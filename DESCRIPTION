@@ -1,0 +1,52 @@
+Package: R2Excel
+Type: Package
+Title: R2Excel : Production Of Statistical Tables in *R*, Save Into (*2*) *Excel* File
+Version: 0.1.21
+Author: 
+  Mathilde Boissel [aut, cre],
+  Cassandra Chaldaureille [aut, cre],
+  Sahara Graf [aut],
+  Laurène Norberciak [aut, cre],
+  Cristian Preda [aut, cre],
+  Stephane Verdun [aut]
+Maintainer: Mathilde Boissel <boissel.mathilde@gmail.com>, Cassandra Chaldaureille <chaldaureille.cassandra@ghicl.net>
+Description: The goal of *R2Excel* is to produce Statistical Tables in *R*, Save Into (*2*) *Excel* File. 
+  With this package, we don't propose any revolutionary statistical models or tests, 
+    but we do recommend that you use this tool for the first stages of analysis in a clinical study. 
+  Once you have your databases, you will naturally want to produce descriptive tables, 
+    and the first univariate or bivariate tests (if groups are present). 
+  We can help you to standardise these tables, while using the appropriate tests 
+    (implementation and verification of certain hypotheses, paired tests or captured messages). 
+  The main functions produce descriptive, homogeneous and harmonious statistical tables, 
+    as well as statistical tests.  
+  This package is used to generate statistical reports produced by the Methodology/Biostatistics Team 
+    of the GHICL DRCI (Lomme, France).
+License: CeCILL-2
+Encoding: UTF-8
+LazyData: true
+Depends: 
+    R (>= 2.10)
+Imports: 
+    stats,
+    tools,
+    dplyr,
+    pillar,
+    magrittr,
+    simpleboot,
+    boot,
+    xlsx,
+    Skillings.Mack, 
+    coin,
+    RVAideMemoire,
+    rstatix,
+    writexl,
+    finalfit,
+    data.table
+Suggests: 
+    knitr,
+    rmarkdown,
+    roxygen2,
+    testthat (>= 3.0.0),
+    usethis
+Config/testthat/edition: 3
+RoxygenNote: 7.3.1
