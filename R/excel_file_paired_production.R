@@ -112,26 +112,6 @@ save_excel_paired_results <- function(
   file = "paired_desc_table.xlsx"
 ) {
   
-  # dataframe = modified_sleep
-  # vars = c("extra", "extra_with_missings", "mesure1", "fact1", "fact1_na")
-  # varstrat = "visites_2*fact3"
-  # patient_id = "ID2"
-  # digits = 2
-  # global_summary = TRUE
-  # force_generate_1_when_0 = FALSE  # for fact tab
-  # keep_missing_line = TRUE # for fact tab
-  # file = file.path("tmp","E-nested_paired_desc.xlsx")
-  # 
-  # signif_digits = 4
-  # simplify = FALSE
-  # force_non_parametric_test = FALSE
-  # metric_show = "auto"
-  # light_contents = TRUE
-  # crossed_varstrat_test = FALSE
-  # detail_NB_mesure_sum = FALSE
-  # test_more_2_levels = FALSE
-  # show_p_adj = FALSE
-  
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(patient_id %in% names(dataframe))
   stopifnot(!is.null(varstrat))
