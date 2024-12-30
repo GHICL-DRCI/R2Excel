@@ -58,3 +58,7 @@ Then install it from your local build, `install.packages("R2Excel_[version].tar.
 Check your current version with `packageVersion("R2Excel")`
 
 Usefull command to know what's new : `utils::news(package = "R2Excel")`
+
+## Starter Pack
+
+See some examples in `inst/StarterPack.html`
