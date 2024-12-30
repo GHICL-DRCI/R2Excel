@@ -51,7 +51,7 @@ Or manually,
 From the online repository : `https://github.com/GHICL-DRCI/R2Excel/`,  
 Download the zipped repo : `> code > Download Zip`,  
 On your machine, on R, `setwd("where_your_zip_is/");`,  
-`unzip("R2Excel-master.zip");`, `file.rename("R2Excel-master", " R2Excel");`,  
+`unzip("R2Excel-main.zip");`, `file.rename("R2Excel-main", " R2Excel");`,  
 Build it `shell("R CMD build R2Excel ")` (will produce the [pkg].tar.gz),  
 Then install it from your local build, `install.packages("R2Excel_[version].tar.gz", repos = NULL)`  
 
