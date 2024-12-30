@@ -1,0 +1,444 @@
+---
+title: "StarterPack"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{StarterPack}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r lib}
+library(R2Excel)
+```
+
+## Before start
+
+Bellow play with some basic examples, check
+
+```{r setup, eval = FALSE}
+packageVersion("R2Excel")
+utils::news(package = "R2Excel")
+```
+
+```r
+dir.create("tmp", showWarnings = FALSE) # prepare the test folder ...
+```
+
+## Basic Data
+
+We propose to play with prepared toy data
+
+```r
+str(modified_sleep) # see the data's structure used with str()
+```
+
+The main function of the package `R2Excel` is `save_excel_results` where you will provide the dataset you want to describe with several options.
+
+(1) It can be a global description, without variable of stratification, so let `varstrat = NULL` by default.  
+
+``` r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "01-desc_tab.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
+  ),
+  varstrat = NULL,
+  digits = 3,
+  simplify = FALSE,
+  light_contents = TRUE
+)
+```
+
+(2) Otherwise, name the column of a factor to separate the statistics, for instance with `varstrat = election`.
+
+```r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "02-desc_tab_strat.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "state.division", "state.region", "binary_test"
+  ),
+  varstrat = "election",
+  digits = 3,
+  simplify = FALSE,
+  light_contents = TRUE
+)
+```
+
+(3) You may be want to remove redundant information about binary (0/1 or non/oui) variables, 
+use `simplify` ; may be useful to see also `force_generate_1_when_0`.
+
+``` r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "03-desc_tab.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "yes_no_french_question", "all_count_zero"
+  ),
+  varstrat = "election",
+  digits = 3,
+  simplify = TRUE, 
+  force_generate_1_when_0 = TRUE
+)
+```
+
+
+Then, just in R and not especially saving your table in an Excel file, 
+you can get quick and beautiful tables of descriptive statistics. 
+See `compute_*` functions.
+
+(4) Either for continuous variables : 
+
+``` r
+vars_wanted <- c(
+  "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+  "HS Grad", "Frost", "Area"
+)
+varstrat_wanted <- "election"
+
+res_conti_tabs <- compute_continuous_table(
+  dataframe = modified_state,
+  vars = vars_wanted,
+   varstrat = varstrat_wanted,
+   digits = 2
+)
+res_conti_tabs
+compute_continuous_table(
+  dataframe = modified_state,
+  vars = vars_wanted[1],
+  varstrat = varstrat_wanted,
+  stats_choice = c("mean", "sd", "N"),
+  digits = 4
+)
+```
+
+(5) Nor for factorial variables : 
+
+``` r
+vars_wanted <- c("state.division", "state.region", "binary_test")
+varstrat_wanted <- "election"
+res_fact_tabs <- compute_factorial_table(
+  dataframe = modified_state,
+  vars = vars_wanted,
+  varstrat = varstrat_wanted,
+  digits = 2,
+  simplify = FALSE
+)
+res_fact_tabs
+
+# also possible to simply binary info
+vars_wanted <- c("state.division", "state.region", "binary_test", "yes_no_french_question")
+varstrat_wanted <- "election"
+res_fact_simpl_tabs <- compute_factorial_table(
+  dataframe = modified_state,
+  vars = vars_wanted,
+  varstrat = varstrat_wanted,
+  digits = 2,
+  simplify = TRUE
+)
+res_fact_simpl_tabs
+
+# and general zero with or without simplification
+vars_wanted <- c("yes_no_french_question", "all_count_zero")
+varstrat_wanted <- "election"
+res_fact_simpl0_tabs <- compute_factorial_table(
+  dataframe = modified_state,
+  vars = vars_wanted,
+  varstrat = varstrat_wanted,
+  digits = 2,
+  simplify = FALSE,
+  force_generate_1_when_0 = TRUE
+)
+res_fact_simpl0_tabs
+```
+
+To go further on statistics, you can test tables according your studied `varstat`. 
+See `test_*` functions.
+
+(6) Tests for qualitative variables
+
+``` r
+res_prop <- test_proportions(
+  dataframe = modified_state[, c("state.division","state.region", "binary_test", "election")],
+  vars = c("state.region", "state.division", "binary_test"),
+  varstrat = "election",
+  digits = 3
+)
+res_prop
+``` 
+
+(7) Tests for quantitative variables
+
+``` r
+res_means <- test_means(
+  dataframe = modified_state[, c("Population", "Income", "election")],
+  vars = c("Population", "Income"),
+  varstrat = "election",
+  digits = 3
+)
+res_means
+```
+
+(8) come with the estimated difference of means
+
+``` r
+estim_diff <- estimate_diff_mean(
+  dataframe = modified_state[, c("Population", "Income", "election")],
+  vars = c("Population", "Income"),
+  varstrat = "election",
+  digits = 2
+)
+estim_diff
+```
+
+(9) With `save_excel_results`, several new possibilities are available.  
+You can now describe 2 varstat crossed (one as a subgroup of the second one) is the varstrat params is provided 
+as "var1*var2" or as c("var1", "var2") :
+
+```r 
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "09-crossed_desc.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area",
+    "state.division", "state.region"
+  ),
+  varstrat = "election*binary_test",
+  digits = 2
+)
+
+# without the Population_totale and NB detail (as sum) but with stat test inside varstrat1
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "09-crossed_desc_test.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area",
+    "state.division", "state.region"
+  ),
+  varstrat = "election*binary_test",
+  digits = 2, 
+  global_summary = FALSE,
+  crossed_varstrat_test = TRUE,
+  detail_NB_mesure_sum = FALSE
+)
+``` 
+
+(10) The option `varstrat` can now take a continuous variable : 
+
+Based on `compute_continuous_table` (transposed) table for each qualitative levels and `compute_correlation_table` with it test for quantitative vars (correlation method can be "detect_auto" or classical known approachs)
+
+```r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp","10-conti_varstrat.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp",
+    "state.division", "state.region", "election"
+  ),
+  varstrat = "Area",
+  digits = 2
+)
+```
+
+```r
+compute_correlation_table(
+  dataframe = modified_state,
+  vars = c("Population", "Income"),
+  varstrat = "Area",
+  method = "detect_auto",
+  digits = 2
+)
+```
+
+(11) The option `show_OR` add the univariate OR columns when the varstrat is a binary factor. 
+It is based on `get_OR_univar` function.
+
+```r
+get_OR_univar(
+   dataframe = modified_state,
+   dependent_var = "binary_test",
+   explanatory_vars = c(
+     "Population", "Income", "Life Exp", "state.region",
+     "yes_no_french_question", "all_count_zero"
+   )
+)
+```
+
+```r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp","11-OR_tab.xlsx"),
+  vars = c(
+    "Population", "Income", "Life Exp", "state.region",
+    "yes_no_french_question", "all_count_zero"
+  ),
+  varstrat = "binary_test",
+  digits = 2, 
+  simplify = FALSE,
+  show_OR = TRUE
+)
+```
+
+(12) The option `show_OR` and `simplify` can work together too.
+
+```r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp","12-OR_tab.xlsx"),
+  vars = c(
+    "Population", "Income", "Life Exp", "state.region",
+    "yes_no_french_question", "all_count_zero"
+  ),
+  varstrat = "binary_test",
+  digits = 2, 
+  simplify = TRUE,
+  show_OR = TRUE
+)
+```
+
+
+## Longitudinal (Paired) Data
+
+If you have longitudinal measures (paired data), you should use "paired" family functions, 
+for instance on toy data `modified_sleep`.
+
+```r
+str(modified_sleep)
+```
+
+(A) You can start by "compute" a "paired" table for continuous traits 
+
+``` r
+compute_paired_continuous_table_and_test(
+  dataframe = modified_sleep,
+  variable_interest = "extra",
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  digits = 2,
+  global_summary = FALSE
+)
+compute_paired_continuous_table_and_test(
+  dataframe = modified_sleep,
+  variable_interest = "mesure3",
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  digits = 2,
+  global_summary = FALSE
+)
+compute_paired_continuous_table_and_test(
+  dataframe = modified_sleep,
+  variable_interest = "extra",
+  varstrat = "visites_5",
+  patient_id = "ID",
+  digits = 2,
+  global_summary = FALSE
+)
+```
+
+
+(B) or "compute" a "paired" table for factorial traits 
+
+``` r
+compute_paired_factorial_table_and_test(
+  dataframe = modified_sleep,
+  variable_interest = "fact1",
+  varstrat = "visites_2",
+  digits = 1,
+  patient_id = "ID2",
+  force_generate_1_when_0 = FALSE,
+  keep_missing_line = TRUE
+)
+compute_paired_factorial_table_and_test(
+  dataframe = modified_sleep,
+  variable_interest = "fact1_na",
+  varstrat = "visites_2",
+  digits = 1,
+  patient_id = "ID2",
+  force_generate_1_when_0 = FALSE,
+  keep_missing_line = TRUE
+)
+compute_paired_factorial_table_and_test(
+  dataframe = modified_sleep,
+  variable_interest = "fact3",
+  varstrat = "visites_2",
+  digits = 1,
+  patient_id = "ID2",
+  force_generate_1_when_0 = FALSE,
+  keep_missing_line = TRUE
+)
+```
+
+(C You can generalize the call of paired tables, for several variables of interest, saved in excel file. 
+
+For instance with 2 visits
+
+```r
+save_excel_paired_results(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings", "mesure1", "mesure2", "mesure3"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  digits = 1,
+  global_summary = TRUE,
+  file = file.path("tmp", "C-desc_paired_data1.xlsx")
+)
+```
+
+(D) For instance with 2 visits
+
+```r
+save_excel_paired_results(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings", "mesure1", "fact1", "fact1_na"),
+  varstrat = c("visites_5"),
+  patient_id = "ID",
+  digits = 2,
+  global_summary = TRUE,
+  force_generate_1_when_0 = FALSE,  # for fact tab
+  keep_missing_line = TRUE, # for fact tab
+  file = file.path("tmp", "D-desc_paired_data3.xlsx")
+)
+
+# with stat test
+save_excel_paired_results(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings", "mesure1", "fact1", "fact1_na"),
+  varstrat = c("visites_5"),
+  patient_id = "ID",
+  digits = 2,
+  global_summary = TRUE,
+  force_generate_1_when_0 = FALSE,
+  keep_missing_line = TRUE,
+  test_more_2_levels = TRUE,
+  file = file.path("tmp", "D-desc_paired_data_tested.xlsx")
+)
+```
+
+(E) The option about "cross" 2 varstrats is also available in "paired" function : 
+
+```r
+save_excel_paired_results(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings", "mesure1", "fact1", "fact1_na"),
+  varstrat = "visites_2*fact3",
+  patient_id = "ID2",
+  digits = 2,
+  global_summary = TRUE,
+  force_generate_1_when_0 = FALSE,  # for fact tab
+  keep_missing_line = TRUE, # for fact tab
+  file = file.path("tmp","E-nested_paired_desc.xlsx")
+)
+```
