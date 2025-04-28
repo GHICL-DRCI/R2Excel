@@ -283,9 +283,87 @@ path25 <- save_excel_paired_results(
   file = file.path("tmp", "25-desc_paired_data12_adj.xlsx")
 )
 
-test_that("Test Paj", {
+test_that("Test Padj", {
   expect_true(file.exists(path24))
   expect_true(file.exists(path25))
+})
+
+#### test droplevels ####
+
+tmp26 <- modified_sleep[group %in% 1, ] # keep only 1 values over the 2 levels
+path26_paired <- save_excel_paired_results(
+  dataframe = tmp26,
+  file = file.path("tmp", "26-droplevels_paired.xlsx"),
+  vars = c("group"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  drop_levels = TRUE
+)
+sheet_26 <- readxl::read_excel(
+  file.path("tmp", "26-droplevels_paired.xlsx")
+)
+path26b_paired <- save_excel_paired_results(
+  dataframe = tmp26,
+  file = file.path("tmp", "26b-droplevels_paired.xlsx"),
+  vars = c("group"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  drop_levels = TRUE, keep_missing_line = FALSE
+)
+sheet_26b <- readxl::read_excel(
+  file.path("tmp", "26b-droplevels_paired.xlsx")
+)
+
+test_that("test drop_levels", {
+  expect_true(nrow(sheet_26)==2)
+  expect_true(nrow(sheet_26b)==1)
+})
+
+
+#### Variables_all_na ####
+modified_sleep$all_na_var <- NA
+path27 <- save_excel_paired_results(
+  dataframe = modified_sleep,
+  file = file.path("tmp", "27-allna.xlsx"),
+  vars = c(
+    "all_na_var", "extra"
+  ),
+  varstrat = "visites_2",
+  patient_id = "ID2"
+)
+modified_sleep$all_na_var <- NULL
+sheet_27 <- readxl::read_excel(
+  file.path("tmp", "27-allna.xlsx")
+)
+sheet_27na <- readxl::read_excel(
+  file.path("tmp", "27-allna.xlsx"), sheet = "Variables_all_na"
+)
+sheet_names <- readxl::excel_sheets(file.path("tmp", "27-allna.xlsx"))
+test_that("test all na", {
+  expect_true(nrow(sheet_27) == 1)
+  expect_true(sheet_27$Variable == "extra")
+  expect_equal(sheet_names, c("quantitative - visites_2", "Variables_all_na"))
+  expect_equal(sheet_27na$Variables_all_na, c("all_na_var"))
+})
+
+#### save_excel_paired_results_filtertest ####
+
+save_excel_paired_results_filtertest(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  file = file.path("tmp", "28-desc_paired_data_tested.xlsx")
+)
+sheet_28 <- readxl::read_excel(
+  file.path("tmp", "28-desc_paired_data_tested.xlsx")
+)
+
+test_that("test save_excel_paired_results_filtertest", {
+  expect_true(nrow(sheet_28) == 2)
+  expect_equal(sheet_28$Variable, c("extra", "extra_with_missings"))
+  expect_equal(sheet_28$N_individuals, sheet_28$temps1_N)
+  expect_equal(sheet_28$N_individuals, sheet_28$temps2_N)
 })
 
 #### end ####
