@@ -1,7 +1,7 @@
 Package: R2Excel
 Type: Package
 Title: R2Excel : Production Of Statistical Tables in *R*, Save Into (*2*) *Excel* File
-Version: 0.1.21
+Version: 0.1.22
 Author: 
   Mathilde Boissel [aut, cre],
   Cassandra Chaldaureille [aut, cre],
