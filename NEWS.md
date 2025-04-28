@@ -1,3 +1,21 @@
+# Version 0.1.22
+
+02/04/2025 & 25/04/2025
+
+-    Shapiro.test not executable with less than 3 point (in overall population, in bivar mode) + add tests (`compute_continuous_table`)
+
+-    `drop_levels` param : drop levels added also on varstrat columns + add test in `save_excel_paired_results` and `save_excel_results`
+
+-    Remove vars with all NA from the vars selection + with a message. Now variables will all Na are removed from the list wanted to be analysed and just stored in a new sheet "Variables_all_na" if applicable + add tests
+
+-    `save_excel_paired_results_filtertest` : new function to use `save_excel_paired_results` in case of missing data + add test
+
+-    vignette fill with new examples of `save_excel_paired_results` in case of missing data : understand how work `save_excel_paired_results_filtertest`.
+
+-    `dico_mapping` param : provide a dataframe to match vars' names and vars' label. "Variable" name will be the first column and "Label" will be set as the 2nd column + add test.
+
+-    Change "N_NA" instead of "NA" col name in compute_ function.
+
 # Version 0.1.21
 
 27/12/2024 - 30/12/2024
