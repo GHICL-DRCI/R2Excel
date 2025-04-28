@@ -31,10 +31,14 @@
 #' @param show_OR A logical. Default FALSE. Do you want to get OR, IC and p (when varstrat is a binary fact).
 #' @param light_contents A logical, Default TRUE. If FALSE, the information like Nb_mesures,
 #'  Valeurs manquantes et p will be repeated.
-#' @param crossed_varstrat_test A logical, Default FALSE. If turn TRUE, and detection of 2 varstrat "var1*var2" to cross,
-#'  statistical test will be provided.
-#' @param detail_NB_mesure_sum A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.
+#' @param crossed_varstrat_test A logical, Default FALSE. If turn TRUE, 
+#'  and detection of 2 varstrat "var1*var2" to cross, statistical test will be provided.
+#' @param detail_NB_mesure_sum A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) 
+#'  for each group.
 #' @param show_p_adj A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.
+#' @param drop_levels A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)
+#' @param dico_mapping A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+#'   the 2nd column must be the labels. Other information will be ignored.
 #'
 #' @return The name or path + name of the saved Excel file.
 #' @export
@@ -75,27 +79,29 @@
 #' )
 #' }
 save_excel_results <- function(
-  dataframe,
-  file = "tmp/description.xlsx",
-  vars,
-  varstrat = NULL,
-  digits = 2,
-  signif_digits = 4,
-  simplify = FALSE,
-  prop_table_margin = 2,
-  force_generate_1_when_0 = TRUE,
-  force_non_parametric_test = FALSE,
-  metric_show = "auto",
-  global_summary = TRUE,
-  show_OR = FALSE,
-  light_contents = TRUE,
-  crossed_varstrat_test = FALSE,
-  detail_NB_mesure_sum = FALSE,
-  show_p_adj = FALSE
+    dataframe,
+    file = "tmp/description.xlsx",
+    vars,
+    varstrat = NULL,
+    digits = 2,
+    signif_digits = 4,
+    simplify = FALSE,
+    prop_table_margin = 2,
+    force_generate_1_when_0 = TRUE,
+    force_non_parametric_test = FALSE,
+    metric_show = "auto",
+    global_summary = TRUE,
+    show_OR = FALSE,
+    light_contents = TRUE,
+    crossed_varstrat_test = FALSE,
+    detail_NB_mesure_sum = FALSE,
+    show_p_adj = FALSE,
+    drop_levels = FALSE,
+    dico_mapping = NULL
 ) {
-  
-  message("[save_excel_results] ", "Starts descriptive analyses of the population")
+  message("[save_excel_results] ", "Starts descriptive analysesn")
 
+  stopifnot(is.data.frame(dataframe))
   stopifnot(vars %in% names(dataframe))
   stopifnot(digits >= 0)
   stopifnot(is.logical(simplify))
@@ -108,6 +114,13 @@ save_excel_results <- function(
   stopifnot(is.logical(crossed_varstrat_test))
   stopifnot(is.logical(detail_NB_mesure_sum))
   stopifnot(is.logical(show_p_adj))
+  stopifnot(is.logical(drop_levels))
+  if (!is.null(dico_mapping)) {
+    stopifnot(is.data.frame(dico_mapping))
+    message("[save_excel_results] Variable and Label must be the first 2 columns !")
+    names(dico_mapping)[1:2] <- c("Variable", "Label")
+    # only select the first 2 columns? should remouve others ? 
+  }
 
   ## detect crossed varstrat :
   if (is.null(varstrat[1]) || varstrat[1] %in% "") {
@@ -119,10 +132,36 @@ save_excel_results <- function(
       varstrat <- unlist(varstrat_splited)
       crossed_varstrat <- TRUE
       stopifnot(varstrat[2] %in% names(dataframe))
+
+      ## --here to test
+      if (drop_levels) dataframe[[varstrat[2]]] <- droplevels(dataframe[[varstrat[2]]]) # v0.1.22
+      if (nlevels(dataframe[[varstrat[2]]]) == 1) {
+        varstrat <- varstrat[1] # no more 2nd var strat
+        crossed_varstrat <- FALSE
+        message(
+          "[save_excel_results] Warning!!! only 1 level in 2nd varstrat, so turn varstrat = varstrat[1]."
+        )
+      }
     } else {
       crossed_varstrat <- FALSE
+
+      if (drop_levels) dataframe[[varstrat]] <- droplevels(dataframe[[varstrat]]) # v0.1.22
+      # droplevels , stop to test
+      if (nlevels(dataframe[[varstrat]]) == 1) {
+        varstrat <- NULL # no more var strat
+        message(
+          "[save_excel_results] Warning!!! only 1 level in varstrat, so turn varstrat = NULL."
+        )
+      }
     }
     stopifnot(varstrat[1] %in% names(dataframe))
+  }
+
+  if (drop_levels) { # v0.1.22
+    message(
+      "[save_excel_results] droplevels(dataframe)"
+    )
+    dataframe <- droplevels(dataframe)
   }
 
   if (force_non_parametric_test) {
@@ -133,6 +172,24 @@ save_excel_results <- function(
   }
 
   vars <- setdiff(vars, varstrat)
+  dataframe <- data.table::setDT(dataframe)
+  if (is.null(varstrat[1]) || varstrat[1] %in% "") {
+    dataframe <- dataframe[, .SD, .SDcols = c(vars)]
+  } else {
+    dataframe <- dataframe[, .SD, .SDcols = c(vars, varstrat)]
+  }
+  ## remove vars (columns) with all NA # v0.1.22
+  dataframe <- dataframe[, .SD, .SDcols = colSums(is.na(dataframe)) < nrow(dataframe)]
+  newcols <- names(dataframe)
+  var_setdiff <- setdiff(vars, newcols)
+  if (length(var_setdiff) > 0) {
+    message("[save_excel_results] Warning!!! Column(s) ", paste0(var_setdiff, collapse = ", "), " removed from vars list, because all NA.")
+    vars <- setdiff(vars, var_setdiff)
+    tab_na_sheet_list <- list(data.frame("Variables_all_na" = var_setdiff))
+    names(tab_na_sheet_list) <- "Variables_all_na"
+  } else {
+    tab_na_sheet_list <- NULL
+  }
 
   # Separation des variables quali et quanti
   vars_quanti <- get_numerics(dataframe, vars = vars)
@@ -162,7 +219,7 @@ save_excel_results <- function(
           vars = vars_quanti,
           varstrat = varstrat[2],
           stats_choice = c(
-            "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal"
+            "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal"
           ),
           digits = digits
         ))
@@ -190,7 +247,7 @@ save_excel_results <- function(
             tmp$Variable <- var_i
             tmp$Modalites[1] <- "Population_totale"
 
-            tmp$Valeurs_manquantes <- as.character(tmp[["NA"]])
+            tmp$Valeurs_manquantes <- as.character(tmp[["N_NA"]])
 
             tmp <- tmp[, `:=`(
               `Mean_sd` = paste0(mean, " +/- ", sd),
@@ -254,7 +311,7 @@ save_excel_results <- function(
               ),
               value.var = cell_content # object in order of tmp$Modalites
             )
-            ## reorder cols pop total before group v0.1.19 
+            ## reorder cols pop total before group v0.1.19
             names(tmp2) <- gsub(varstrat[2], paste0(varstrat[2], "="), names(tmp2))
             reordercols <- unique(c(
               "Variable", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
@@ -338,7 +395,7 @@ save_excel_results <- function(
             vars = vars_quanti,
             varstrat = varstrat_i,
             stats_choice = c(
-              "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal"
+              "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal"
             ),
             # all stats are excepted in excel workbook function
             digits = digits
@@ -349,7 +406,9 @@ save_excel_results <- function(
         if (is.null(varstrat_i) || varstrat_i %in% "" || is.numeric(dataframe[[varstrat_i]])) {
           pvaleur_quanti <- NULL
           tab_quanti_sheet <- data.table::as.data.table(analyse_desc_quanti, keep.rownames = "Variable")
-          if ("NA" %in% names(tab_quanti_sheet)) tab_quanti_sheet$Valeurs_manquantes <- tab_quanti_sheet[["NA"]]
+          if ("N_NA" %in% names(tab_quanti_sheet)) {
+            tab_quanti_sheet$Valeurs_manquantes <- tab_quanti_sheet[["N_NA"]]
+          }
 
           tab_quanti_sheet <- tab_quanti_sheet[, `:=`(
             `Moy +/- Sd` = paste0(as.character(mean), " +/- ", as.character(sd)),
@@ -397,7 +456,7 @@ save_excel_results <- function(
               tmp$Variable <- var_i
               tmp$Modalites[1] <- "Population_totale"
 
-              tmp$Valeurs_manquantes <- as.character(tmp[["NA"]])
+              tmp$Valeurs_manquantes <- as.character(tmp[["N_NA"]])
 
               tmp <- tmp[, `:=`(
                 `Mean_sd` = paste0(mean, " +/- ", sd),
@@ -585,14 +644,14 @@ save_excel_results <- function(
                 )
               )
               tmp$Valeurs_manquantes <- ifelse(
-                tmp$n[tmp$Modalites %in% "NA"] == 0,
+                tmp$n[tmp$Modalites %in% "N_NA"] == 0,
                 "0",
                 paste0(
-                  tmp$n[tmp$Modalites %in% "NA"],
+                  tmp$n[tmp$Modalites %in% "N_NA"],
                   ifelse(
                     detail_NB_mesure_sum,
                     paste0(" ", "(", paste0(
-                      tmp[tmp$Modalites %in% "NA", .SD, .SDcols = levels_i_n],
+                      tmp[tmp$Modalites %in% "N_NA", .SD, .SDcols = levels_i_n],
                       collapse = "+"
                     ), ")"),
                     ""
@@ -609,7 +668,7 @@ save_excel_results <- function(
                   paste(tmp[[paste0("n", namei)]], tmp[[paste0("p", namei)]])
                 })
               ]
-              tmp3 <- tmp2[!Modalites %in% c("Nb_mesures", "NA"), .SD, .SDcols = c(
+              tmp3 <- tmp2[!Modalites %in% c("Nb_mesures", "N_NA"), .SD, .SDcols = c(
                 "Variable", "Modalites", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
                 paste0(varstrat[2], "=", levels_i_names)
               )]
@@ -724,7 +783,7 @@ save_excel_results <- function(
               vars = varstrat_i,
               varstrat = quali_i_var,
               stats_choice = c(
-                "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal"
+                "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal"
               ),
               # all stats are excepted in excel workbook function
               digits = digits
@@ -758,9 +817,9 @@ save_excel_results <- function(
                 names(tmp) <- c("Modalites", names(tmp_raw[[1]]))
                 tmp$Variable <- var_i
                 tmp$Nb_mesures <- tmp$n[tmp$Modalites %in% "Nb_mesures"]
-                tmp$Valeurs_manquantes <- tmp$n[tmp$Modalites %in% "NA"]
+                tmp$Valeurs_manquantes <- tmp$n[tmp$Modalites %in% "N_NA"]
                 tmp$`Effectif (%)` <- paste(tmp$n, tmp$p)
-                tmp <- tmp[!Modalites %in% c("Nb_mesures", "NA"), .SD, .SDcols = c(
+                tmp <- tmp[!Modalites %in% c("Nb_mesures", "N_NA"), .SD, .SDcols = c(
                   "Variable", "Modalites", "Nb_mesures", "Valeurs_manquantes", "Effectif (%)"
                 )]
 
@@ -832,7 +891,7 @@ save_excel_results <- function(
                   tmp$Modalites[1] <- "Population_totale"
                   tmp$varstrat <- var_i
 
-                  tmp$Valeurs_manquantes <- tmp[["NA"]]
+                  tmp$Valeurs_manquantes <- tmp[["N_NA"]]
 
                   tmp <- tmp[, `:=`(
                     `Mean_sd` = paste0(mean, " +/- ", sd),
@@ -928,14 +987,14 @@ save_excel_results <- function(
                     )
                   )
                   tmp$Valeurs_manquantes <- ifelse(
-                    tmp$n[tmp$Modalites %in% "NA"] == 0,
+                    tmp$n[tmp$Modalites %in% "N_NA"] == 0,
                     0,
                     paste0(
-                      tmp$n[tmp$Modalites %in% "NA"],
+                      tmp$n[tmp$Modalites %in% "N_NA"],
                       ifelse(
                         detail_NB_mesure_sum,
                         paste0(" ", "(", paste0(
-                          tmp[tmp$Modalites %in% "NA", .SD, .SDcols = levels_i_n],
+                          tmp[tmp$Modalites %in% "N_NA", .SD, .SDcols = levels_i_n],
                           collapse = "+"
                         ), ")"),
                         ""
@@ -953,7 +1012,7 @@ save_excel_results <- function(
                       paste(tmp[[paste0("n", namei)]], tmp[[paste0("p", namei)]])
                     })
                   ]
-                  tmp2 <- tmp2[!Modalites %in% c("Nb_mesures", "NA"), .SD, .SDcols = c(
+                  tmp2 <- tmp2[!Modalites %in% c("Nb_mesures", "N_NA"), .SD, .SDcols = c(
                     "Variable", "Modalites", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
                     paste0(varstrat_i, "=", levels_i_names)
                   )]
@@ -1148,10 +1207,9 @@ save_excel_results <- function(
           )
         },
         tab_quali_sheet_sep
-      ) 
+      )
       tab_quali_sheet_list <- list(tab_quali_sheet_tab) ## --here v0.1.18
       names(tab_quali_sheet_list) <- paste0("quali-", varstrat[1], "-", varstrat[2])
-      
     } else {
       ##### P adj classique #####
       ## adj this other way
@@ -1292,22 +1350,52 @@ save_excel_results <- function(
     }
 
     # finish to format sheet list
+
     if (!is.null(tab_quanti_sheet_tab)) { ## --here v0.1.18
       names(tab_quanti_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quanti_sheet_tab))
+
+      if (!is.null(dico_mapping)) {
+        # add label #v0.1.22
+        tab_quanti_sheet_tab <- merge(
+          x = tab_quanti_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quanti_sheet_tab, neworder = unique(c("Label", names(tab_quanti_sheet_tab)))
+        )
+      }
+
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- paste0("quanti-", varstrat[1], "-", varstrat[2])
     } else {
       tab_quanti_sheet_list <- NULL ## --here v0.1.18
     }
+
     if (!is.null(tab_quali_sheet_tab)) { ## --here v0.1.18
       names(tab_quali_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quali_sheet_tab))
+
+      if (!is.null(dico_mapping)) {
+        # add label #v0.1.22
+        tab_quali_sheet_tab <- merge(
+          x = tab_quali_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quali_sheet_tab, neworder = unique(c("Label", names(tab_quali_sheet_tab)))
+        )
+      }
+
       tab_quali_sheet_list <- list(tab_quali_sheet_tab)
       names(tab_quali_sheet_list) <- paste0("quali-", varstrat[1], "-", varstrat[2])
     } else {
       tab_quali_sheet_list <- NULL ## --here v0.1.18
     }
   } else {
-    ##### Classique #####
+    ##### Classique ( no cross varstrat ) #####
 
     # just format p values, ever light content done if wanted
 
@@ -1358,12 +1446,40 @@ save_excel_results <- function(
     if (is.null(name_quanti)) {
       tab_quanti_sheet_list <- NULL
     } else {
+      if (!is.null(dico_mapping)) {
+        # add label #v0.1.22
+        tab_quanti_sheet_tab <- merge(
+          x = tab_quanti_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quanti_sheet_tab, neworder = unique(c("Label", names(tab_quanti_sheet_tab)))
+        )
+      }
+
+      # remake the list
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- name_quanti
     }
     if (is.null(name_quali)) {
       tab_quali_sheet_list <- NULL
     } else {
+      if (!is.null(dico_mapping)) {
+        # add label
+        tab_quali_sheet_tab <- merge(
+          x = tab_quali_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quali_sheet_tab, neworder = unique(c("Label", names(tab_quali_sheet_tab)))
+        )
+      }
+
+      # remake the list
       tab_quali_sheet_list <- list(tab_quali_sheet_tab)
       names(tab_quali_sheet_list) <- name_quali
     }
@@ -1374,7 +1490,8 @@ save_excel_results <- function(
   writexl::write_xlsx(
     x = c(
       tab_quanti_sheet_list,
-      tab_quali_sheet_list
+      tab_quali_sheet_list,
+      tab_na_sheet_list
     ),
     path = file, col_names = TRUE
   )
