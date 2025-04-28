@@ -310,6 +310,25 @@ save_excel_results(
 ```
 
 
+(13) you might be interested in putting labels in front of your complicated variable names.
+
+
+```r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "13-labels.xlsx"),
+  vars = c(
+    "Population", "Illiteracy", "Income",
+    "state.division", "state.region"
+  ),
+  varstrat = "binary_test",
+  dico_mapping = data.frame(
+    "Vars" = c("Population", "Income", "state.division", "state.region"), 
+    "labels" = c("Population size (nb)", "Income (in dollars)", "State Division ???", "state region (cad point)")
+  )
+)
+```
+
 ## Longitudinal (Paired) Data
 
 If you have longitudinal measures (paired data), you should use "paired" family functions, 
@@ -440,5 +459,74 @@ save_excel_paired_results(
   force_generate_1_when_0 = FALSE,  # for fact tab
   keep_missing_line = TRUE, # for fact tab
   file = file.path("tmp","E-nested_paired_desc.xlsx")
+)
+```
+
+(F) understand `save_excel_paired_results_filtertest` : A specific table for repeated data may be wanted in two ways: to show rows with missing values to describe everything or to remove missing data to describe only tested data.  
+Here is a snippet of code to do both :
+
+```r
+## description in detail with NA at each VISITE
+R2Excel::save_excel_paired_results(
+  dataframe = modified_sleep, 
+  vars = c("extra_with_missings", "extra"),
+  varstrat = "visites_2",
+  patient_id = "ID2", 
+  file = file.path("tmp", "F-missing_paired_desc.xlsx"),
+  global_summary = FALSE,
+  keep_missing_line = FALSE
+)
+
+## or only describe data tested (without missing values at each variable)
+desc_data_tested <- data.table::rbindlist(l = lapply(
+  X = c("extra_with_missings", "extra"),
+  FUN = function(var_i) {
+    
+    tmp_i <- modified_sleep
+    # get if with NA :
+    detect_missing_id <- tmp_i[["ID2"]][which(is.na(tmp_i[[var_i]]))]
+    # remove them
+    tmp_i <- tmp_i[!ID2 %in% detect_missing_id, ]
+    # or get id with 1 line ... (other kind of missing values)
+    detect_missing_id <-local({
+      tt <- as.data.frame(table(tmp_i[["ID2"]]))
+      tt$Var1[tt$Freq == 1]
+    })
+    # remove them
+    tmp_i <- tmp_i[!ID2 %in% detect_missing_id, ]
+    
+    # nrow(tmp_i)
+    R2Excel::save_excel_paired_results(
+      dataframe = tmp_i, 
+      vars = var_i,
+      varstrat = "visites_2",
+      patient_id = "ID2", 
+      file = file.path("tmp", paste0("F-Nomissing_paired_desc_", var_i, ".xlsx")),
+      global_summary = FALSE,
+      keep_missing_line = FALSE
+      # metric_show = if wanted ? sepecifically for each var_i
+    )
+    # read the excel table
+    tab <- readxl::read_excel(path = file.path("tmp", paste0("F-Nomissing_paired_desc_", var_i, ".xlsx")))
+    unlink( # if want to clean temporary file
+        file.path("tmp", paste0("F-Nomissing_paired_desc_", var_i, ".xlsx"))
+    ) 
+    return(tab)
+  }
+))
+writexl::write_xlsx(
+  x = list(
+    "quantitative - visites_2" = desc_data_tested
+  ),
+  path = file.path("tmp", "F-Nomissing_paired_desc.xlsx")
+)
+
+## this last example is now include in a function meta function :
+save_excel_paired_results_filtertest(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings", "group"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  file = file.path("tmp", "desc_paired_data_tested.xlsx")
 )
 ```
