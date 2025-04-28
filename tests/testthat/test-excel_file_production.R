@@ -358,7 +358,7 @@ sheet_padj <- readxl::read_excel(
   file.path("tmp", "04-test_padj.xlsx"), sheet = "quantitative - election"
 )
 
-test_that("p adj", {
+test_that("test order p adj", {
   expect_true(file.exists(path04))
   expect_equal(  
     names(sheet_padj), # test order
@@ -392,12 +392,119 @@ sheet_cross_padj <- readxl::read_excel(
   sheet = "quanti-election-binary_test"
 )
 
-test_that("p adj", {
+test_that("test p adj", {
   expect_true(file.exists(path05))
   expect_true(
     all(c("P_valeur", "P_adj_holm") %in% sheet_cross_padj[1, ])
   )
 })
+
+#### drop_levels ####
+
+tmp06 <- modified_state[binary_test %in% 1, ] # keep only 1 values over the 2 levels
+path06_TRUE <- save_excel_results(
+  dataframe = tmp06,
+  file = file.path("tmp", "06-yesdroplevels.xlsx"),
+  vars = c(
+    # "Population", "Income", 
+    # "state.region",
+    "binary_test"
+  ),
+  varstrat = NULL, 
+  drop_levels = TRUE
+)
+path06_FALSE <- save_excel_results(
+  dataframe = tmp06,
+  file = file.path("tmp", "06-nodroplevels.xlsx"),
+  vars = c(
+    "binary_test"
+  ),
+  varstrat = NULL, 
+  drop_levels = FALSE
+)
+sheet_yes <- readxl::read_excel(
+  file.path("tmp", "06-yesdroplevels.xlsx")
+)
+sheet_no <- readxl::read_excel(
+  file.path("tmp", "06-nodroplevels.xlsx")
+)
+path06_TRUE_varstrat <- save_excel_results(
+  dataframe = tmp06,
+  file = file.path("tmp", "06-yesdroplevels_varstrat.xlsx"),
+  vars = c(
+    "Population", "Income", 
+    "state.region"
+  ),
+  varstrat = "binary_test", 
+  drop_levels = TRUE
+)
+sheet_yes_varstrat <- readxl::read_excel(
+  file.path("tmp", "06-yesdroplevels_varstrat.xlsx")
+)
+
+
+test_that("test drop_levels", {
+  expect_true(nrow(sheet_yes) + 1 == nrow(sheet_no))
+  expect_true(ncol(sheet_yes_varstrat)==7)
+  expect_true(expect_true(nrow(sheet_yes_varstrat)==2))
+})
+
+#### Variables_all_na ####
+modified_state$all_na_var <- NA
+path07 <- save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "07-allna.xlsx"),
+  vars = c(
+    "zero_levels", "all_na_var", "Population"
+  ),
+  varstrat = "binary_test"
+)
+modified_state$all_na_var <- NULL
+sheet_07 <- readxl::read_excel(
+  file.path("tmp", "07-allna.xlsx")
+)
+sheet_07na <- readxl::read_excel(
+  file.path("tmp", "07-allna.xlsx"), sheet = "Variables_all_na"
+)
+sheet_names <- readxl::excel_sheets(file.path("tmp", "07-allna.xlsx"))
+test_that("test all na", {
+  expect_true(nrow(sheet_07) == 1)
+  expect_true(sheet_07$Variable == "Population")
+  expect_equal(sheet_names, c("quantitative - binary_test", "Variables_all_na"))
+  expect_equal(sheet_07na$Variables_all_na, c("zero_levels", "all_na_var"))
+})
+
+#### dico vars = label ####
+path08 <- save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "08-labels.xlsx"),
+  vars = c(
+    "Population", "Illiteracy", "Income",
+    "state.division", "state.region"
+  ),
+  varstrat = "binary_test",
+  dico_mapping = data.frame(
+    "Vars" = c("Population", "Income", "state.division", "state.region"), 
+    "labels" = c("Population size (nb)", "Income (in dollars)", "State Division ???", "state region (cad point)")
+  )
+)
+sheet_08quanti <- readxl::read_excel(
+  file.path("tmp", "08-labels.xlsx"),
+  sheet = "quantitative - binary_test"
+)
+sheet_08quali <- readxl::read_excel(
+  file.path("tmp", "08-labels.xlsx"),
+  sheet = "qualitative - binary_test"
+)
+
+test_that("test labels", {
+  expect_true(names(sheet_08quanti)[1] == "Label")
+  expect_true(sheet_08quanti$Label[1] == "Population size (nb)" & sheet_08quanti$Variable[1] == "Population")
+  expect_true(is.na(sheet_08quanti$Label[2])  & sheet_08quanti$Variable[2] == "Illiteracy")
+  expect_true(sheet_08quali$Label[1] == "State Division ???" & sheet_08quali$Variable[1] == "state.division")
+  expect_equal(is.na(sheet_08quali$Label), is.na(sheet_08quali$Variable))
+})
+
 
 #### end ####
 # clear tmp test folder

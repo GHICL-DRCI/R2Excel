@@ -8,7 +8,7 @@
 #' @param vars A vector of characters. Names of dataframe's continuous columns to describe.
 #' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
 #' @param stats_choice A vector of characters. Default provide all usual statistics to describe continuous variables,
-#'  namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal")'
+#'  namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal")'
 #' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
 #'
 #' @return A final table or a list of tables if varstrat not null.
@@ -26,17 +26,20 @@
 #' )
 #' }
 compute_continuous_table <- function(
-  dataframe,
-  vars = setdiff(colnames(dataframe), varstrat),
-  varstrat = NULL,
-  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal"),
-  digits = 2
+    dataframe,
+    vars = setdiff(colnames(dataframe), varstrat),
+    varstrat = NULL,
+    stats_choice = c(
+      "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal"
+    ),
+    digits = 2
 ) {
-  
   dataframe <- as.data.frame(dataframe)
   ## stops
   stopifnot(all(vars %in% names(dataframe)))
-  stopifnot(all(stats_choice %in% c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal")))
+  stopifnot(all(stats_choice %in% c(
+    "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal"
+  )))
   stopifnot(digits >= 0)
 
   # detection of numeric varibles
@@ -50,7 +53,9 @@ compute_continuous_table <- function(
     # init resulting dataframe with stats
     statistics <- as.data.frame(matrix(NA, nrow = length(vars_numeric), ncol = 11))
     rownames(statistics) <- vars_numeric
-    colnames(statistics) <- c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal")
+    colnames(statistics) <- c(
+      "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal"
+    )
 
     # compute stats for each variables
     for (vari in vars_numeric) {
@@ -76,22 +81,33 @@ compute_continuous_table <- function(
 
       statistics[vari, ] <- c(
         round(x = c(
-          mean(dataframe[, vari], na.rm = TRUE),
-          sd(dataframe[, vari], na.rm = TRUE),
-          stats::median(dataframe[, vari], na.rm = TRUE),
-          stats::quantile(dataframe[, vari], 0.25, na.rm = TRUE),
-          stats::quantile(dataframe[, vari], 0.75, na.rm = TRUE),
-          min(dataframe[, vari], na.rm = TRUE),
-          max(dataframe[, vari], na.rm = TRUE),
-          length(dataframe[, vari]),
-          sum(is.na(dataframe[, vari])),
-          sum(is.na(dataframe[, vari]) == FALSE)
+          mean(dataframe[[vari]], na.rm = TRUE),
+          sd(dataframe[[vari]], na.rm = TRUE),
+          stats::median(dataframe[[vari]], na.rm = TRUE),
+          stats::quantile(dataframe[[vari]], 0.25, na.rm = TRUE),
+          stats::quantile(dataframe[[vari]], 0.75, na.rm = TRUE),
+          # min(dataframe[[vari]], na.rm = TRUE), # --here  Message d'avis : -Inf est renvoyé si aucune données
+          # max(dataframe[[vari]], na.rm = TRUE), # --here  Message d'avis : -Inf est renvoyé si aucune données
+          # fix message d'avis
+          ifelse(
+            all(is.na(dataframe[[vari]])),
+            NA, # --here  Message d'avis : -Inf est renvoyé si aucune données
+            min(dataframe[[vari]], na.rm = TRUE)
+          ),
+          ifelse(
+            all(is.na(dataframe[[vari]])),
+            NA, # --here  Message d'avis : -Inf est renvoyé si aucune données
+            max(dataframe[[vari]], na.rm = TRUE)
+          ),
+          length(dataframe[[vari]]), # N
+          sum(is.na(dataframe[[vari]])), # N_NA
+          sum(is.na(dataframe[[vari]]) == FALSE) # Nb mesures
         ), digits = digits),
         shapiro_conclu
       )
     }
 
-    final_table <- base::subset(statistics, select = stats_choice) # --here confirm prefix please
+    final_table <- statistics[, stats_choice]
   } else { # bivariate analyse
 
     # message("[compute_continuous_table] varstrat : ", varstrat)
@@ -110,7 +126,7 @@ compute_continuous_table <- function(
       statistics[[vari]] <- as.data.frame(matrix(NA, nrow = length(varstrat_levels) + 1, ncol = 11))
       rownames(statistics[[vari]]) <- c("", varstrat_levels)
       colnames(statistics[[vari]]) <- c(
-        "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal"
+        "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal"
       )
 
       # compute stats for each variables per level of varstrat
@@ -143,8 +159,16 @@ compute_continuous_table <- function(
             stats::median(dataframe[which(dataframe[, varstrat] == level), vari], na.rm = TRUE),
             stats::quantile(dataframe[which(dataframe[, varstrat] == level), vari], 0.25, na.rm = TRUE),
             stats::quantile(dataframe[which(dataframe[, varstrat] == level), vari], 0.75, na.rm = TRUE),
-            min(dataframe[which(dataframe[, varstrat] == level), vari], na.rm = TRUE),
-            max(dataframe[which(dataframe[, varstrat] == level), vari], na.rm = TRUE),
+            ifelse(
+              all(is.na(dataframe[which(dataframe[, varstrat] == level), vari])),
+              NA, # --here  Message d'avis : -Inf est renvoyé si aucune données
+              min(dataframe[which(dataframe[, varstrat] == level), vari], na.rm = TRUE)
+            ),
+            ifelse(
+              all(is.na(dataframe[which(dataframe[, varstrat] == level), vari])),
+              NA, # --here  Message d'avis : -Inf est renvoyé si aucune données
+              max(dataframe[which(dataframe[, varstrat] == level), vari], na.rm = TRUE)
+            ),
             length(dataframe[which(dataframe[, varstrat] == level), vari]),
             sum(is.na(dataframe[which(dataframe[, varstrat] == level), vari])),
             sum(is.na(dataframe[which(dataframe[, varstrat] == level), vari]) == FALSE)
@@ -157,7 +181,7 @@ compute_continuous_table <- function(
 
       # compute stats for each variables in global pop
       tmp_shapi <- stats::na.omit(dataframe[, vari])
-      if (length(unique(tmp_shapi)) == 1) {
+      if (length(unique(tmp_shapi)) == 1 || length(tmp_shapi) < 3) { # v0.1.24 : add length(tmp_shapi) < 3
         shapiro_conclu <- NA # shapiro not applicable if all values are the same
       } else {
         # capture shapi error, so able to skip it
@@ -177,16 +201,26 @@ compute_continuous_table <- function(
       }
       statistics[[vari]][1, ] <- c(
         round(x = c(
-          mean(dataframe[, vari], na.rm = TRUE),
-          stats::sd(dataframe[, vari], na.rm = TRUE),
-          stats::median(dataframe[, vari], na.rm = TRUE),
-          stats::quantile(dataframe[, vari], 0.25, na.rm = TRUE),
-          stats::quantile(dataframe[, vari], 0.75, na.rm = TRUE),
-          min(dataframe[, vari], na.rm = TRUE),
-          max(dataframe[, vari], na.rm = TRUE),
-          length(dataframe[, vari]),
-          sum(is.na(dataframe[, vari])),
-          sum(is.na(dataframe[, vari]) == FALSE)
+          mean(dataframe[[vari]], na.rm = TRUE),
+          stats::sd(dataframe[[vari]], na.rm = TRUE),
+          stats::median(dataframe[[vari]], na.rm = TRUE),
+          stats::quantile(dataframe[[vari]], 0.25, na.rm = TRUE),
+          stats::quantile(dataframe[[vari]], 0.75, na.rm = TRUE),
+          # min(dataframe[[vari]], na.rm = TRUE), # --here  Message d'avis : -Inf est renvoyé si aucune données
+          # max(dataframe[[vari]], na.rm = TRUE), # --here  Message d'avis : -Inf est renvoyé si aucune données
+          ifelse(
+            all(is.na(dataframe[[vari]])),
+            NA, # --here  Message d'avis : -Inf est renvoyé si aucune données
+            min(dataframe[[vari]], na.rm = TRUE)
+          ),
+          ifelse(
+            all(is.na(dataframe[[vari]])),
+            NA, # --here  Message d'avis : -Inf est renvoyé si aucune données
+            max(dataframe[[vari]], na.rm = TRUE)
+          ),
+          length(dataframe[[vari]]),
+          sum(is.na(dataframe[[vari]])),
+          sum(is.na(dataframe[[vari]]) == FALSE)
         ), digits = digits),
         shapiro_conclu
       )
@@ -235,14 +269,13 @@ compute_continuous_table <- function(
 #' )
 #' }
 compute_correlation_table <- function(
-  dataframe,
-  vars = setdiff(colnames(dataframe), varstrat),
-  varstrat = varstrat, # needed
-  method_corr = "detect_auto",
-  digits = 2,
-  signif_digits = 4
+    dataframe,
+    vars = setdiff(colnames(dataframe), varstrat),
+    varstrat = varstrat, # needed
+    method_corr = "detect_auto",
+    digits = 2,
+    signif_digits = 4
 ) {
-  
   dataframe <- data.table::as.data.table(dataframe)
 
   ## stops
@@ -314,7 +347,7 @@ compute_correlation_table <- function(
       }
       ## detection of linear link
       ## reg <- stats::lm(formula = as.formula(paste0("`", varstrat, "`", "~", "`", vari, "`")), data = tmp_dt)
-      ## --here improvment : also detect linear link ? summary(reg)[["r.squared"]] > 0.5
+      ## --here improvment suggestion : also detect linear link ? summary(reg)[["r.squared"]] > 0.5
     }
     message("[compute_correlation_table] correlation ", method_corr)
     has_issues <- try(tools::assertCondition(
@@ -433,15 +466,14 @@ compute_correlation_table <- function(
 #' )
 #' }
 compute_factorial_table <- function(
-  dataframe,
-  vars = setdiff(colnames(dataframe), varstrat),
-  varstrat = NULL,
-  simplify = TRUE,
-  prop_table_margin = 2,
-  digits = 2,
-  force_generate_1_when_0 = FALSE
+    dataframe,
+    vars = setdiff(colnames(dataframe), varstrat),
+    varstrat = NULL,
+    simplify = TRUE,
+    prop_table_margin = 2,
+    digits = 2,
+    force_generate_1_when_0 = FALSE
 ) {
-  
   dataframe <- as.data.frame(dataframe)
   ## stops
   stopifnot(all(vars %in% names(dataframe)))
@@ -481,7 +513,7 @@ compute_factorial_table <- function(
 
       # init resulting dataframe for this variable
       effectifs[[vari]] <- as.data.frame(matrix(NA, ncol = 2, nrow = var_nlevels + 2))
-      rownames(effectifs[[vari]]) <- c(var_levels, "NA", "Nb_mesures")
+      rownames(effectifs[[vari]]) <- c(var_levels, "N_NA", "Nb_mesures")
       colnames(effectifs[[vari]]) <- c("n", "p")
 
       # counts and proportions of modalities
@@ -510,11 +542,11 @@ compute_factorial_table <- function(
               all(c("oui", "non") %in% tolower(rownames(vari_tab)))
           ) {
             if (any(grepl("1", rownames(vari_tab)))) {
-              vari_tab <- vari_tab[c("1", "NA", "Nb_mesures"), ]
+              vari_tab <- vari_tab[c("1", "N_NA", "Nb_mesures"), ]
             } else {
               # ignore.case about oui
               row_select <- grep("OUI", rownames(vari_tab), ignore.case = TRUE, value = TRUE)
-              vari_tab <- vari_tab[c(row_select, "NA", "Nb_mesures"), ]
+              vari_tab <- vari_tab[c(row_select, "N_NA", "Nb_mesures"), ]
             }
           }
         }
@@ -558,9 +590,9 @@ compute_factorial_table <- function(
         NA,
         ncol = 2 * varstrat_nlevels + 2, nrow = var_nlevels + 2
       ))
-      rownames(effectifs[[vari]]) <- c(var_levels, "NA", "Nb_mesures")
+      rownames(effectifs[[vari]]) <- c(var_levels, "N_NA", "Nb_mesures")
       colnames(effectifs[[vari]]) <- c(
-        # "n", "p", paste(c("n", "p"), sort(rep(varstrat_levels, 2)), sep = "") ## --here sort to remove (v0.1.3)
+        # "n", "p", paste(c("n", "p"), sort(rep(varstrat_levels, 2)), sep = "") ## sort to remove (v0.1.3)
         "n", "p", paste(c("n", "p"), rep(varstrat_levels, each = 2), sep = "")
       )
 
@@ -614,11 +646,11 @@ compute_factorial_table <- function(
               all(c("oui", "non") %in% tolower(rownames(vari_tab)))
           ) {
             if (any(grepl("1", rownames(vari_tab)))) {
-              vari_tab <- vari_tab[c("1", "NA", "Nb_mesures"), ]
+              vari_tab <- vari_tab[c("1", "N_NA", "Nb_mesures"), ]
             } else {
               # ignore.case about oui
               row_select <- grep("OUI", rownames(vari_tab), ignore.case = TRUE, value = TRUE)
-              vari_tab <- vari_tab[c(row_select, "NA", "Nb_mesures"), ]
+              vari_tab <- vari_tab[c(row_select, "N_NA", "Nb_mesures"), ]
             }
           }
         }

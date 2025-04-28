@@ -27,7 +27,7 @@ test_that("test dim in conti tab", {
   )
   expect_identical(
     colnames(res_conti_tabs[[1]]),
-    c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal") # default
+    c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal") # default
   )
 })
 
@@ -71,7 +71,7 @@ test_that("test values in conti tab", {
     tolerance = 0
   )
   expect_equal(
-    res_conti_tabs[[1]]["electionred", "NA"],
+    res_conti_tabs[[1]]["electionred", "N_NA"],
     sum(is.na(modified_state[[vars_wanted[1]]][modified_state$election %in% "red"])),
     tolerance = 0
   )
@@ -96,7 +96,7 @@ test_that("test values in conti tab", {
 test_that("test NAs in conti tab", {
   # in Frost
   expect_equal(
-    res_conti_tabs[["Frost"]][1, "NA"],
+    res_conti_tabs[["Frost"]][1, "N_NA"],
     sum(is.na(modified_state[["Frost"]]))
   )
   expect_equal(
@@ -127,6 +127,29 @@ test_that("test dim in conti subset tab", {
   )
 })
 
+#### shapi ####
+# v0.1.22 test shapiro to skip
+# shapiro.test not executable with less than 3 point (in overall population, in bivar mode)
+modified_state$twovalues <- c(3.3, 4.4, rep(NA, nrow(modified_state)-2))
+res_shapi <- compute_continuous_table(
+  dataframe = modified_state,
+  vars = c("Population", "twovalues"),
+  varstrat = "election"
+)
+# mentione as "warning" :
+# message d'avis
+modified_state$twovalues <- NULL
+test_that("test shapi no error", {
+  expect_equal(length(res_shapi), 2)
+  expect_equal(nrow(res_shapi[[1]]), 3)
+  expect_equal(nrow(res_shapi[[2]]), 3)
+  expect_equal(ncol(res_shapi[[1]]), 11) 
+  expect_equal(ncol(res_shapi[[2]]), 11) 
+  expect_true(all(res_shapi[[1]]$is_Normal %in% 0))
+  expect_true(all(is.na(res_shapi[[2]]$is_Normal)))
+})
+
+
 #### factorial tables ####
 
 vars_wanted <- c("state.division", "state.region", "binary_test")
@@ -154,7 +177,7 @@ test_that("test dim in fact tab", {
   )
   expect_identical(
     rownames(res_fact_tabs[[1]]),
-    c(levels(modified_state[[vars_wanted[1]]]), "NA", "Nb_mesures")
+    c(levels(modified_state[[vars_wanted[1]]]), "N_NA", "Nb_mesures")
   )
   expect_true(
     all(

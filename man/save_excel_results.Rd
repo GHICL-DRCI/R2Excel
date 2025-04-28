@@ -23,7 +23,9 @@ save_excel_results(
   light_contents = TRUE,
   crossed_varstrat_test = FALSE,
   detail_NB_mesure_sum = FALSE,
-  show_p_adj = FALSE
+  show_p_adj = FALSE,
+  drop_levels = FALSE,
+  dico_mapping = NULL
 )
 }
 \arguments{
@@ -68,12 +70,18 @@ Caution, if you force_non_parametric_test as TRUE, metric_show is forced as 'med
 \item{light_contents}{A logical, Default TRUE. If FALSE, the information like Nb_mesures,
 Valeurs manquantes et p will be repeated.}
 
-\item{crossed_varstrat_test}{A logical, Default FALSE. If turn TRUE, and detection of 2 varstrat "var1*var2" to cross,
-statistical test will be provided.}
+\item{crossed_varstrat_test}{A logical, Default FALSE. If turn TRUE, 
+and detection of 2 varstrat "var1*var2" to cross, statistical test will be provided.}
 
-\item{detail_NB_mesure_sum}{A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.}
+\item{detail_NB_mesure_sum}{A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) 
+for each group.}
 
 \item{show_p_adj}{A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.}
+
+\item{drop_levels}{A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)}
+
+\item{dico_mapping}{A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+the 2nd column must be the labels. Other information will be ignored.}
 }
 \value{
 The name or path + name of the saved Excel file.

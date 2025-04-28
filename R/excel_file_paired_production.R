@@ -4,12 +4,13 @@
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
 #'  Columns must be well formated with factor or numeric class (important).
+#' @param file A character. Path and name of the excel results file.
 #' @param vars A vector of characters. Name of columns to describe and test.
 #' @param varstrat A characters. Not null. Names of the stratification variable, making groups to compare (*time* or *visites* for instance).
 #'   The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" will be set on 3 lines for each individuals).
 #'   About 2 *crossed varstrats* : you can provide "var1*var2", and so
 #'    get a description of the 2nd varstrat (var2) for each level of the 1st varstrat (var1).
-#'   Attention, we except var1 as the repeated variables (time or visites) and 
+#'   Attention, we except var1 as the repeated variables (time or visites) and
 #'    var2 as the condition/group that will be tested with *not paired test* (if `crossed_varstrat_test` is set TRUE).
 #' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
 #' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
@@ -37,7 +38,9 @@
 #'   the information like Nb_mesure, Valeurs manquantes et p will be repeated.
 #' @param test_more_2_levels A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels
 #' @param show_p_adj A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.
-#' @param file A character. Path and name of the excel results file.
+#' @param drop_levels A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)
+#' @param dico_mapping A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+#'   the 2nd column must be the labels. Other information will be ignored.
 #'
 #' @return A character. Path and name of the excel results file.
 #'
@@ -92,26 +95,27 @@
 #' )
 #' }
 save_excel_paired_results <- function(
-  dataframe,
-  vars,
-  varstrat,
-  digits = 2,
-  signif_digits = 4,
-  patient_id = "patientid",
-  simplify = FALSE,
-  global_summary = FALSE,
-  force_non_parametric_test = FALSE,
-  force_generate_1_when_0 = TRUE, # for fact tab
-  keep_missing_line = TRUE, # for fact tab
-  metric_show = "auto",
-  light_contents = TRUE,
-  crossed_varstrat_test = FALSE,
-  detail_NB_mesure_sum = FALSE,
-  test_more_2_levels = FALSE,
-  show_p_adj = FALSE,
-  file = "paired_desc_table.xlsx"
+    dataframe,
+    file = "paired_desc_table.xlsx",
+    vars,
+    varstrat,
+    digits = 2,
+    signif_digits = 4,
+    patient_id = "patientid",
+    simplify = FALSE,
+    global_summary = FALSE,
+    force_non_parametric_test = FALSE,
+    force_generate_1_when_0 = TRUE, # for fact tab
+    keep_missing_line = TRUE, # for fact tab
+    metric_show = "auto",
+    light_contents = TRUE,
+    crossed_varstrat_test = FALSE,
+    detail_NB_mesure_sum = FALSE,
+    test_more_2_levels = FALSE,
+    show_p_adj = FALSE,
+    drop_levels = FALSE,
+    dico_mapping = NULL
 ) {
-  
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(patient_id %in% names(dataframe))
   stopifnot(!is.null(varstrat))
@@ -128,14 +132,36 @@ save_excel_paired_results <- function(
   stopifnot(is.logical(light_contents))
   stopifnot(is.logical(crossed_varstrat_test))
   stopifnot(is.logical(test_more_2_levels))
+  stopifnot(is.logical(drop_levels))
+  if (!is.null(dico_mapping)) {
+    stopifnot(is.data.frame(dico_mapping))
+    message("[save_excel_paired_results] Variable and Label must be the first 2 columns !")
+    names(dico_mapping)[1:2] <- c("Variable", "Label")
+  }
+
+  message("[save_excel_paired_results] ", "Starts descriptive analyses")
 
   ## detect crossed varstrat :
   varstrat_splited <- strsplit(x = varstrat, split = "*", fixed = TRUE)
   if (length(unlist(varstrat_splited)) == 2) {
     varstrat <- unlist(varstrat_splited)
     crossed_varstrat <- TRUE
+    if (drop_levels) dataframe[[varstrat[2]]] <- droplevels(dataframe[[varstrat[2]]]) # v0.1.22
+    # droplevels if any visite no present at all --here to test
+    stopifnot(nlevels(dataframe[[varstrat[2]]]) > 1)
   } else {
     crossed_varstrat <- FALSE
+    # because of the dropted levels check varstrat :
+    if (drop_levels) dataframe[[varstrat]] <- droplevels(dataframe[[varstrat]]) # v0.1.22
+    # droplevels : if any visite no present at all --here to test
+    stopifnot(nlevels(dataframe[[varstrat]]) > 1)
+  }
+
+  if (drop_levels) { # v0.1.22
+    message(
+      "[save_excel_results] droplevels(dataframe)"
+    )
+    dataframe <- droplevels(dataframe)
   }
 
   if (force_non_parametric_test) {
@@ -147,6 +173,23 @@ save_excel_paired_results <- function(
   }
 
   vars <- setdiff(vars, varstrat)
+
+  dataframe <- dataframe[, .SD, .SDcols = c(patient_id, vars, varstrat)]
+  ## remove vars (columns) with all NA # v0.1.22
+  dataframe <- dataframe[, .SD, .SDcols = colSums(is.na(dataframe)) < nrow(dataframe)]
+  newcols <- names(dataframe)
+  var_setdiff <- setdiff(vars, newcols)
+  if (length(var_setdiff) > 0) {
+    message(
+      "[save_excel_results] Warning!!! Column(s) ", paste0(var_setdiff, collapse = ", "), " removed from vars list, because all NA."
+    )
+    vars <- setdiff(vars, var_setdiff)
+    tab_na_sheet_list <- list(data.frame("Variables_all_na" = var_setdiff))
+    names(tab_na_sheet_list) <- "Variables_all_na"
+  } else {
+    tab_na_sheet_list <- NULL
+  }
+
   vars_quanti <- get_numerics(dataframe, vars = vars)
   vars_quali <- get_factors(dataframe, vars = vars)
 
@@ -199,9 +242,9 @@ save_excel_paired_results <- function(
             )
 
             res$Valeurs_manquantes <- paste0(
-              res[["NA"]][res$Modalites %in% "Population_totale"],
+              res[["N_NA"]][res$Modalites %in% "Population_totale"],
               ifelse(
-                detail_NB_mesure_sum & res[["NA"]][res$Modalites %in% "Population_totale"] != 0,
+                detail_NB_mesure_sum & res[["N_NA"]][res$Modalites %in% "Population_totale"] != 0,
                 paste0(" ", "(", paste0(
                   res$Nb_mesures[!res$Modalites %in% "Population_totale"],
                   collapse = "+"
@@ -256,9 +299,9 @@ save_excel_paired_results <- function(
           tab_all_varstrat_quanti$cell_contents <- tab_all_varstrat_quanti$Med_q1_q3
         }
       }
-      # format NA as "/" 
+      # format NA as "/"
       tab_all_varstrat_quanti$cell_contents <- ifelse(
-        grepl("^NA", tab_all_varstrat_quanti$cell_contents), 
+        grepl("^NA", tab_all_varstrat_quanti$cell_contents),
         "/",
         tab_all_varstrat_quanti$cell_contents
       )
@@ -279,7 +322,7 @@ save_excel_paired_results <- function(
       #   names(res)[1] <- "Variable"
       #   return(res)
       # })
-      ## --fix 
+      ## --fix
       tab_all_varstrat_quanti_wide <- lapply(X = levels_to_sep, function(level_i) {
         res <- data.table::dcast(
           data = tab_all_varstrat_quanti[strat %in% level_i, ],
@@ -449,14 +492,14 @@ save_excel_paired_results <- function(
               )
             )
             tmp$Valeurs_manquantes <- ifelse(
-              tmp$n[tmp$Modalites %in% "NA"] == 0,
+              tmp$n[tmp$Modalites %in% "N_NA"] == 0,
               "0",
               paste0(
-                tmp$n[tmp$Modalites %in% "NA"],
+                tmp$n[tmp$Modalites %in% "N_NA"],
                 ifelse(
                   detail_NB_mesure_sum,
                   paste0(" ", "(", paste0(
-                    tmp[tmp$Modalites %in% "NA", .SD, .SDcols = levels_i_n],
+                    tmp[tmp$Modalites %in% "N_NA", .SD, .SDcols = levels_i_n],
                     collapse = "+"
                   ), ")"),
                   ""
@@ -473,7 +516,7 @@ save_excel_paired_results <- function(
                 paste(tmp[[paste0("n", namei)]], tmp[[paste0("p", namei)]])
               })
             ]
-            tmp3 <- tmp2[!Modalites %in% c("Nb_mesures", "NA"), .SD, .SDcols = c(
+            tmp3 <- tmp2[!Modalites %in% c("Nb_mesures", "N_NA"), .SD, .SDcols = c(
               "Variable", "Modalites", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
               paste0(varstrat[2], "=", levels_i_names)
             )]
@@ -570,7 +613,6 @@ save_excel_paired_results <- function(
       tab_quali_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quali_sheet_list) <- paste0("qualitative - ", varstrat[1])
     }
-    
   } else {
     message("[save_excel_paired_results] There is no qualitative variables")
     tab_quali_sheet_list <- NULL
@@ -821,6 +863,20 @@ save_excel_paired_results <- function(
     ## --here v0.1.18
     if (!is.null(tab_quanti_sheet_tab)) { ## --here v0.1.18
       names(tab_quanti_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quanti_sheet_tab))
+      
+      if (!is.null(dico_mapping)) {
+        # add label #v0.1.22
+        tab_quanti_sheet_tab <- merge(
+          x = tab_quanti_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quanti_sheet_tab, neworder = unique(c("Label", names(tab_quanti_sheet_tab)))
+        )
+      }
+      
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- paste0("quanti-", varstrat[1], "-", varstrat[2])
     } else {
@@ -828,6 +884,20 @@ save_excel_paired_results <- function(
     }
     if (!is.null(tab_quali_sheet_tab)) { ## --here v0.1.18
       names(tab_quali_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quali_sheet_tab))
+      
+      if (!is.null(dico_mapping)) {
+        # add label #v0.1.22
+        tab_quali_sheet_tab <- merge(
+          x = tab_quali_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quali_sheet_tab, neworder = unique(c("Label", names(tab_quali_sheet_tab)))
+        )
+      }
+      
       tab_quali_sheet_list <- list(tab_quali_sheet_tab)
       names(tab_quali_sheet_list) <- paste0("quali-", varstrat[1], "-", varstrat[2])
     } else {
@@ -882,12 +952,40 @@ save_excel_paired_results <- function(
     if (is.null(name_quanti)) {
       tab_quanti_sheet_list <- NULL
     } else {
+      
+      if (!is.null(dico_mapping)) {
+        # add label #v0.1.22
+        tab_quanti_sheet_tab <- merge(
+          x = tab_quanti_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quanti_sheet_tab, neworder = unique(c("Label", names(tab_quanti_sheet_tab)))
+        )
+      }
+      
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- name_quanti
     }
     if (is.null(name_quali)) {
       tab_quali_sheet_list <- NULL
     } else {
+      
+      if (!is.null(dico_mapping)) {
+        # add label #v0.1.22
+        tab_quali_sheet_tab <- merge(
+          x = tab_quali_sheet_tab,
+          y = dico_mapping,
+          by = "Variable", all.x = TRUE,
+          sort = FALSE
+        )
+        data.table::setcolorder(
+          x = tab_quali_sheet_tab, neworder = unique(c("Label", names(tab_quali_sheet_tab)))
+        )
+      }
+      
       tab_quali_sheet_list <- list(tab_quali_sheet_tab)
       names(tab_quali_sheet_list) <- name_quali
     }
@@ -898,11 +996,219 @@ save_excel_paired_results <- function(
   writexl::write_xlsx(
     x = c(
       tab_quanti_sheet_list,
-      tab_quali_sheet_list
+      tab_quali_sheet_list,
+      tab_na_sheet_list
     ),
     path = file,
     col_names = TRUE
   )
 
+  return(file)
+}
+
+
+#' Save the tables for paired data in Excel file, only describing data tested !
+#'
+#' provide descriptive statistics table with a paired level, after filtering missing data for each variables, then re-save it in Excel
+#'
+#' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
+#'  Columns must be well formated with factor or numeric class (important).
+#' @param file A character. Path and name of the excel results file.
+#' @param vars A vector of characters. Name of columns to describe and test.
+#' @param varstrat A characters. Not null. Names of the stratification variable, making groups to compare (*time* or *visites* for instance).
+#'   The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" will be set on 3 lines for each individuals).
+#'   About 2 *crossed varstrats* : you can provide "var1*var2", and so
+#'    get a description of the 2nd varstrat (var2) for each level of the 1st varstrat (var1).
+#'   Attention, we except var1 as the repeated variables (time or visites) and
+#'    var2 as the condition/group that will be tested with *not paired test* (if `crossed_varstrat_test` is set TRUE).
+#' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
+#' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
+#' @param simplify A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
+#'   TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.
+#' @param patient_id A character. Default "patientid". Name of identifant patient id column.
+#'   the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)
+#' @param global_summary A logical. Default FALSE Do you want to get global summary.
+#'  Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.
+#' @param force_non_parametric_test A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+#'  non parametric test, whatever shapiro test said about normality.
+#' @param force_generate_1_when_0 A logical, Default FALSE. If TRUE, will test if the unique modality is 0 or "non" and
+#'    add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to
+#'    only show the modality (1).
+#' @param keep_missing_line A logical, Default TRUE. Do you want to keep the missing data count (like a level)
+#' @param metric_show A character, Default "auto". What is the metric to show in cell content ?
+#'   "auto" = mean or median, automatic choice according shapiro test,
+#'   "mean" = mean +/- sd forced, whatever shapir said,
+#'   "median" = media [Q1;Q3] forced, whatever shapir said.
+#'   Caution, if you force_non_paramtric_test as TRUE, metric_show is forced as 'median' to be consistent.
+#' @param crossed_varstrat_test A logical, Default FALSE. If turn TRUE, and detection of 2 varstrat "var1*var2" to cross,
+#'  statistical test will be provided.
+#' @param detail_NB_mesure_sum A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.
+#' @param light_contents A logical, Default TRUE. If FALSE,
+#'   the information like Nb_mesure, Valeurs manquantes et p will be repeated.
+#' @param test_more_2_levels A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels
+#' @param show_p_adj A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.
+#' @param drop_levels A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)
+#' @param dico_mapping A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+#'   the 2nd column must be the labels. Other information will be ignored.
+#'
+#' @return A character. Path and name of the excel results file.
+#'
+#' @export
+#' @import data.table
+#' @importFrom writexl write_xlsx
+#' @examples
+#' \dontrun{
+#' save_excel_paired_results_filtertest(
+#'   dataframe = modified_sleep,
+#'   vars = c("extra", "extra_with_missings", "group"),
+#'   varstrat = "visites_2",
+#'   patient_id = "ID2",
+#'   file = file.path("tmp", "desc_paired_data_tested.xlsx")
+#' )
+#' }
+save_excel_paired_results_filtertest <- function(
+    dataframe,
+    file = "paired_desc_table.xlsx",
+    vars,
+    varstrat,
+    digits = 2,
+    signif_digits = 4,
+    patient_id = "patientid",
+    simplify = FALSE,
+    global_summary = FALSE,
+    force_non_parametric_test = FALSE,
+    force_generate_1_when_0 = TRUE, # for fact tab
+    keep_missing_line = TRUE, # for fact tab
+    metric_show = "auto",
+    light_contents = TRUE,
+    crossed_varstrat_test = FALSE,
+    detail_NB_mesure_sum = FALSE,
+    test_more_2_levels = FALSE,
+    show_p_adj = FALSE,
+    drop_levels = FALSE,
+    dico_mapping = NULL
+) {
+  stopifnot(all(vars %in% names(dataframe)))
+  stopifnot(patient_id %in% names(dataframe))
+  stopifnot(!is.null(varstrat))
+  stopifnot(!varstrat %in% "")
+  stopifnot(length(varstrat) == 1)
+  stopifnot(digits >= 0)
+  stopifnot(signif_digits >= 0)
+  stopifnot(is.logical(simplify))
+  stopifnot(is.logical(global_summary))
+  stopifnot(is.logical(force_non_parametric_test))
+  stopifnot(is.logical(force_generate_1_when_0))
+  stopifnot(is.logical(keep_missing_line))
+  stopifnot(metric_show %in% c("mean", "median", "auto"))
+  stopifnot(is.logical(light_contents))
+  stopifnot(is.logical(crossed_varstrat_test))
+  stopifnot(is.logical(test_more_2_levels))
+  stopifnot(is.logical(drop_levels))
+
+  message("[save_excel_paired_results_filtertest] Run save_excel_paired_results for each vars (filter NA).")
+  desc_data_tested <- lapply(
+    X = vars,
+    FUN = function(var_i) {
+      tmp_i <- dataframe
+      # get if with NA :
+      detect_missing_id <- tmp_i[[patient_id]][which(is.na(tmp_i[[var_i]]))]
+      # remove them
+      tmp_i <- tmp_i[!(tmp_i[[patient_id]] %in% detect_missing_id), ]
+      # or get id with 1 line ... (other kind of missing values)
+      detect_missing_id <- local({
+        tt <- as.data.frame(table(tmp_i[[patient_id]]))
+        tt$Var1[tt$Freq == 1]
+      })
+      # remove them
+      tmp_i <- tmp_i[!(tmp_i[[patient_id]] %in% detect_missing_id), ]
+
+      save_excel_paired_results(
+        dataframe = tmp_i,
+        file = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file),
+        vars = var_i,
+        varstrat = varstrat,
+        digits = digits,
+        signif_digits = signif_digits,
+        patient_id = patient_id,
+        simplify = simplify,
+        global_summary = global_summary,
+        force_non_parametric_test = force_non_parametric_test,
+        force_generate_1_when_0 = force_generate_1_when_0, # for fact tab
+        keep_missing_line = keep_missing_line, # for fact tab
+        metric_show = metric_show,
+        light_contents = light_contents,
+        crossed_varstrat_test = crossed_varstrat_test,
+        detail_NB_mesure_sum = detail_NB_mesure_sum,
+        test_more_2_levels = test_more_2_levels,
+        show_p_adj = show_p_adj,
+        drop_levels = drop_levels,
+        dico_mapping = dico_mapping
+      )
+    }
+  )
+
+  message("[save_excel_paired_results_filtertest] Gather quanti lines")
+  # quanti
+  desc_data_tested_sheetquanti <- data.table::rbindlist(l = lapply(
+    X = vars,
+    FUN = function(var_i) {
+      # read the excel table, quanti sheet
+      if (
+        grepl("^quanti", readxl::excel_sheets(gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)))
+      ) {
+        tab_quanti <- readxl::read_excel(
+          path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+        )
+      }
+    }
+  ))
+  message("[save_excel_paired_results_filtertest] Gather quali lines")
+  # quali
+  desc_data_tested_sheetquali <- data.table::rbindlist(l = lapply(
+    X = vars,
+    FUN = function(var_i) {
+      # read the excel table, quanti sheet
+      if (
+        grepl("^quali", readxl::excel_sheets(gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)))
+      ) {
+        tab_quali <- readxl::read_excel(
+          path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+        )
+      }
+    }
+  ))
+  message("[save_excel_paired_results_filtertest] Clear")
+  clean_temp_files <- lapply(
+    X = vars,
+    FUN = function(var_i) {
+      unlink( # if want to clean temporary file
+        gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+      )
+    }
+  )
+  message("[save_excel_paired_results_filtertest] Make list")
+  # remake the lists
+  if (nrow(desc_data_tested_sheetquanti) > 0) {
+    tab_quanti_sheet_list <- list(desc_data_tested_sheetquanti)
+    names(tab_quanti_sheet_list) <- paste0("quantitative - ", varstrat)
+  } else {
+    tab_quanti_sheet_list <- NULL
+  }
+
+  if (nrow(desc_data_tested_sheetquali) > 0) {
+    tab_quali_sheet_list <- list(desc_data_tested_sheetquali)
+    names(tab_quali_sheet_list) <- paste0("qualitative - ", varstrat)
+  } else {
+    tab_quali_sheet_list <- NULL
+  }
+  message("[save_excel_paired_results_filtertest] save ", file)
+  writexl::write_xlsx(
+    x = c(
+      tab_quanti_sheet_list,
+      tab_quali_sheet_list
+    ),
+    path = file
+  )
   return(file)
 }

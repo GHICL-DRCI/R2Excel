@@ -8,7 +8,7 @@ compute_continuous_table(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat = NULL,
-  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA",
+  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA",
     "Nb_mesures", "is_Normal"),
   digits = 2
 )
@@ -21,7 +21,7 @@ compute_continuous_table(
 \item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.}
 
 \item{stats_choice}{A vector of characters. Default provide all usual statistics to describe continuous variables,
-namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "NA", "Nb_mesures", "is_Normal")'}
+namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal")'}
 
 \item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
 }

@@ -622,126 +622,213 @@ together too.</li>
 <span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  <span class="at">simplify =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>  <span class="at">show_OR =</span> <span class="cn">TRUE</span></span>
 <span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>)</span></code></pre></div>
+<ol start="13" style="list-style-type: decimal">
+<li>you might be interested in putting labels in front of your
+complicated variable names.</li>
+</ol>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">save_excel_results</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_state,</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;13-labels.xlsx&quot;</span>),</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>    <span class="st">&quot;Population&quot;</span>, <span class="st">&quot;Illiteracy&quot;</span>, <span class="st">&quot;Income&quot;</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    <span class="st">&quot;state.division&quot;</span>, <span class="st">&quot;state.region&quot;</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  ),</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;binary_test&quot;</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>  <span class="at">dico_mapping =</span> <span class="fu">data.frame</span>(</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>    <span class="st">&quot;Vars&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;Population&quot;</span>, <span class="st">&quot;Income&quot;</span>, <span class="st">&quot;state.division&quot;</span>, <span class="st">&quot;state.region&quot;</span>), </span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>    <span class="st">&quot;labels&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;Population size (nb)&quot;</span>, <span class="st">&quot;Income (in dollars)&quot;</span>, <span class="st">&quot;State Division ???&quot;</span>, <span class="st">&quot;state region (cad point)&quot;</span>)</span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>  )</span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="longitudinal-paired-data" class="section level2">
 <h2>Longitudinal (Paired) Data</h2>
 <p>If you have longitudinal measures (paired data), you should use
 “paired” family functions, for instance on toy data
 <code>modified_sleep</code>.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">str</span>(modified_sleep)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">str</span>(modified_sleep)</span></code></pre></div>
 <ol style="list-style-type: upper-alpha">
 <li>You can start by “compute” a “paired” table for continuous
 traits</li>
 </ol>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">compute_paired_continuous_table_and_test</span>(</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;extra&quot;</span>,</span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">FALSE</span></span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>)</span>
-<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="fu">compute_paired_continuous_table_and_test</span>(</span>
-<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;mesure3&quot;</span>,</span>
-<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
-<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
-<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
-<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">FALSE</span></span>
-<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a>)</span>
-<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a><span class="fu">compute_paired_continuous_table_and_test</span>(</span>
-<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;extra&quot;</span>,</span>
-<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_5&quot;</span>,</span>
-<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID&quot;</span>,</span>
-<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
-<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">FALSE</span></span>
-<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">compute_paired_continuous_table_and_test</span>(</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;extra&quot;</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">FALSE</span></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>)</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a><span class="fu">compute_paired_continuous_table_and_test</span>(</span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;mesure3&quot;</span>,</span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">FALSE</span></span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>)</span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a><span class="fu">compute_paired_continuous_table_and_test</span>(</span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;extra&quot;</span>,</span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_5&quot;</span>,</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID&quot;</span>,</span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">FALSE</span></span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a>)</span></code></pre></div>
 <ol start="2" style="list-style-type: upper-alpha">
 <li>or “compute” a “paired” table for factorial traits</li>
 </ol>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">compute_paired_factorial_table_and_test</span>(</span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;fact1&quot;</span>,</span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
-<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
-<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span></span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>)</span>
-<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a><span class="fu">compute_paired_factorial_table_and_test</span>(</span>
-<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;fact1_na&quot;</span>,</span>
-<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
-<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
-<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
-<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span></span>
-<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a>)</span>
-<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a><span class="fu">compute_paired_factorial_table_and_test</span>(</span>
-<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;fact3&quot;</span>,</span>
-<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
-<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
-<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
-<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span></span>
-<span id="cb21-27"><a href="#cb21-27" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">compute_paired_factorial_table_and_test</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;fact1&quot;</span>,</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>)</span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="fu">compute_paired_factorial_table_and_test</span>(</span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;fact1_na&quot;</span>,</span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a>)</span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a><span class="fu">compute_paired_factorial_table_and_test</span>(</span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a>  <span class="at">variable_interest =</span> <span class="st">&quot;fact3&quot;</span>,</span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span></span>
+<span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a>)</span></code></pre></div>
 <p>(C You can generalize the call of paired tables, for several
 variables of interest, saved in excel file.</p>
 <p>For instance with 2 visits</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">save_excel_paired_results</span>(</span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;mesure1&quot;</span>, <span class="st">&quot;mesure2&quot;</span>, <span class="st">&quot;mesure3&quot;</span>),</span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;C-desc_paired_data1.xlsx&quot;</span>)</span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>)</span></code></pre></div>
-<ol start="4" style="list-style-type: upper-alpha">
-<li>For instance with 2 visits</li>
-</ol>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="fu">save_excel_paired_results</span>(</span>
 <span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;mesure1&quot;</span>, <span class="st">&quot;fact1&quot;</span>, <span class="st">&quot;fact1_na&quot;</span>),</span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="fu">c</span>(<span class="st">&quot;visites_5&quot;</span>),</span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID&quot;</span>,</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;mesure1&quot;</span>, <span class="st">&quot;mesure2&quot;</span>, <span class="st">&quot;mesure3&quot;</span>),</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">1</span>,</span>
 <span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,  <span class="co"># for fact tab</span></span>
-<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span>, <span class="co"># for fact tab</span></span>
-<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;D-desc_paired_data3.xlsx&quot;</span>)</span>
-<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>)</span>
-<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a></span>
-<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a><span class="co"># with stat test</span></span>
-<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a><span class="fu">save_excel_paired_results</span>(</span>
-<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
-<span id="cb23-16"><a href="#cb23-16" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;mesure1&quot;</span>, <span class="st">&quot;fact1&quot;</span>, <span class="st">&quot;fact1_na&quot;</span>),</span>
-<span id="cb23-17"><a href="#cb23-17" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="fu">c</span>(<span class="st">&quot;visites_5&quot;</span>),</span>
-<span id="cb23-18"><a href="#cb23-18" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID&quot;</span>,</span>
-<span id="cb23-19"><a href="#cb23-19" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
-<span id="cb23-20"><a href="#cb23-20" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb23-21"><a href="#cb23-21" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb23-22"><a href="#cb23-22" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb23-23"><a href="#cb23-23" tabindex="-1"></a>  <span class="at">test_more_2_levels =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb23-24"><a href="#cb23-24" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;D-desc_paired_data_tested.xlsx&quot;</span>)</span>
-<span id="cb23-25"><a href="#cb23-25" tabindex="-1"></a>)</span></code></pre></div>
-<ol start="5" style="list-style-type: upper-alpha">
-<li>The option about “cross” 2 varstrats is also available in “paired”
-function :</li>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;C-desc_paired_data1.xlsx&quot;</span>)</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>)</span></code></pre></div>
+<ol start="4" style="list-style-type: upper-alpha">
+<li>For instance with 2 visits</li>
 </ol>
 <div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">save_excel_paired_results</span>(</span>
 <span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
 <span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;mesure1&quot;</span>, <span class="st">&quot;fact1&quot;</span>, <span class="st">&quot;fact1_na&quot;</span>),</span>
-<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2*fact3&quot;</span>,</span>
-<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="fu">c</span>(<span class="st">&quot;visites_5&quot;</span>),</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID&quot;</span>,</span>
 <span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
 <span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,  <span class="co"># for fact tab</span></span>
 <span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span>, <span class="co"># for fact tab</span></span>
-<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>,<span class="st">&quot;E-nested_paired_desc.xlsx&quot;</span>)</span>
-<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;D-desc_paired_data3.xlsx&quot;</span>)</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>)</span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a></span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a><span class="co"># with stat test</span></span>
+<span id="cb24-14"><a href="#cb24-14" tabindex="-1"></a><span class="fu">save_excel_paired_results</span>(</span>
+<span id="cb24-15"><a href="#cb24-15" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb24-16"><a href="#cb24-16" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;mesure1&quot;</span>, <span class="st">&quot;fact1&quot;</span>, <span class="st">&quot;fact1_na&quot;</span>),</span>
+<span id="cb24-17"><a href="#cb24-17" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="fu">c</span>(<span class="st">&quot;visites_5&quot;</span>),</span>
+<span id="cb24-18"><a href="#cb24-18" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID&quot;</span>,</span>
+<span id="cb24-19"><a href="#cb24-19" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb24-20"><a href="#cb24-20" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb24-21"><a href="#cb24-21" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb24-22"><a href="#cb24-22" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb24-23"><a href="#cb24-23" tabindex="-1"></a>  <span class="at">test_more_2_levels =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;D-desc_paired_data_tested.xlsx&quot;</span>)</span>
+<span id="cb24-25"><a href="#cb24-25" tabindex="-1"></a>)</span></code></pre></div>
+<ol start="5" style="list-style-type: upper-alpha">
+<li>The option about “cross” 2 varstrats is also available in “paired”
+function :</li>
+</ol>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">save_excel_paired_results</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;mesure1&quot;</span>, <span class="st">&quot;fact1&quot;</span>, <span class="st">&quot;fact1_na&quot;</span>),</span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2*fact3&quot;</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>  <span class="at">force_generate_1_when_0 =</span> <span class="cn">FALSE</span>,  <span class="co"># for fact tab</span></span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">TRUE</span>, <span class="co"># for fact tab</span></span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>,<span class="st">&quot;E-nested_paired_desc.xlsx&quot;</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a>)</span></code></pre></div>
+<ol start="6" style="list-style-type: upper-alpha">
+<li>understand <code>save_excel_paired_results_filtertest</code> : A
+specific table for repeated data may be wanted in two ways: to show rows
+with missing values to describe everything or to remove missing data to
+describe only tested data.<br />
+Here is a snippet of code to do both :</li>
+</ol>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="do">## description in detail with NA at each VISITE</span></span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>R2Excel<span class="sc">::</span><span class="fu">save_excel_paired_results</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep, </span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;extra&quot;</span>),</span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>, </span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;F-missing_paired_desc.xlsx&quot;</span>),</span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>  <span class="at">global_summary =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a>  <span class="at">keep_missing_line =</span> <span class="cn">FALSE</span></span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>)</span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a></span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a><span class="do">## or only describe data tested (without missing values at each variable)</span></span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a>desc_data_tested <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">rbindlist</span>(<span class="at">l =</span> <span class="fu">lapply</span>(</span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a>  <span class="at">X =</span> <span class="fu">c</span>(<span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;extra&quot;</span>),</span>
+<span id="cb26-15"><a href="#cb26-15" tabindex="-1"></a>  <span class="at">FUN =</span> <span class="cf">function</span>(var_i) {</span>
+<span id="cb26-16"><a href="#cb26-16" tabindex="-1"></a>    </span>
+<span id="cb26-17"><a href="#cb26-17" tabindex="-1"></a>    tmp_i <span class="ot">&lt;-</span> modified_sleep</span>
+<span id="cb26-18"><a href="#cb26-18" tabindex="-1"></a>    <span class="co"># get if with NA :</span></span>
+<span id="cb26-19"><a href="#cb26-19" tabindex="-1"></a>    detect_missing_id <span class="ot">&lt;-</span> tmp_i[[<span class="st">&quot;ID2&quot;</span>]][<span class="fu">which</span>(<span class="fu">is.na</span>(tmp_i[[var_i]]))]</span>
+<span id="cb26-20"><a href="#cb26-20" tabindex="-1"></a>    <span class="co"># remove them</span></span>
+<span id="cb26-21"><a href="#cb26-21" tabindex="-1"></a>    tmp_i <span class="ot">&lt;-</span> tmp_i[<span class="sc">!</span>ID2 <span class="sc">%in%</span> detect_missing_id, ]</span>
+<span id="cb26-22"><a href="#cb26-22" tabindex="-1"></a>    <span class="co"># or get id with 1 line ... (other kind of missing values)</span></span>
+<span id="cb26-23"><a href="#cb26-23" tabindex="-1"></a>    detect_missing_id <span class="ot">&lt;-</span><span class="fu">local</span>({</span>
+<span id="cb26-24"><a href="#cb26-24" tabindex="-1"></a>      tt <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">table</span>(tmp_i[[<span class="st">&quot;ID2&quot;</span>]]))</span>
+<span id="cb26-25"><a href="#cb26-25" tabindex="-1"></a>      tt<span class="sc">$</span>Var1[tt<span class="sc">$</span>Freq <span class="sc">==</span> <span class="dv">1</span>]</span>
+<span id="cb26-26"><a href="#cb26-26" tabindex="-1"></a>    })</span>
+<span id="cb26-27"><a href="#cb26-27" tabindex="-1"></a>    <span class="co"># remove them</span></span>
+<span id="cb26-28"><a href="#cb26-28" tabindex="-1"></a>    tmp_i <span class="ot">&lt;-</span> tmp_i[<span class="sc">!</span>ID2 <span class="sc">%in%</span> detect_missing_id, ]</span>
+<span id="cb26-29"><a href="#cb26-29" tabindex="-1"></a>    </span>
+<span id="cb26-30"><a href="#cb26-30" tabindex="-1"></a>    <span class="co"># nrow(tmp_i)</span></span>
+<span id="cb26-31"><a href="#cb26-31" tabindex="-1"></a>    R2Excel<span class="sc">::</span><span class="fu">save_excel_paired_results</span>(</span>
+<span id="cb26-32"><a href="#cb26-32" tabindex="-1"></a>      <span class="at">dataframe =</span> tmp_i, </span>
+<span id="cb26-33"><a href="#cb26-33" tabindex="-1"></a>      <span class="at">vars =</span> var_i,</span>
+<span id="cb26-34"><a href="#cb26-34" tabindex="-1"></a>      <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb26-35"><a href="#cb26-35" tabindex="-1"></a>      <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>, </span>
+<span id="cb26-36"><a href="#cb26-36" tabindex="-1"></a>      <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;F-Nomissing_paired_desc_&quot;</span>, var_i, <span class="st">&quot;.xlsx&quot;</span>)),</span>
+<span id="cb26-37"><a href="#cb26-37" tabindex="-1"></a>      <span class="at">global_summary =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb26-38"><a href="#cb26-38" tabindex="-1"></a>      <span class="at">keep_missing_line =</span> <span class="cn">FALSE</span></span>
+<span id="cb26-39"><a href="#cb26-39" tabindex="-1"></a>      <span class="co"># metric_show = if wanted ? sepecifically for each var_i</span></span>
+<span id="cb26-40"><a href="#cb26-40" tabindex="-1"></a>    )</span>
+<span id="cb26-41"><a href="#cb26-41" tabindex="-1"></a>    <span class="co"># read the excel table</span></span>
+<span id="cb26-42"><a href="#cb26-42" tabindex="-1"></a>    tab <span class="ot">&lt;-</span> readxl<span class="sc">::</span><span class="fu">read_excel</span>(<span class="at">path =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;F-Nomissing_paired_desc_&quot;</span>, var_i, <span class="st">&quot;.xlsx&quot;</span>)))</span>
+<span id="cb26-43"><a href="#cb26-43" tabindex="-1"></a>    <span class="fu">unlink</span>( <span class="co"># if want to clean temporary file</span></span>
+<span id="cb26-44"><a href="#cb26-44" tabindex="-1"></a>        <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;F-Nomissing_paired_desc_&quot;</span>, var_i, <span class="st">&quot;.xlsx&quot;</span>))</span>
+<span id="cb26-45"><a href="#cb26-45" tabindex="-1"></a>    ) </span>
+<span id="cb26-46"><a href="#cb26-46" tabindex="-1"></a>    <span class="fu">return</span>(tab)</span>
+<span id="cb26-47"><a href="#cb26-47" tabindex="-1"></a>  }</span>
+<span id="cb26-48"><a href="#cb26-48" tabindex="-1"></a>))</span>
+<span id="cb26-49"><a href="#cb26-49" tabindex="-1"></a>writexl<span class="sc">::</span><span class="fu">write_xlsx</span>(</span>
+<span id="cb26-50"><a href="#cb26-50" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">list</span>(</span>
+<span id="cb26-51"><a href="#cb26-51" tabindex="-1"></a>    <span class="st">&quot;quantitative - visites_2&quot;</span> <span class="ot">=</span> desc_data_tested</span>
+<span id="cb26-52"><a href="#cb26-52" tabindex="-1"></a>  ),</span>
+<span id="cb26-53"><a href="#cb26-53" tabindex="-1"></a>  <span class="at">path =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;F-Nomissing_paired_desc.xlsx&quot;</span>)</span>
+<span id="cb26-54"><a href="#cb26-54" tabindex="-1"></a>)</span>
+<span id="cb26-55"><a href="#cb26-55" tabindex="-1"></a></span>
+<span id="cb26-56"><a href="#cb26-56" tabindex="-1"></a><span class="do">## this last example is now include in a function meta function :</span></span>
+<span id="cb26-57"><a href="#cb26-57" tabindex="-1"></a><span class="fu">save_excel_paired_results_filtertest</span>(</span>
+<span id="cb26-58"><a href="#cb26-58" tabindex="-1"></a>  <span class="at">dataframe =</span> modified_sleep,</span>
+<span id="cb26-59"><a href="#cb26-59" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">c</span>(<span class="st">&quot;extra&quot;</span>, <span class="st">&quot;extra_with_missings&quot;</span>, <span class="st">&quot;group&quot;</span>),</span>
+<span id="cb26-60"><a href="#cb26-60" tabindex="-1"></a>  <span class="at">varstrat =</span> <span class="st">&quot;visites_2&quot;</span>,</span>
+<span id="cb26-61"><a href="#cb26-61" tabindex="-1"></a>  <span class="at">patient_id =</span> <span class="st">&quot;ID2&quot;</span>,</span>
+<span id="cb26-62"><a href="#cb26-62" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;tmp&quot;</span>, <span class="st">&quot;desc_paired_data_tested.xlsx&quot;</span>)</span>
+<span id="cb26-63"><a href="#cb26-63" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 
 
