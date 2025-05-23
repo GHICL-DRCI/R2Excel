@@ -174,7 +174,8 @@ save_excel_paired_results <- function(
 
   vars <- setdiff(vars, varstrat)
 
-  dataframe <- dataframe[, .SD, .SDcols = c(patient_id, vars, varstrat)]
+  ## bug : data.table::setDT(dataframe) # v0.1.23
+  dataframe <- data.table::setDT(dataframe)[, .SD, .SDcols = c(patient_id, vars, varstrat)]
   ## remove vars (columns) with all NA # v0.1.22
   dataframe <- dataframe[, .SD, .SDcols = colSums(is.na(dataframe)) < nrow(dataframe)]
   newcols <- names(dataframe)
