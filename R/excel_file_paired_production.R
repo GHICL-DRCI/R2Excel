@@ -1,46 +1,49 @@
-#' Save the tables for paired data in Excel file
 #'
-#' provide descriptive statistics table with a paired level, saved in Excel
+#' Tables for paired or longitudinal data, saved in Excel file
 #'
+#' Create Excel file of descriptive analysis
+#' Provide descriptive Excel file for factorial (qualitative) and continuous (quantitative) data
+#' Add statistical paired or longitudinal test according the time variable of stratification
+#' 
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
 #'  Columns must be well formated with factor or numeric class (important).
 #' @param file A character. Path and name of the excel results file.
 #' @param vars A vector of characters. Name of columns to describe and test.
 #' @param varstrat A characters. Not null. Names of the stratification variable, making groups to compare (*time* or *visites* for instance).
-#'   The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" will be set on 3 lines for each individuals).
-#'   About 2 *crossed varstrats* : you can provide "var1*var2", and so
-#'    get a description of the 2nd varstrat (var2) for each level of the 1st varstrat (var1).
-#'   Attention, we except var1 as the repeated variables (time or visites) and
-#'    var2 as the condition/group that will be tested with *not paired test* (if `crossed_varstrat_test` is set TRUE).
+#'  The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" will be set on 3 lines for each individuals).
+#'  About 2 *crossed varstrats* : you can provide "var1*var2", and so
+#'  get a description of the 2nd varstrat (var2) for each level of the 1st varstrat (var1).
+#'  Attention, we except var1 as the repeated variables (time or visites) and
+#'  var2 as the condition/group that will be tested with *not paired test* (if `crossed_varstrat_test` is set TRUE).
 #' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
 #' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
 #' @param simplify A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
-#'   TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.
-#' @param patient_id A character. Default "patientid". Name of identifant patient id column.
-#'   the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)
+#'  TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.
+#' @param patient_id A character. Default "patientid". Name of patient identifier (id) column.
+#'  the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)
 #' @param global_summary A logical. Default FALSE Do you want to get global summary.
 #'  Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.
 #' @param force_non_parametric_test A logical. Default FALSE. You can turn it TRUE if you want to force the use of
 #'  non parametric test, whatever shapiro test said about normality.
 #' @param force_generate_1_when_0 A logical, Default FALSE. If TRUE, will test if the unique modality is 0 or "non" and
-#'    add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to
-#'    only show the modality (1).
+#'  add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to
+#'  only show the modality (1).
 #' @param keep_missing_line A logical, Default TRUE. Do you want to keep the missing data count (like a level)
 #' @param metric_show A character, Default "auto". What is the metric to show in cell content ?
-#'   "auto" = mean or median, automatic choice according shapiro test,
-#'   "mean" = mean +/- sd forced, whatever shapir said,
-#'   "median" = media [Q1;Q3] forced, whatever shapir said.
-#'   Caution, if you force_non_paramtric_test as TRUE, metric_show is forced as 'median' to be consistent.
+#'  "auto" = mean or median, automatic choice according shapiro test,
+#'  "mean" = mean +/- sd forced, whatever shapiro said,
+#'  "median" = media [Q1;Q3] forced, whatever shapir said.
+#'  Caution, if you force_non_parametric_test as TRUE, metric_show is forced as 'median' to be consistent.
 #' @param crossed_varstrat_test A logical, Default FALSE. If turn TRUE, and detection of 2 varstrat "var1*var2" to cross,
 #'  statistical test will be provided.
 #' @param detail_NB_mesure_sum A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.
 #' @param light_contents A logical, Default TRUE. If FALSE,
-#'   the information like Nb_mesure, Valeurs manquantes et p will be repeated.
-#' @param test_more_2_levels A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels
-#' @param show_p_adj A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.
-#' @param drop_levels A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)
-#' @param dico_mapping A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
-#'   the 2nd column must be the labels. Other information will be ignored.
+#'  the information like "Nb_mesure", "Valeurs manquantes" et "p" will be repeated.
+#' @param test_more_2_levels A logical, Default FALSE. Do not return stat test if varstrat has more than 2 levels
+#' @param show_p_adj A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.
+#' @param drop_levels A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)
+#' @param dico_labels A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+#'  the 2nd column must be the labels. Other information will be ignored.
 #'
 #' @return A character. Path and name of the excel results file.
 #'
@@ -114,8 +117,9 @@ save_excel_paired_results <- function(
     test_more_2_levels = FALSE,
     show_p_adj = FALSE,
     drop_levels = FALSE,
-    dico_mapping = NULL
+    dico_labels = NULL
 ) {
+  
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(patient_id %in% names(dataframe))
   stopifnot(!is.null(varstrat))
@@ -133,10 +137,10 @@ save_excel_paired_results <- function(
   stopifnot(is.logical(crossed_varstrat_test))
   stopifnot(is.logical(test_more_2_levels))
   stopifnot(is.logical(drop_levels))
-  if (!is.null(dico_mapping)) {
-    stopifnot(is.data.frame(dico_mapping))
+  if (!is.null(dico_labels)) {
+    stopifnot(is.data.frame(dico_labels))
     message("[save_excel_paired_results] Variable and Label must be the first 2 columns !")
-    names(dico_mapping)[1:2] <- c("Variable", "Label")
+    names(dico_labels)[1:2] <- c("Variable", "Label")
   }
 
   message("[save_excel_paired_results] ", "Starts descriptive analyses")
@@ -153,13 +157,13 @@ save_excel_paired_results <- function(
     crossed_varstrat <- FALSE
     # because of the dropted levels check varstrat :
     if (drop_levels) dataframe[[varstrat]] <- droplevels(dataframe[[varstrat]]) # v0.1.22
-    # droplevels : if any visite no present at all --here to test
+    # droplevels : if any visite no present at all 
     stopifnot(nlevels(dataframe[[varstrat]]) > 1)
   }
 
   if (drop_levels) { # v0.1.22
     message(
-      "[save_excel_results] droplevels(dataframe)"
+      "[save_excel_paired_results] droplevels(dataframe)"
     )
     dataframe <- droplevels(dataframe)
   }
@@ -182,7 +186,7 @@ save_excel_paired_results <- function(
   var_setdiff <- setdiff(vars, newcols)
   if (length(var_setdiff) > 0) {
     message(
-      "[save_excel_results] Warning!!! Column(s) ", paste0(var_setdiff, collapse = ", "), " removed from vars list, because all NA."
+      "[save_excel_paired_results] Warning!!! Column(s) ", paste0(var_setdiff, collapse = ", "), " removed from vars list, because all NA."
     )
     vars <- setdiff(vars, var_setdiff)
     tab_na_sheet_list <- list(data.frame("Variables_all_na" = var_setdiff))
@@ -865,11 +869,11 @@ save_excel_paired_results <- function(
     if (!is.null(tab_quanti_sheet_tab)) { ## --here v0.1.18
       names(tab_quanti_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quanti_sheet_tab))
       
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label #v0.1.22
         tab_quanti_sheet_tab <- merge(
           x = tab_quanti_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )
@@ -886,11 +890,11 @@ save_excel_paired_results <- function(
     if (!is.null(tab_quali_sheet_tab)) { ## --here v0.1.18
       names(tab_quali_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quali_sheet_tab))
       
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label #v0.1.22
         tab_quali_sheet_tab <- merge(
           x = tab_quali_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )
@@ -954,11 +958,11 @@ save_excel_paired_results <- function(
       tab_quanti_sheet_list <- NULL
     } else {
       
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label #v0.1.22
         tab_quanti_sheet_tab <- merge(
           x = tab_quanti_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )
@@ -974,11 +978,11 @@ save_excel_paired_results <- function(
       tab_quali_sheet_list <- NULL
     } else {
       
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label #v0.1.22
         tab_quali_sheet_tab <- merge(
           x = tab_quali_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )
@@ -1007,10 +1011,12 @@ save_excel_paired_results <- function(
   return(file)
 }
 
-
-#' Save the tables for paired data in Excel file, only describing data tested !
 #'
-#' provide descriptive statistics table with a paired level, after filtering missing data for each variables, then re-save it in Excel
+#' Tables for paired-tested-data, saved in Excel file
+#'
+#' Provide descriptive statistics table with a paired level, 
+#' **after filtering missing data** for each variables, then re-save the output in Excel
+#' (calling `save_excel_paired_results`)
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
 #'  Columns must be well formated with factor or numeric class (important).
@@ -1026,7 +1032,7 @@ save_excel_paired_results <- function(
 #' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
 #' @param simplify A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
 #'   TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.
-#' @param patient_id A character. Default "patientid". Name of identifant patient id column.
+#' @param patient_id A character. Default "patientid". Name of patient identifier (id) column.
 #'   the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)
 #' @param global_summary A logical. Default FALSE Do you want to get global summary.
 #'  Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.
@@ -1038,24 +1044,26 @@ save_excel_paired_results <- function(
 #' @param keep_missing_line A logical, Default TRUE. Do you want to keep the missing data count (like a level)
 #' @param metric_show A character, Default "auto". What is the metric to show in cell content ?
 #'   "auto" = mean or median, automatic choice according shapiro test,
-#'   "mean" = mean +/- sd forced, whatever shapir said,
+#'   "mean" = mean +/- sd forced, whatever shapiro said,
 #'   "median" = media [Q1;Q3] forced, whatever shapir said.
-#'   Caution, if you force_non_paramtric_test as TRUE, metric_show is forced as 'median' to be consistent.
+#'   Caution, if you force_non_parametric_test as TRUE, metric_show is forced as 'median' to be consistent.
 #' @param crossed_varstrat_test A logical, Default FALSE. If turn TRUE, and detection of 2 varstrat "var1*var2" to cross,
 #'  statistical test will be provided.
 #' @param detail_NB_mesure_sum A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.
 #' @param light_contents A logical, Default TRUE. If FALSE,
-#'   the information like Nb_mesure, Valeurs manquantes et p will be repeated.
-#' @param test_more_2_levels A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels
-#' @param show_p_adj A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.
-#' @param drop_levels A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)
-#' @param dico_mapping A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+#'   the information like 'Nb_mesure', 'Valeurs manquantes' et 'p' will be repeated.
+#' @param test_more_2_levels A logical, Default FALSE. Do not return stat test if varstrat has more than 2 levels
+#' @param show_p_adj A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.
+#' @param drop_levels A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)
+#' @param dico_labels A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
 #'   the 2nd column must be the labels. Other information will be ignored.
 #'
 #' @return A character. Path and name of the excel results file.
 #'
 #' @export
 #' @import data.table
+#' @importFrom readxl read_excel
+#' @importFrom readxl excel_sheets
 #' @importFrom writexl write_xlsx
 #' @examples
 #' \dontrun{
