@@ -2,7 +2,7 @@
 % Please edit documentation in R/excel_file_paired_production.R
 \name{save_excel_paired_results_filtertest}
 \alias{save_excel_paired_results_filtertest}
-\title{Save the tables for paired data in Excel file, only describing data tested !}
+\title{Tables for paired-tested-data, saved in Excel file}
 \usage{
 save_excel_paired_results_filtertest(
   dataframe,
@@ -24,7 +24,7 @@ save_excel_paired_results_filtertest(
   test_more_2_levels = FALSE,
   show_p_adj = FALSE,
   drop_levels = FALSE,
-  dico_mapping = NULL
+  dico_labels = NULL
 )
 }
 \arguments{
@@ -46,7 +46,7 @@ Attention, we except var1 as the repeated variables (time or visites) and
 
 \item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
 
-\item{patient_id}{A character. Default "patientid". Name of identifant patient id column.
+\item{patient_id}{A character. Default "patientid". Name of patient identifier (id) column.
 the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)}
 
 \item{simplify}{A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
@@ -66,32 +66,34 @@ only show the modality (1).}
 
 \item{metric_show}{A character, Default "auto". What is the metric to show in cell content ?
 "auto" = mean or median, automatic choice according shapiro test,
-"mean" = mean +/- sd forced, whatever shapir said,
+"mean" = mean +/- sd forced, whatever shapiro said,
 "median" = media [Q1;Q3] forced, whatever shapir said.
-Caution, if you force_non_paramtric_test as TRUE, metric_show is forced as 'median' to be consistent.}
+Caution, if you force_non_parametric_test as TRUE, metric_show is forced as 'median' to be consistent.}
 
 \item{light_contents}{A logical, Default TRUE. If FALSE,
-the information like Nb_mesure, Valeurs manquantes et p will be repeated.}
+the information like 'Nb_mesure', 'Valeurs manquantes' et 'p' will be repeated.}
 
 \item{crossed_varstrat_test}{A logical, Default FALSE. If turn TRUE, and detection of 2 varstrat "var1*var2" to cross,
 statistical test will be provided.}
 
 \item{detail_NB_mesure_sum}{A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.}
 
-\item{test_more_2_levels}{A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels}
+\item{test_more_2_levels}{A logical, Default FALSE. Do not return stat test if varstrat has more than 2 levels}
 
-\item{show_p_adj}{A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.}
+\item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.}
 
-\item{drop_levels}{A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)}
+\item{drop_levels}{A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)}
 
-\item{dico_mapping}{A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+\item{dico_labels}{A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
 the 2nd column must be the labels. Other information will be ignored.}
 }
 \value{
 A character. Path and name of the excel results file.
 }
 \description{
-provide descriptive statistics table with a paired level, after filtering missing data for each variables, then re-save it in Excel
+Provide descriptive statistics table with a paired level, 
+**after filtering missing data** for each variables, then re-save the output in Excel
+(calling `save_excel_paired_results`)
 }
 \examples{
 \dontrun{
