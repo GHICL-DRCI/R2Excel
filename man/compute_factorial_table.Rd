@@ -19,17 +19,23 @@ compute_factorial_table(
 
 \item{vars}{A vector of characters. Names of dataframe's factorial columns to describe.}
 
-\item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.}
+\item{varstrat}{A character. Default NULL. Name of the stratification variable,
+making groups to compare.}
 
-\item{simplify}{A logical. Default TRUE. Reduce the yes/no  (or 1/0) modalities to display only the yes (1).}
+\item{simplify}{A logical. Default TRUE. Reduce the yes/no  (or 1/0) modalities 
+to display only the yes (1).}
 
-\item{prop_table_margin}{A vector giving the margins to split by. Default 2. 1 indicates rows, 2 indicates columns,
-c(1, 2) indicates rows and columns. When x has named dimnames, it can be a character vector selecting dimension names.}
+\item{prop_table_margin}{A vector giving the margins to split by. Default 2. 
+1 indicates rows, 2 indicates columns,
+c(1, 2) indicates rows and columns. When x has named dimnames, 
+it can be a character vector selecting dimension names.}
 
 \item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
 
-\item{force_generate_1_when_0}{A logical, Default FALSE. If TRUE, will test if the unique modality is 0 or "non" and
-add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to only show the modality (1).}
+\item{force_generate_1_when_0}{A logical, Default FALSE. If TRUE, 
+will test if the unique modality is 0 or "non" and
+add the level 1 or "oui" so it can be display in counts. 
+Can be combined with simplify to only show the modality (1).}
 }
 \value{
 A list of tables with counts and percentage.

@@ -1,8 +1,9 @@
-# Create Excel file with 2 sheets (description of qualitative and quantitative variables)
-
-#' create Excel file of descriptive analysis
-#' provide descriptive Excel file for factorial (qualitative) and continuous (quantitative) data
-#' add statistical test according a variable of stratification
+#'
+#' Create Excel file with description of qualitative and quantitative variables
+#' 
+#' Create Excel file of descriptive analysis
+#' Provide descriptive Excel file for factorial (qualitative) and continuous (quantitative) data
+#' Add statistical test according a variable of stratification
 #'
 #' @param dataframe A data.frame. Columns must be well formated with factor or numeric class (important).
 #' @param file A character. Name of the Excel file or path + name of the Excel file (file name must end by ".xlsx").
@@ -35,12 +36,14 @@
 #'  and detection of 2 varstrat "var1*var2" to cross, statistical test will be provided.
 #' @param detail_NB_mesure_sum A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) 
 #'  for each group.
-#' @param show_p_adj A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.
-#' @param drop_levels A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)
-#' @param dico_mapping A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+#' @param show_p_adj A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.
+#' @param show_SMD A logical, Default FALSE. If turn TRUE, add SMD column (standardized mean difference) between 2 groups.
+#' @param drop_levels A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)
+#' @param dico_labels A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
 #'   the 2nd column must be the labels. Other information will be ignored.
 #'
 #' @return The name or path + name of the saved Excel file.
+#' 
 #' @export
 #' @examples
 #' \dontrun{
@@ -96,10 +99,12 @@ save_excel_results <- function(
     crossed_varstrat_test = FALSE,
     detail_NB_mesure_sum = FALSE,
     show_p_adj = FALSE,
+    show_SMD = FALSE,
     drop_levels = FALSE,
-    dico_mapping = NULL
+    dico_labels = NULL
 ) {
-  message("[save_excel_results] ", "Starts descriptive analysesn")
+  
+  message("[save_excel_results] ", "Starts descriptive analyses")
 
   stopifnot(is.data.frame(dataframe))
   stopifnot(vars %in% names(dataframe))
@@ -114,11 +119,12 @@ save_excel_results <- function(
   stopifnot(is.logical(crossed_varstrat_test))
   stopifnot(is.logical(detail_NB_mesure_sum))
   stopifnot(is.logical(show_p_adj))
+  stopifnot(is.logical(show_SMD)) # dev 1.23
   stopifnot(is.logical(drop_levels))
-  if (!is.null(dico_mapping)) {
-    stopifnot(is.data.frame(dico_mapping))
+  if (!is.null(dico_labels)) {
+    stopifnot(is.data.frame(dico_labels))
     message("[save_excel_results] Variable and Label must be the first 2 columns !")
-    names(dico_mapping)[1:2] <- c("Variable", "Label")
+    names(dico_labels)[1:2] <- c("Variable", "Label")
     # only select the first 2 columns? should remouve others ? 
   }
 
@@ -322,6 +328,33 @@ save_excel_results <- function(
           }
         ))
 
+        #### Show SMD : in each level of the 1st cross varstrat ####
+        if (
+          show_SMD && is.factor(
+            dataframe[dataframe[[varstrat[1]]] %in% level_i, ][[varstrat[2]]]
+            ) &&
+              nlevels(dataframe[dataframe[[varstrat[1]]] %in% level_i, ][[varstrat[2]]]) == 2
+        ) {
+          message("[save_excel_results] ", "show_SMD")
+          SMD_tab <- compute_SMD_table(
+            dataframe = dataframe[dataframe[[varstrat[1]]] %in% level_i, ],
+            vars = vars_quanti,
+            varstrat = varstrat[2],
+            digits = digits
+          )
+          if (!show_SMD || is.null(SMD_tab)) {
+            # tab_quanti_sheet <- tab_quanti_sheet # stay the same...
+          } else {
+            tab_quanti_sheet <- merge(
+              x = tab_quanti_sheet,
+              y = SMD_tab,
+              by = "Variable",
+              all = TRUE,
+              sort = FALSE
+            )
+          }
+        }
+        
         ## stat test added in option
         if (crossed_varstrat_test) {
           tab_quanti_sheet <- merge(
@@ -367,7 +400,7 @@ save_excel_results <- function(
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- paste0("quanti-", varstrat[1], "-", varstrat[2])
     } else {
-      ##### for each variable of group varstrat #####
+      ##### No crossed_varstrat : for each variable of the group varstrat #####
 
       if (is.null(varstrat)) varstrat <- ""
       tab_quanti_sheet_list <- lapply(varstrat, function(varstrat_i) {
@@ -404,6 +437,7 @@ save_excel_results <- function(
 
         ##### stats tests #####
         if (is.null(varstrat_i) || varstrat_i %in% "" || is.numeric(dataframe[[varstrat_i]])) {
+          
           pvaleur_quanti <- NULL
           tab_quanti_sheet <- data.table::as.data.table(analyse_desc_quanti, keep.rownames = "Variable")
           if ("N_NA" %in% names(tab_quanti_sheet)) {
@@ -417,11 +451,13 @@ save_excel_results <- function(
           )]
 
           if (is.null(varstrat_i) || varstrat_i %in% "") {
+            ##### no stat test = no varstrat #####
             tab_quanti_sheet <- tab_quanti_sheet[, .SD, .SDcols = c(
               "Variable", "Nb_mesures", "Valeurs_manquantes",
               "Moy +/- Sd", "Med [Q1;Q3]", "Min - Max", "is_Normal"
             )]
           } else { # is.numeric(dataframe[[varstrat_i]])
+            ##### stat test varstrat continuous #####
             tab_quanti_sheet <- tab_quanti_sheet[, .SD, .SDcols = c(
               # "varstrat",  # do not show
               "Variable", "Valeurs_manquantes", "Nb_mesures",
@@ -435,6 +471,7 @@ save_excel_results <- function(
             )
           }
         } else {
+          ##### stat test varstrat factorial #####
           pvaleur_quanti <- test_means(
             dataframe = dataframe,
             vars = vars_quanti,
@@ -528,6 +565,29 @@ save_excel_results <- function(
           ))
           tab_quanti_sheet <- merge(tab_quanti_sheet, tab_test, by = "Variable", sort = FALSE)
 
+          #### Show SMD ####
+          if (show_SMD && is.factor(dataframe[[varstrat_i]]) && nlevels(dataframe[[varstrat_i]]) == 2) {
+            message("[save_excel_results] ", "show_SMD")
+            SMD_tab <- compute_SMD_table(
+              dataframe = dataframe,
+              vars = vars_quanti,
+              varstrat = varstrat_i,
+              digits = digits
+            )
+            if (!show_SMD || is.null(SMD_tab)) {
+              # tab_quanti_sheet <- tab_quanti_sheet # stay the same...
+            } else {
+              tab_quanti_sheet <- merge(
+                x = tab_quanti_sheet,
+                y = SMD_tab,
+                by = "Variable",
+                all = TRUE,
+                sort = FALSE
+              )
+            }
+          }
+          
+          #### Show OR ####
           if (show_OR && is.factor(dataframe[[varstrat_i]]) && length(levels(dataframe[[varstrat_i]])) == 2) {
             message("[save_excel_results] ", "show_OR")
             OR_tab <- get_OR_univar(
@@ -537,14 +597,14 @@ save_excel_results <- function(
               check_n_levels = FALSE, # not applicable in continuous vars
               signif_digits = signif_digits
             )
-            if (is.null(OR_tab)) {
+            if (!show_OR || is.null(OR_tab)) {
               # tab_quanti_sheet <- tab_quanti_sheet # stay the same...
             } else {
               OR_tab$Modalites <- NULL
               tab_quanti_sheet <- merge(
                 x = tab_quanti_sheet,
                 y = OR_tab,
-                by = c("Variable"),
+                by = "Variable",
                 all = TRUE,
                 sort = FALSE
               )
@@ -711,7 +771,8 @@ save_excel_results <- function(
           #   tab_quali_sheet$line_fill <- NULL
           # } else {
           tab_quali_sheet <- merge(
-            x = tab_quali_sheet, y = tab_test,
+            x = tab_quali_sheet,
+            y = tab_test,
             by = "Variable",
             all = TRUE,
             sort = FALSE
@@ -764,7 +825,7 @@ save_excel_results <- function(
       tab_quali_sheet_list <- list(tab_quali_sheet_tab)
       names(tab_quali_sheet_list) <- paste0("quali-", varstrat[1], "-", varstrat[2])
     } else {
-      ##### for each variable of group varstrat #####
+      ##### No crossed_varstrat = for each variable of group varstrat #####
       if (is.null(varstrat)) varstrat <- ""
       tab_quali_sheet_list <- lapply(X = varstrat, function(varstrat_i) {
         mm <- ifelse(
@@ -1039,7 +1100,7 @@ save_excel_results <- function(
                 check_n_levels = TRUE,
                 signif_digits = signif_digits
               )
-              if (is.null(OR_tab)) {
+              if (!show_OR || is.null(OR_tab)) {
                 # tab_quali_sheet <- tab_quali_sheet # stay the same...
               } else {
                 tab_quali_sheet <- merge(
@@ -1075,7 +1136,7 @@ save_excel_results <- function(
                 sort = FALSE
               )
             }
-
+            
             ## and re order cols, put OR at the end if col present
             if (show_OR && is.factor(dataframe[[varstrat_i]]) && length(levels(dataframe[[varstrat_i]])) == 2) {
               col_select <- c(
@@ -1354,11 +1415,11 @@ save_excel_results <- function(
     if (!is.null(tab_quanti_sheet_tab)) { ## --here v0.1.18
       names(tab_quanti_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quanti_sheet_tab))
 
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label #v0.1.22
         tab_quanti_sheet_tab <- merge(
           x = tab_quanti_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )
@@ -1376,11 +1437,11 @@ save_excel_results <- function(
     if (!is.null(tab_quali_sheet_tab)) { ## --here v0.1.18
       names(tab_quali_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quali_sheet_tab))
 
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label #v0.1.22
         tab_quali_sheet_tab <- merge(
           x = tab_quali_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )
@@ -1446,11 +1507,11 @@ save_excel_results <- function(
     if (is.null(name_quanti)) {
       tab_quanti_sheet_list <- NULL
     } else {
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label #v0.1.22
         tab_quanti_sheet_tab <- merge(
           x = tab_quanti_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )
@@ -1466,11 +1527,11 @@ save_excel_results <- function(
     if (is.null(name_quali)) {
       tab_quali_sheet_list <- NULL
     } else {
-      if (!is.null(dico_mapping)) {
+      if (!is.null(dico_labels)) {
         # add label
         tab_quali_sheet_tab <- merge(
           x = tab_quali_sheet_tab,
-          y = dico_mapping,
+          y = dico_labels,
           by = "Variable", all.x = TRUE,
           sort = FALSE
         )

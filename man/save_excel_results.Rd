@@ -2,9 +2,7 @@
 % Please edit documentation in R/excel_file_production.R
 \name{save_excel_results}
 \alias{save_excel_results}
-\title{create Excel file of descriptive analysis
-provide descriptive Excel file for factorial (qualitative) and continuous (quantitative) data
-add statistical test according a variable of stratification}
+\title{Create Excel file with description of qualitative and quantitative variables}
 \usage{
 save_excel_results(
   dataframe,
@@ -24,8 +22,9 @@ save_excel_results(
   crossed_varstrat_test = FALSE,
   detail_NB_mesure_sum = FALSE,
   show_p_adj = FALSE,
+  show_SMD = FALSE,
   drop_levels = FALSE,
-  dico_mapping = NULL
+  dico_labels = NULL
 )
 }
 \arguments{
@@ -76,20 +75,22 @@ and detection of 2 varstrat "var1*var2" to cross, statistical test will be provi
 \item{detail_NB_mesure_sum}{A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) 
 for each group.}
 
-\item{show_p_adj}{A logical, Default FALSE. If trun TRUE, add P_adj_holm column based on p.adjust.}
+\item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.}
 
-\item{drop_levels}{A logical, Default FALSE. If trun TRUE, apply droplevels(dataframe)}
+\item{show_SMD}{A logical, Default FALSE. If turn TRUE, add SMD column (standardized mean difference) between 2 groups.}
 
-\item{dico_mapping}{A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+\item{drop_levels}{A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)}
+
+\item{dico_labels}{A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
 the 2nd column must be the labels. Other information will be ignored.}
 }
 \value{
 The name or path + name of the saved Excel file.
 }
 \description{
-create Excel file of descriptive analysis
-provide descriptive Excel file for factorial (qualitative) and continuous (quantitative) data
-add statistical test according a variable of stratification
+Create Excel file of descriptive analysis
+Provide descriptive Excel file for factorial (qualitative) and continuous (quantitative) data
+Add statistical test according a variable of stratification
 }
 \examples{
 \dontrun{

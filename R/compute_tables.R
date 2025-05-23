@@ -12,6 +12,7 @@
 #' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
 #'
 #' @return A final table or a list of tables if varstrat not null.
+#' 
 #' @export
 #' @examples
 #' \dontrun{
@@ -250,6 +251,7 @@ compute_continuous_table <- function(
 #' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
 #'
 #' @return A final table of stat and correlation.
+#' 
 #' @import data.table
 #' @import stats
 #' @import tools
@@ -436,14 +438,22 @@ compute_correlation_table <- function(
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.frame.
 #' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
-#' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
-#' @param simplify A logical. Default TRUE. Reduce the yes/no  (or 1/0) modalities to display only the yes (1).
-#' @param prop_table_margin A vector giving the margins to split by. Default 2. 1 indicates rows, 2 indicates columns,
-#'  c(1, 2) indicates rows and columns. When x has named dimnames, it can be a character vector selecting dimension names.
+#' @param varstrat A character. Default NULL. Name of the stratification variable,
+#'  making groups to compare.
+#' @param simplify A logical. Default TRUE. Reduce the yes/no  (or 1/0) modalities 
+#' to display only the yes (1).
+#' @param prop_table_margin A vector giving the margins to split by. Default 2. 
+#'  1 indicates rows, 2 indicates columns,
+#'  c(1, 2) indicates rows and columns. When x has named dimnames, 
+#'  it can be a character vector selecting dimension names.
 #' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
-#' @param force_generate_1_when_0 A logical, Default FALSE. If TRUE, will test if the unique modality is 0 or "non" and
-#'    add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to only show the modality (1).
+#' @param force_generate_1_when_0 A logical, Default FALSE. If TRUE, 
+#'  will test if the unique modality is 0 or "non" and
+#'  add the level 1 or "oui" so it can be display in counts. 
+#'  Can be combined with simplify to only show the modality (1).
+#'    
 #' @return A list of tables with counts and percentage.
+#' 
 #' @export
 #' @examples
 #' \dontrun{
@@ -662,4 +672,84 @@ compute_factorial_table <- function(
   }
 
   return(final_table)
+}
+
+
+#' compute SMD
+#'
+#' standardized mean difference
+#' 
+#' Interpretation of SMD values : The generally accepted thresholds for interpreting effect size are :  
+#' SMD < 0.1: negligible difference,  
+#' 0.1 ≤ SMD < 0.2: small difference,  
+#' 0.2 ≤ SMD < 0.5: moderate difference,  
+#' SMD ≥ 0.5: large difference.  
+#' These thresholds help to assess the balance between groups, especially after matching or adjustment procedures.
+#'
+#' @param dataframe A data.frame. tibble or data.table
+#' @param vars A vector of characters. Names of dataframe's numeric columns.
+#' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
+#' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
+#' 
+#' @return A table of SMD values for each vars.
+#' 
+#' @export
+#' @examples
+#' \dontrun{
+#' compute_SMD_table(
+#'   dataframe = modified_state,
+#'   vars = c(
+#'     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+#'     "HS Grad", "Frost", "Area"
+#'   ),
+#'   varstrat = "election",
+#'   digits = 2
+#'  )
+#' }
+compute_SMD_table <- function(
+  dataframe, 
+  vars, 
+  varstrat,
+  digits = 2
+) {
+
+  ## stops
+  stopifnot(all(vars %in% names(dataframe)))
+  stopifnot(varstrat %in% names(dataframe))
+  stopifnot(digits >= 0)
+  
+  stopifnot(nlevels(dataframe[[varstrat]]) == 2)
+
+  # detection of numeric varibles
+  vars_numeric <- get_numerics(dataframe, vars)
+  if (!all(vars %in% vars_numeric)) {
+    message("[compute_SMD_table] Warning, some of selected vars were ignored (not numeric).")
+  }
+  
+  # compute stats corr for each variables
+  SMD_tab <- data.table::rbindlist(lapply(X = vars_numeric, function(vari) {
+    x <- dataframe[[vari]]
+    g <- dataframe[[varstrat]]
+    g_levels <- levels(dataframe[[varstrat]])
+    
+    SMD_val <- (
+        mean(x[g %in% g_levels[1]], na.rm = TRUE) -
+          mean(x[g %in% g_levels[2]], na.rm = TRUE)
+      ) / (
+        sqrt(
+          (
+            var(x[g %in% g_levels[1]], na.rm = TRUE) +
+              var(x[g %in% g_levels[2]], na.rm = TRUE)
+          ) / 2
+        )
+      )
+    return(
+      data.table(
+        Variable = vari,
+        SMD = round(x = SMD_val, digits = digits)
+      )
+    )
+  }), use.names = TRUE, fill = TRUE)
+  
+  return(SMD_tab)
 }

@@ -1,5 +1,16 @@
 dir.create("tmp", showWarnings = FALSE)
 
+path10df <- save_excel_paired_results(
+  dataframe = as.data.frame(modified_sleep),
+  vars = c("extra", "extra_with_missings", "mesure1", "mesure2", "mesure3"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  digits = 1,
+  signif_digits = 4,
+  global_summary = TRUE,
+  file = file.path("tmp", "10-desc_paired_data1df.xlsx")
+)
+
 path10 <- save_excel_paired_results(
   dataframe = modified_sleep,
   vars = c("extra", "extra_with_missings", "mesure1", "mesure2", "mesure3"),
@@ -52,6 +63,8 @@ tab10 <- readxl::read_excel(
   sheet = "quantitative - visites_2"
 )
 test_that("Test Paired excel", {
+  expect_true(file.exists(path10df))
+  expect_true(file.exists(path10))
   expect_true(file.exists(path10))
   expect_true(file.exists(path11))
   expect_true(file.exists(path12))
@@ -365,6 +378,39 @@ test_that("test save_excel_paired_results_filtertest", {
   expect_equal(sheet_28$N_individuals, sheet_28$temps1_N)
   expect_equal(sheet_28$N_individuals, sheet_28$temps2_N)
 })
+
+
+
+#### dico vars = label ####
+path29 <- save_excel_paired_results(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings", "fact1", "fact1_na"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  digits = 2,
+  file = file.path("tmp", "29-desc_paired_dico.xlsx"),
+  dico_labels = data.frame(
+    "Vars" = c("extra","fact1_na"), 
+    "labels" = c("extra mesure", "facteur 1 avec na")
+  )
+)
+sheet_29quanti <- readxl::read_excel(
+  file.path("tmp", "29-desc_paired_dico.xlsx"),
+  sheet = "quantitative - visites_2"
+)
+sheet_29quali <- readxl::read_excel(
+  file.path("tmp", "29-desc_paired_dico.xlsx"),
+  sheet = "qualitative - visites_2"
+)
+
+test_that("test labels", {
+  expect_true(names(sheet_29quanti)[1] == "Label")
+  expect_true(sheet_29quanti$Label[1] == "extra mesure" & sheet_29quanti$Variable[1] == "extra")
+  expect_true(is.na(sheet_29quanti$Label[2])  & sheet_29quanti$Variable[2] == "extra_with_missings")
+  expect_equal(sheet_29quali$Label[sheet_29quali$Variable %in% "fact1_na"], "facteur 1 avec na")
+  expect_true(is.na(sheet_29quali$Label[sheet_29quali$Variable %in% "fact1"]))
+})
+
 
 #### end ####
 # clear tmp test folder

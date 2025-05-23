@@ -344,3 +344,77 @@ test_that("test correlation tab", {
 
 })
 
+
+#### SMD table ####
+
+SMD_tab <- compute_SMD_table(
+  dataframe = modified_state,
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area"
+  ),
+  varstrat = "election",
+  digits = 2
+)
+
+SMD_tab2 <- compute_SMD_table(
+  dataframe = modified_state,
+  vars = c(
+    "Population", "Income", "Area"
+  ),
+  varstrat = "binary_test",
+  digits = 3
+)
+
+test_that("smd computation", {
+  expect_equal(
+    nrow(SMD_tab),
+    length(c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area"
+  )))
+  expect_equal(
+    nrow(SMD_tab2), 3
+  )
+  expect_equal(
+    SMD_tab2$SMD,
+    c(-0.088, 0.321, 0.266)
+  )
+  
+  ## compute by hand (same than in compute_SMD_table function)
+  x <- modified_state$Murder
+  g <- modified_state$election
+  level_elec <- levels(g)
+  smd_murder <- (
+    mean(x[g %in% level_elec[1]], na.rm = TRUE) -
+      mean(x[g %in% level_elec[2]], na.rm = TRUE)
+  ) / (
+    sqrt(
+      (
+        var(x[g %in% level_elec[1]], na.rm = TRUE) +
+          var(x[g %in% level_elec[2]], na.rm = TRUE)
+      ) / 2
+    )
+  )
+  expect_equal(
+    round(smd_murder, 2), 
+    SMD_tab$SMD[SMD_tab$Variable %in% "Murder"]
+  )
+  
+})
+
+
+test_that("error no smd ", {
+  expect_error(
+    compute_SMD_table(
+      dataframe = modified_state,
+      vars = c(
+        "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+        "HS Grad", "Frost", "Area"
+      ),
+      varstrat = "special_condition",
+      digits = 2
+    )
+  )
+})
+

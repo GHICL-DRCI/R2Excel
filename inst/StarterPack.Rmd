@@ -310,7 +310,7 @@ save_excel_results(
 ```
 
 
-(13) you might be interested in putting labels in front of your complicated variable names.
+(13) you might be interested in putting labels next to your blurry variable names. Use the `dico_labels` param, putting the variable name in the first column and your labels in the second.
 
 
 ```r
@@ -322,10 +322,40 @@ save_excel_results(
     "state.division", "state.region"
   ),
   varstrat = "binary_test",
-  dico_mapping = data.frame(
+  dico_labels = data.frame(
     "Vars" = c("Population", "Income", "state.division", "state.region"), 
     "labels" = c("Population size (nb)", "Income (in dollars)", "State Division ???", "state region (cad point)")
   )
+)
+```
+
+(14) In presence of a binary varstrat, you may want to check that your two groups are well balanced.
+If so, SMD (standardized mean difference) between the groups will provide a good indication. Check out the `show_smd` param ! 
+
+```r
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "14-smd.xlsx"),
+  vars = c(
+    "Population", "Illiteracy", "Income",
+    "state.division", "state.region"
+  ),
+  varstrat = "binary_test",
+  show_SMD = TRUE,
+  show_OR = TRUE
+)
+
+# also possible in cross situation
+save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "14-crossed_smd.xlsx"),
+  vars = c(
+    "Population", "Income",
+    "state.division", "state.region"
+  ),
+  varstrat = "election*binary_test",
+  digits = 2,
+  show_SMD = TRUE,
 )
 ```
 
@@ -400,7 +430,7 @@ compute_paired_factorial_table_and_test(
 )
 ```
 
-(C You can generalize the call of paired tables, for several variables of interest, saved in excel file. 
+(C) You can generalize the call of paired tables, for several variables of interest, saved in excel file. 
 
 For instance with 2 visits
 
@@ -462,8 +492,9 @@ save_excel_paired_results(
 )
 ```
 
-(F) understand `save_excel_paired_results_filtertest` : A specific table for repeated data may be wanted in two ways: to show rows with missing values to describe everything or to remove missing data to describe only tested data.  
-Here is a snippet of code to do both :
+(F) Understand `save_excel_paired_results_filtertest` : A specific table for repeated data may be wanted in two ways: 
+  To show rows with missing values to describe everything or to remove missing data to describe only the tested data.  
+Here is a code snippet to do both :
 
 ```r
 ## description in detail with NA at each VISITE
@@ -530,3 +561,5 @@ save_excel_paired_results_filtertest(
   file = file.path("tmp", "desc_paired_data_tested.xlsx")
 )
 ```
+
+
