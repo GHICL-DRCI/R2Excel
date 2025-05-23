@@ -1086,7 +1086,7 @@ save_excel_paired_results_filtertest <- function(
     test_more_2_levels = FALSE,
     show_p_adj = FALSE,
     drop_levels = FALSE,
-    dico_mapping = NULL
+    dico_labels = NULL
 ) {
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(patient_id %in% names(dataframe))
@@ -1122,29 +1122,37 @@ save_excel_paired_results_filtertest <- function(
       })
       # remove them
       tmp_i <- tmp_i[!(tmp_i[[patient_id]] %in% detect_missing_id), ]
-
-      save_excel_paired_results(
-        dataframe = tmp_i,
-        file = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file),
-        vars = var_i,
-        varstrat = varstrat,
-        digits = digits,
-        signif_digits = signif_digits,
-        patient_id = patient_id,
-        simplify = simplify,
-        global_summary = global_summary,
-        force_non_parametric_test = force_non_parametric_test,
-        force_generate_1_when_0 = force_generate_1_when_0, # for fact tab
-        keep_missing_line = keep_missing_line, # for fact tab
-        metric_show = metric_show,
-        light_contents = light_contents,
-        crossed_varstrat_test = crossed_varstrat_test,
-        detail_NB_mesure_sum = detail_NB_mesure_sum,
-        test_more_2_levels = test_more_2_levels,
-        show_p_adj = show_p_adj,
-        drop_levels = drop_levels,
-        dico_mapping = dico_mapping
-      )
+      
+      if (nrow(tmp_i) > 0) {
+        save_excel_paired_results(
+          dataframe = tmp_i,
+          file = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file),
+          vars = var_i,
+          varstrat = varstrat,
+          digits = digits,
+          signif_digits = signif_digits,
+          patient_id = patient_id,
+          simplify = simplify,
+          global_summary = global_summary,
+          force_non_parametric_test = force_non_parametric_test,
+          force_generate_1_when_0 = force_generate_1_when_0, # for fact tab
+          keep_missing_line = keep_missing_line, # for fact tab
+          metric_show = metric_show,
+          light_contents = light_contents,
+          crossed_varstrat_test = crossed_varstrat_test,
+          detail_NB_mesure_sum = detail_NB_mesure_sum,
+          test_more_2_levels = test_more_2_levels,
+          show_p_adj = show_p_adj,
+          drop_levels = drop_levels,
+          dico_labels = dico_labels
+        )
+      } else {
+        message(
+          "[save_excel_paired_results_filtertest] ", var_i, " can not be analysed (filter NA remove all lines),",
+          " variable just ignored."
+        )
+        return(NULL)
+      }
     }
   )
 
@@ -1153,13 +1161,21 @@ save_excel_paired_results_filtertest <- function(
   desc_data_tested_sheetquanti <- data.table::rbindlist(l = lapply(
     X = vars,
     FUN = function(var_i) {
-      # read the excel table, quanti sheet
-      if (
-        grepl("^quanti", readxl::excel_sheets(gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)))
-      ) {
-        tab_quanti <- readxl::read_excel(
-          path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
-        )
+      file_i <- gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+      if (file.exists(file_i)) {
+        # read the excel table, quanti sheet
+        if (grepl("^quanti", readxl::excel_sheets(file_i))) {
+          tab_quanti <- readxl::read_excel(
+            path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+          )
+          return(tab_quanti)
+        } else { 
+          # no quanti sheet
+          return(NULL)
+        }
+      } else {
+        # no file, var ignored
+        return(NULL)
       }
     }
   ))
@@ -1168,13 +1184,22 @@ save_excel_paired_results_filtertest <- function(
   desc_data_tested_sheetquali <- data.table::rbindlist(l = lapply(
     X = vars,
     FUN = function(var_i) {
-      # read the excel table, quanti sheet
-      if (
-        grepl("^quali", readxl::excel_sheets(gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)))
-      ) {
-        tab_quali <- readxl::read_excel(
-          path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
-        )
+      file_i <- gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+      if (file.exists(file_i)) {
+        # read the excel table, quanti sheet
+        if (
+          grepl("^quali", readxl::excel_sheets(gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)))
+        ) {
+          tab_quali <- readxl::read_excel(
+            path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+          )
+        } else {
+          # no quali sheet
+          return(NULL)
+        }
+      } else {
+        # no file, var ignored
+        return(NULL)
       }
     }
   ))
@@ -1182,9 +1207,12 @@ save_excel_paired_results_filtertest <- function(
   clean_temp_files <- lapply(
     X = vars,
     FUN = function(var_i) {
-      unlink( # if want to clean temporary file
-        gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
-      )
+      file_i <- gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+      if (file.exists(file_i)) {
+        unlink( # if want to clean temporary file
+          gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+        )
+      }
     }
   )
   message("[save_excel_paired_results_filtertest] Make list")
