@@ -483,7 +483,7 @@ path08 <- save_excel_results(
     "state.division", "state.region"
   ),
   varstrat = "binary_test",
-  dico_mapping = data.frame(
+  dico_labels = data.frame(
     "Vars" = c("Population", "Income", "state.division", "state.region"), 
     "labels" = c("Population size (nb)", "Income (in dollars)", "State Division ???", "state region (cad point)")
   )
@@ -505,6 +505,50 @@ test_that("test labels", {
   expect_equal(is.na(sheet_08quali$Label), is.na(sheet_08quali$Variable))
 })
 
+#### SMD add ####
+
+path09 <- save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "09-smd.xlsx"),
+  vars = c(
+    "Population", "Illiteracy", "Income",
+    "state.division", "state.region"
+  ),
+  varstrat = "binary_test",
+  show_SMD = TRUE,
+  show_OR = TRUE
+)
+sheet09quanti <- readxl::read_excel(
+  file.path("tmp", "09-smd.xlsx"),
+  sheet = "quantitative - binary_test"
+)
+# sheet09quali <- readxl::read_excel(
+#   file.path("tmp", "09-smd.xlsx"),
+#   sheet = "qualitative - binary_test"
+# )
+# also possible in cross situation
+path09cross <- save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "09-crossed_smd.xlsx"),
+  vars = c(
+    "Population", "Income",
+    "state.division", "state.region"
+  ),
+  varstrat = "election*binary_test",
+  digits = 2,
+  show_SMD = TRUE
+)
+sheet09quanticross <- readxl::read_excel(
+  path09cross,
+  sheet = 1 # quali one
+)
+test_that("test smd", {
+  expect_true("SMD" %in% names(sheet09quanti))
+  expect_true(sheet09quanti$SMD[1] == -0.09) # test 1 value
+
+  expect_true("SMD" %in% sheet09quanticross[1, ])
+  expect_true(sheet09quanticross[2, "election==red...7"] == -0.43) # test 1 value
+})
 
 #### end ####
 # clear tmp test folder
