@@ -5,7 +5,7 @@
 
 The goal of *R2Excel* is to produce Statistical Tables in *R*, Save Into (*2*) *Excel* File. 
 
-With this package, we don't propose any revolutionary statistical models or tests, but we do recommend that you use this tool for the first stages of analysis in a clinical study. Once you have your databases, you will naturally want to produce descriptive tables, and the first univariate or bivariate tests (if groups are present). We can help you to standardise these tables, while using the appropriate tests (implementation and verification of certain hypotheses, paired tests or captured messages). The main functions produce descriptive, homogeneous and harmonious statistical tables, as well as statistical tests.  
+With this package, we don't propose any revolutionary statistical models or tests, but we do recommend that you use this tool for the first stages of analysis in a clinical study. Once you have your databases, you will naturally want to produce descriptive tables, and the first univariate or bivariate tests (if groups are present). We can help you to standardize these tables, while using the appropriate tests (implementation and verification of certain hypotheses, paired tests or captured messages). The main functions produce descriptive, homogeneous and harmonious statistical tables, as well as statistical tests.  
 
 This package is used to generate statistical reports produced by the Methodology/Biostatistics Team of the GHICL DRCI (Lomme, France).
 
@@ -24,7 +24,6 @@ Ce package est utilisé pour générer les rapports statistiques produits par la
 
 N'hésitez pas à participer à ce projet : il est conçu pour être open source sous une [Licence CECILL-2](https://cecill.info/licences/Licence_CeCILL_V2.1-fr.txt) (équivalent français de la licence GPL). 
 Toute amélioration ou aide à la documentation est la bienvenue. Pour ce faire, nous vous prions de bien vouloir procéder à la création d'une branche pour nous soumettre votre requête ("merge request"). 
-
 
 ## Authors
 
@@ -61,4 +60,4 @@ Usefull command to know what's new : `utils::news(package = "R2Excel")`
 
 ## Starter Pack
 
-See some examples in `inst/StarterPack.html`
+See some examples in `inst/StarterPack.Rmd` (`inst/StarterPack.html`)
