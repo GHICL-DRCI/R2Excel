@@ -1,3 +1,21 @@
+# Version 0.1.23
+
+22/05/2025 & 23/05/2025
+
+-    `show_SMD` param : provide the standardised mean difference (SMD) between 2 groups + add test
+
+-    `dico_mapping` param renamed as `dico_label`
+  
+-    Update documentation (fix typo)
+  
+-    Update vignette with new params' examples
+
+[BUG]
+
+-    `setDT` needed in  `save_excel_paired_results` when selecting with `.SD` operator.
+  
+-    `save_excel_paired_results_filtertest` skip vars with all NA.
+
 # Version 0.1.22
 
 02/04/2025 & 25/04/2025
