@@ -33,7 +33,8 @@ save_excel_results(
 \item{file}{A character. Name of the Excel file or path + name of the Excel file (file name must end by ".xlsx").
 Default "Excel_report_description.xlsx".}
 
-\item{vars}{A vector of characters. Names of dataframe's columns to describe.}
+\item{vars}{A vector of characters. Names of dataframe's columns to describe.
+Only consider numerics, factors and dates.}
 
 \item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.
 Only one varstrat is expected in general.
