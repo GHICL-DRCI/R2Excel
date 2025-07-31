@@ -9,6 +9,7 @@
 #' @param file A character. Name of the Excel file or path + name of the Excel file (file name must end by ".xlsx").
 #'   Default "Excel_report_description.xlsx".
 #' @param vars A vector of characters. Names of dataframe's columns to describe.
+#'   Only consider numerics, factors and dates. 
 #' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
 #'   Only one varstrat is expected in general.
 #'   About 2 crossed varstrats : you can provide "var1*var2"
@@ -128,13 +129,16 @@ save_excel_results <- function(
     # only select the first 2 columns? should remouve others ? 
   }
 
-  ## detect crossed varstrat :
+  #### Detect crossed varstrat ####
   if (is.null(varstrat[1]) || varstrat[1] %in% "") {
+    # no varstrat
     varstrat <- ""
     crossed_varstrat <- FALSE
   } else {
+    # yes there is a varstrat
     varstrat_splited <- strsplit(x = varstrat, split = "*", fixed = TRUE)
     if (length(unlist(varstrat_splited)) == 2) {
+      # if there is a 2nd var strat
       varstrat <- unlist(varstrat_splited)
       crossed_varstrat <- TRUE
       stopifnot(varstrat[2] %in% names(dataframe))
@@ -151,8 +155,10 @@ save_excel_results <- function(
     } else {
       crossed_varstrat <- FALSE
 
-      if (drop_levels) dataframe[[varstrat]] <- droplevels(dataframe[[varstrat]]) # v0.1.22
-      # droplevels , stop to test
+      if (drop_levels & is.factor(dataframe[[varstrat]])) { # v0.1.24
+        dataframe[[varstrat]] <- droplevels(dataframe[[varstrat]]) # v0.1.22
+      }
+      # droplevels, stop to test
       if (nlevels(dataframe[[varstrat]]) == 1) {
         varstrat <- NULL # no more var strat
         message(
@@ -176,14 +182,16 @@ save_excel_results <- function(
     )
     metric_show <- "median"
   }
-
-  vars <- setdiff(vars, varstrat)
+  
+  vars <- setdiff(vars, varstrat) # do not desc the varstrat...
   dataframe <- data.table::setDT(dataframe)
   if (is.null(varstrat[1]) || varstrat[1] %in% "") {
     dataframe <- dataframe[, .SD, .SDcols = c(vars)]
   } else {
     dataframe <- dataframe[, .SD, .SDcols = c(vars, varstrat)]
   }
+  
+  #### Clear useless cols ####
   ## remove vars (columns) with all NA # v0.1.22
   dataframe <- dataframe[, .SD, .SDcols = colSums(is.na(dataframe)) < nrow(dataframe)]
   newcols <- names(dataframe)
@@ -197,25 +205,32 @@ save_excel_results <- function(
     tab_na_sheet_list <- NULL
   }
 
-  # Separation des variables quali et quanti
+  #### Vars class ####
+  # Separation of variables quali / quanti / dates
   vars_quanti <- get_numerics(dataframe, vars = vars)
   vars_quali <- get_factors(dataframe, vars = vars)
-
+  vars_dates <- get_dates(dataframe, vars = vars)
+  
   #### Variables quantitatives ####
+  
   if (length(vars_quanti) == 0) {
-    ##### skip variables quantitatives #####
-    # print("Il n'y a pas de variable quantitative")
+    ##### Skip variables quantitatives #####
     message("[save_excel_results] ", "There is no quantitative variables")
     tab_quanti_sheet_list <- NULL
   } else {
+    
+    ##### crossed_varstrat #####
+    
     if (crossed_varstrat) {
-      ##### crossed_varstrat #####
+      
       message("[save_excel_results] ", "crossed_varstrat")
       # for each level of group (varstrat[[1]]), produce a part of the table :
       levels_to_sep <- levels(dataframe[[varstrat[1]]])
-      message(paste0("[save_excel_results] ", "quanti (with Varstat ? ", varstrat[1], ")"))
+      message(paste0("[save_excel_results] ", "quanti (with varstat :  ", varstrat[1], ")"))
 
       tab_quanti_sheet_sep <- lapply(levels_to_sep, function(level_i) {
+        
+        ##### Only describ ####
         message(paste0(
           "[save_excel_results] Go on varstrat ", varstrat[1], " crossed for level ", level_i, ")"
         ))
@@ -230,7 +245,7 @@ save_excel_results <- function(
           digits = digits
         ))
 
-        ## want stat test as option
+        ##### Statistical tests as option ##### 
         if (crossed_varstrat_test) {
           pvaleur_quanti <- test_means(
             dataframe = dataframe[dataframe[[varstrat[1]]] %in% level_i, ],
@@ -241,6 +256,7 @@ save_excel_results <- function(
           tab_test <- data.table::as.data.table(pvaleur_quanti$result, keep.rownames = "Variable")
         }
 
+        ##### Format tab sheet ####
         tab_quanti_sheet <- data.table::rbindlist(l = lapply(
           X = seq_len(length(analyse_desc_quanti)), FUN = function(i) {
             var_i <- names(analyse_desc_quanti)[i]
@@ -328,7 +344,9 @@ save_excel_results <- function(
           }
         ))
 
-        #### Show SMD : in each level of the 1st cross varstrat ####
+        ##### Show SMD #####
+        ## SMD in each level of the 1st cross varstrat ##
+        ## and add into tab sheet
         if (
           show_SMD && is.factor(
             dataframe[dataframe[[varstrat[1]]] %in% level_i, ][[varstrat[2]]]
@@ -355,7 +373,7 @@ save_excel_results <- function(
           }
         }
         
-        ## stat test added in option
+        ## add stat test into tab sheet (if option)
         if (crossed_varstrat_test) {
           tab_quanti_sheet <- merge(
             tab_quanti_sheet, tab_test,
@@ -399,20 +417,25 @@ save_excel_results <- function(
       # names(tab_quanti_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quanti_sheet_tab))
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- paste0("quanti-", varstrat[1], "-", varstrat[2])
+    
     } else {
-      ##### No crossed_varstrat : for each variable of the group varstrat #####
-
+      
+      ##### No crossed_varstrat ####
+      
       if (is.null(varstrat)) varstrat <- ""
       tab_quanti_sheet_list <- lapply(varstrat, function(varstrat_i) {
+        ## for each variable of the group varstrat ##
+        
+        ##### Only describ ####
         mm <- ifelse(
           is.null(varstrat_i) || varstrat_i %in% "",
-          paste0("[save_excel_results] ", "quanti (without Varstat)"),
-          paste0("[save_excel_results] ", "quanti (with Varstat ? ", varstrat_i, ")")
+          paste0("[save_excel_results] ", "quanti (without varstat)"),
+          paste0("[save_excel_results] ", "quanti (with varstat : ", varstrat_i, ")")
         )
         message(mm)
 
         if (!is.null(varstrat_i) && !varstrat_i %in% "" & is.numeric(dataframe[[varstrat_i]])) {
-          ##### varstrat continuous #####
+          ##### Varstrat continuous #####
           analyse_desc_quanti <- compute_correlation_table(
             dataframe = dataframe,
             vars = vars_quanti,
@@ -422,7 +445,7 @@ save_excel_results <- function(
             signif_digits = signif_digits
           )
         } else {
-          ##### varstrat factorial or no varstrat #####
+          ##### Varstrat factorial or No varstrat #####
           analyse_desc_quanti <- compute_continuous_table(
             dataframe = dataframe,
             vars = vars_quanti,
@@ -435,7 +458,9 @@ save_excel_results <- function(
           )
         }
 
-        ##### stats tests #####
+        ##### Format tab sheet #####
+        # and
+        ##### Statistical tests #####
         if (is.null(varstrat_i) || varstrat_i %in% "" || is.numeric(dataframe[[varstrat_i]])) {
           
           pvaleur_quanti <- NULL
@@ -456,21 +481,26 @@ save_excel_results <- function(
               "Variable", "Nb_mesures", "Valeurs_manquantes",
               "Moy +/- Sd", "Med [Q1;Q3]", "Min - Max", "is_Normal"
             )]
-          } else { # is.numeric(dataframe[[varstrat_i]])
+          } else { 
+            # is.numeric(dataframe[[varstrat_i]])
             ##### stat test varstrat continuous #####
             tab_quanti_sheet <- tab_quanti_sheet[, .SD, .SDcols = c(
               # "varstrat",  # do not show
-              "Variable", "Valeurs_manquantes", "Nb_mesures",
+              "Variable", "Nb_mesures", "Valeurs_manquantes",
               # "Moy +/- Sd", "Med [Q1;Q3]", "Min - Max",  # do not show
-              "is_Normal",
+              "is_Normal", # variable normal ? (not said if varstrat is normal)
               "correlation", "IC95", "P_valeur", "correlation_method", "message"
             )]
             # add varstrat name before correlation
-            names(tab_quanti_sheet)[grep("^correlation$", names(tab_quanti_sheet))] <- paste0(
+            names(tab_quanti_sheet)[
+              grep("^correlation$", names(tab_quanti_sheet))
+            ] <- paste0(
               varstrat_i, " correlation"
             )
           }
+          
         } else {
+          
           ##### stat test varstrat factorial #####
           pvaleur_quanti <- test_means(
             dataframe = dataframe,
@@ -565,7 +595,7 @@ save_excel_results <- function(
           ))
           tab_quanti_sheet <- merge(tab_quanti_sheet, tab_test, by = "Variable", sort = FALSE)
 
-          #### Show SMD ####
+          ##### Show SMD #####
           if (show_SMD && is.factor(dataframe[[varstrat_i]]) && nlevels(dataframe[[varstrat_i]]) == 2) {
             message("[save_excel_results] ", "show_SMD")
             SMD_tab <- compute_SMD_table(
@@ -587,7 +617,7 @@ save_excel_results <- function(
             }
           }
           
-          #### Show OR ####
+          ##### Show OR #####
           if (show_OR && is.factor(dataframe[[varstrat_i]]) && length(levels(dataframe[[varstrat_i]])) == 2) {
             message("[save_excel_results] ", "show_OR")
             OR_tab <- get_OR_univar(
@@ -636,23 +666,25 @@ save_excel_results <- function(
   #### Variables qualitatives ####
 
   if (length(vars_quali) == 0) {
-    ##### skip variables qualitative #####
+    ##### Skip variables qualitative #####
     # print("Il n'y a pas de variable qualitative")
     message("[save_excel_results] ", "There is no qualitative variables")
     tab_quali_sheet_list <- NULL
   } else {
+    
     if (crossed_varstrat) {
+    
       ##### crossed_varstrat #####
       message("[save_excel_results] ", "crossed_varstrat")
       # for each level of group (varstrat[[1]]), produce a part of the table :
       levels_to_sep <- levels(dataframe[[varstrat[1]]])
-      message(paste0("[save_excel_results] ", "quali (with Varstat ? ", varstrat[1], ")"))
+      message(paste0("[save_excel_results] ", "quali (with varstat :  ", varstrat[1], ")"))
 
       tab_quali_sheet_sep <- lapply(levels_to_sep, function(level_i) {
         message(paste0(
           "[save_excel_results] Go on varstrat ", varstrat[1], " crossed for level ", level_i, ")"
         ))
-
+        ##### Only describ #####
         analyse_desc_quali <- compute_factorial_table(
           dataframe = droplevels(dataframe[dataframe[[varstrat[1]]] %in% level_i, ]),
           vars = vars_quali,
@@ -662,8 +694,8 @@ save_excel_results <- function(
           digits = digits,
           force_generate_1_when_0 = force_generate_1_when_0
         )
-
-        ## stat test in crossed_varstrat as option
+        
+        ##### Statistical tests as option #####
         if (crossed_varstrat_test) {
           pvaleur_quali <- test_proportions(
             dataframe = dataframe[dataframe[[varstrat[1]]] %in% level_i, ],
@@ -672,7 +704,8 @@ save_excel_results <- function(
           )
           tab_test <- data.table::as.data.table(pvaleur_quali$result, keep.rownames = "Variable")
         }
-
+        
+        ##### Format tab sheet #####
         tab_quali_sheet <- data.table::rbindlist(
           l = lapply(
             X = seq_len(length(analyse_desc_quali)),
@@ -756,7 +789,36 @@ save_excel_results <- function(
           fill = TRUE
         )
 
-        ## stat test in crossed_varstrat as option
+        
+        ##### Show SMD #####
+        ## in each level of the 1st cross varstrat ##
+        if (
+          show_SMD && is.factor(
+            dataframe[dataframe[[varstrat[1]]] %in% level_i, ][[varstrat[2]]]
+          ) &&
+          nlevels(dataframe[dataframe[[varstrat[1]]] %in% level_i, ][[varstrat[2]]]) == 2
+        ) {
+          message("[save_excel_results] ", "show_SMD")
+          SMD_tab <- compute_SMD_table(
+            dataframe = dataframe[dataframe[[varstrat[1]]] %in% level_i, ],
+            vars = vars_quali,
+            varstrat = varstrat[2],
+            digits = digits
+          )
+          if (!show_SMD || is.null(SMD_tab)) {
+            # tab_quali_sheet <- tab_quali_sheet # stay the same...
+          } else {
+            tab_quali_sheet <- merge(
+              x = tab_quali_sheet,
+              y = SMD_tab,
+              by = "Variable",
+              all = TRUE,
+              sort = FALSE
+            )
+          }
+        }
+        
+        ## add stat test into tab sheet (if option)
         if (crossed_varstrat_test) {
           # merge computed table and stat test results
           # if (light_contents) { ## --fix make error when merge later
@@ -824,20 +886,24 @@ save_excel_results <- function(
       # names(tab_quali_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quali_sheet_tab))
       tab_quali_sheet_list <- list(tab_quali_sheet_tab)
       names(tab_quali_sheet_list) <- paste0("quali-", varstrat[1], "-", varstrat[2])
+    
     } else {
-      ##### No crossed_varstrat = for each variable of group varstrat #####
+      ##### No crossed_varstrat #####
+     
       if (is.null(varstrat)) varstrat <- ""
       tab_quali_sheet_list <- lapply(X = varstrat, function(varstrat_i) {
+        # for each variable of group varstrat #
         mm <- ifelse(
           is.null(varstrat_i) || varstrat_i %in% "",
-          paste0("[save_excel_results] ", "quali (without Varstat)"),
-          paste0("[save_excel_results] ", "quali (with Varstat ? ", varstrat_i, ")")
+          paste0("[save_excel_results] ", "quali (without varstat)"),
+          paste0("[save_excel_results] ", "quali (with varstat :  ", varstrat_i, ")")
         )
         message(mm)
 
+        ##### Only Describ #####
         # get computed tables
         if (!is.null(varstrat_i) && !(varstrat_i %in% "") && is.numeric(dataframe[[varstrat_i]])) {
-          ##### varstrat continuous #####
+          ##### Varstrat continuous #####
           analyse_desc_quali <- lapply(X = vars_quali, FUN = function(quali_i_var) {
             compute_continuous_table(
               dataframe = dataframe,
@@ -851,7 +917,7 @@ save_excel_results <- function(
             )
           })
         } else {
-          ##### varstrat factorial or no varstrat #####
+          ##### Varstrat factorial or No varstrat #####
           analyse_desc_quali <- compute_factorial_table(
             dataframe = dataframe,
             vars = vars_quali,
@@ -862,8 +928,12 @@ save_excel_results <- function(
           )
         }
 
+        ##### Format tab sheet #####
+        # and
+        ##### Statistical tests #####
         # format outputs tab_quali_sheet
         if (is.null(varstrat_i) || varstrat_i %in% "") {
+          # no varstrat, no test...
           pvaleur_quali <- NULL
           tab_quali_sheet <- data.table::rbindlist(
             l = lapply(
@@ -898,9 +968,12 @@ save_excel_results <- function(
             fill = TRUE
           )
         } else {
+          
           ##### stats tests #####
 
           if (is.numeric(dataframe[[varstrat_i]])) {
+            # numeric varstrat..
+            ##### stat test varstrat continuous #####
             tab_test <- data.table::rbindlist(lapply(X = vars_quali, FUN = function(quali_i_var) {
               message("[save_excel_results] test_means ", quali_i_var)
               pvaleur_quanti <- test_means(
@@ -919,6 +992,7 @@ save_excel_results <- function(
               return(tab_test)
             }), use.names = TRUE, fill = TRUE)
           } else {
+            ##### stat test varstrat factorial #####
             pvaleur_quali <- test_proportions(
               dataframe = dataframe,
               vars = vars_quali,
@@ -932,8 +1006,11 @@ save_excel_results <- function(
             )
           }
 
+          ##### Format tab sheet #####
+          
           # now we have computed tables and pvalues, reshape table outputs : tab_quali_sheet
           if (is.numeric(dataframe[[varstrat_i]])) {
+            
             tab_quali_sheet <- data.table::rbindlist(
               l = lapply(
                 X = seq_len(length(analyse_desc_quali)),
@@ -979,7 +1056,7 @@ save_excel_results <- function(
                   tmp <- tmp[, .SD, .SDcols = c(
                     # "Variable",
                     "varstrat", "Modalites",
-                    "N", "Valeurs_manquantes", "Nb_mesures",
+                    "N", "Nb_mesures", "Valeurs_manquantes", 
                     # "Mean_sd", "Med_q1_q3" # select one of them
                     cell_content
                     # , "Min - Max", "is_Normal" # nor return with varstrat
@@ -1090,7 +1167,30 @@ save_excel_results <- function(
               ),
               fill = TRUE
             )
-
+            
+            ##### Show SMD #####
+            if (show_SMD && is.factor(dataframe[[varstrat_i]]) && nlevels(dataframe[[varstrat_i]]) == 2) {
+              message("[save_excel_results] ", "show_SMD")
+              SMD_tab <- compute_SMD_table(
+                dataframe = dataframe,
+                vars = vars_quali,
+                varstrat = varstrat_i,
+                digits = digits
+              )
+              if (!show_SMD || is.null(SMD_tab)) {
+                # tab_quali_sheet <- tab_quali_sheet # stay the same...
+              } else {
+                tab_quali_sheet <- merge(
+                  x = tab_quali_sheet,
+                  y = SMD_tab,
+                  by = "Variable",
+                  all = TRUE,
+                  sort = FALSE
+                )
+              }
+            }
+            
+            ##### Show OR #####
             if (show_OR && is.factor(dataframe[[varstrat_i]]) && length(levels(dataframe[[varstrat_i]])) == 2) {
               message("[save_excel_results] ", "show_OR")
               OR_tab <- get_OR_univar(
@@ -1166,7 +1266,7 @@ save_excel_results <- function(
     }
   }
 
-  #### show p adjusted ####
+  #### Show p adjusted ####
 
   if (show_p_adj && !is.null(varstrat[[1]]) && !varstrat[[1]] %in% "") {
     message("[save_excel_results] show_p_adj")
@@ -1331,7 +1431,7 @@ save_excel_results <- function(
     }
   }
 
-  ####  finish to format pval and sheets ####
+  #### reFormat tab sheet with pval ####
   if (crossed_varstrat) {
     ##### crossed_varstrat #####
     ## finish to formated crossed vars tabs
@@ -1372,7 +1472,7 @@ save_excel_results <- function(
       } # else nothing to format as light
     }
 
-    ##### format p val in tab_quanti_sheet_tab #####
+    ##### Format p val in tab_quanti_sheet_tab #####
     pval_cols_quanti <- c(
       grep("P_valeur$", names(tab_quanti_sheet_tab), value = TRUE),
       grep("P_adj_holm$", names(tab_quanti_sheet_tab), value = TRUE)
@@ -1391,7 +1491,7 @@ save_excel_results <- function(
       ]
     }
 
-    ##### format p val in tab_quali_sheet_tab #####
+    ##### Format p val & labels in tab_quali_sheet_tab #####
     pval_cols_quali <- c(
       grep("P_valeur$", names(tab_quali_sheet_tab), value = TRUE),
       grep("P_adj_holm$", names(tab_quali_sheet_tab), value = TRUE)
@@ -1410,7 +1510,7 @@ save_excel_results <- function(
       ]
     }
 
-    # finish to format sheet list
+    # finish to format sheet list with dico_labels
 
     if (!is.null(tab_quanti_sheet_tab)) { ## --here v0.1.18
       names(tab_quanti_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quanti_sheet_tab))
@@ -1448,6 +1548,25 @@ save_excel_results <- function(
         data.table::setcolorder(
           x = tab_quali_sheet_tab, neworder = unique(c("Label", names(tab_quali_sheet_tab)))
         )
+        
+        # # v0.1.24 fix label when quanti varstrat ?
+        # if (is.numeric(dataframe[[varstrat[1]]])) {
+        #   tab_quali_sheet_tab <- merge(
+        #     x = tab_quali_sheet_tab,
+        #     y = dico_labels,
+        #     by.x = "varstrat", by.y = "Variable",
+        #     all.x = TRUE,
+        #     sort = FALSE
+        #   )
+        #   data.table::setcolorder(
+        #     x = tab_quali_sheet_tab, 
+        #     neworder = unique(c(
+        #       "Label.x", "Variable", "Label.y", "varstrat", "Modalities",
+        #       names(tab_quali_sheet_tab)
+        #     ))
+        #   )
+        # }
+        
       }
 
       tab_quali_sheet_list <- list(tab_quali_sheet_tab)
@@ -1456,6 +1575,7 @@ save_excel_results <- function(
       tab_quali_sheet_list <- NULL ## --here v0.1.18
     }
   } else {
+    
     ##### Classique ( no cross varstrat ) #####
 
     # just format p values, ever light content done if wanted
@@ -1527,6 +1647,7 @@ save_excel_results <- function(
     if (is.null(name_quali)) {
       tab_quali_sheet_list <- NULL
     } else {
+      
       if (!is.null(dico_labels)) {
         # add label
         tab_quali_sheet_tab <- merge(
@@ -1538,6 +1659,24 @@ save_excel_results <- function(
         data.table::setcolorder(
           x = tab_quali_sheet_tab, neworder = unique(c("Label", names(tab_quali_sheet_tab)))
         )
+        
+        # v0.1.24 fix label when quanti varstrat
+        if (is.numeric(dataframe[[varstrat[1]]])) {
+          tab_quali_sheet_tab <- merge(
+            x = tab_quali_sheet_tab,
+            y = dico_labels,
+            by.x = "varstrat", by.y = "Variable",
+            all.x = TRUE,
+            sort = FALSE
+          )
+          data.table::setcolorder(
+            x = tab_quali_sheet_tab, 
+            neworder = unique(c(
+              "Label.x", "Variable", "Label.y", "varstrat", "Modalites",
+              names(tab_quali_sheet_tab)
+            ))
+          )
+        }
       }
 
       # remake the list
@@ -1546,12 +1685,54 @@ save_excel_results <- function(
     }
   }
 
+  #### Variables Dates #### 
+  # v0.1.24
+  ##### Only describ ######
+  if (length(vars_dates) == 0) {
+    message("[save_excel_results] ", "There is no date variables")
+    tab_date_sheet_list <- NULL
+  } else {
+    if (crossed_varstrat) {
+      levels_to_sep <- levels(dataframe[[varstrat[1]]])
+      message(paste0("[save_excel_results] ", "date (with varstat : ", varstrat[1], ")"))
+      
+      tab_date_sheet_list <- list(
+        data.table::rbindlist(
+          lapply(X = levels_to_sep, FUN = function(level1i) {
+            tab1i <- compute_date_table(
+              dataframe = dataframe[dataframe[[varstrat[1]]] %in% level1i,],
+              vars = vars_dates,
+              varstrat = varstrat[2]
+            )
+            tab1i$varstrat1 <- varstrat[1]
+            tab1i$levels1 <- level1i
+            data.table::setcolorder(x = tab1i, neworder = unique(c(
+              "varstrat1", "levels1", names(tab1i)
+            )))
+           return(tab1i)
+          }),
+          fill = TRUE, use.names = TRUE
+        )
+      )
+      names(tab_date_sheet_list) <- paste0("date - ", varstrat[1], "__", varstrat[2])
+    } else {
+      tab_date_sheet_list <- list(compute_date_table(
+        dataframe = dataframe,
+        vars = vars_dates,
+        varstrat = varstrat
+      ))
+      names(tab_date_sheet_list) <- paste0("date - ", varstrat)
+    }
+
+  }
+  
   #### Write Excel ####
   message("[save_excel_results] ", "write_xlsx")
   writexl::write_xlsx(
     x = c(
       tab_quanti_sheet_list,
       tab_quali_sheet_list,
+      tab_date_sheet_list,
       tab_na_sheet_list
     ),
     path = file, col_names = TRUE
