@@ -1,26 +1,46 @@
+# Version 0.1.24
+
+30/07/2025 - 31/07/2025
+
+-    Add Saïd Maallem as ctb for his suggestions, tests and feedback.
+
+-    Add sheet about date description in `save_excel_results`, based on new functions `get_dates` and `compute_date_table` + add docs + add corresponding unit tests.
+
+-    Expand SMD computation to qualitative variables. Enhancement of `compute_SMD_table`. 
+
+-    Add poster from [EPICLIN 2025](https://www.sciencedirect.com/science/article/pii/S2950433325002836) congress, in inst folder.
+
+-    Update vignette ("StarterPack"), in inst folder.
+
+[BUG]
+
+-    Fix `drop_levels` with varstrat's class test (need factor).
+
+-    With quanti varstrat : Fix cols order & Fix labels for variables too (not only varstrat) in quali sheet.
+
+
 # Version 0.1.23
 
-22/05/2025 & 23/05/2025
+22/05/2025 - 23/05/2025
 
 -    `show_SMD` param : provide the standardised mean difference (SMD) between 2 groups + add test
 
 -    `dico_mapping` param renamed as `dico_label`
-  
+
 -    Update documentation (fix typo)
-  
+
 -    Update vignette with new params' examples
 
 [BUG]
 
 -    `setDT` needed in  `save_excel_paired_results` when selecting with `.SD` operator.
-  
+
 -    `save_excel_paired_results_filtertest` skip vars with all NA.
+
 
 # Version 0.1.22
 
 02/04/2025 & 25/04/2025
-
--    Shapiro.test not executable with less than 3 point (in overall population, in bivar mode) + add tests (`compute_continuous_table`)
 
 -    `drop_levels` param : drop levels added also on varstrat columns + add test in `save_excel_paired_results` and `save_excel_results`
 
@@ -34,6 +54,11 @@
 
 -    Change "N_NA" instead of "NA" col name in compute_ function.
 
+[BUG]
+
+-    Shapiro.test not executable with less than 3 point (in overall population, in bivar mode) + add tests (`compute_continuous_table`)
+
+
 # Version 0.1.21
 
 27/12/2024 - 30/12/2024
@@ -45,6 +70,7 @@
 [STYLE]
 
 -    N "total" and N missing clarified and Columns names and types homogenized (`Nb_mesures`, `Valeurs_manquantes`, as character)
+
 -    "varstrat1" renamed "varstart"
 
 # Version 0.1.20
