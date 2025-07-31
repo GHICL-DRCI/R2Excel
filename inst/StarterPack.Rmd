@@ -93,6 +93,9 @@ save_excel_results(
 )
 ```
 
+<br>
+<hr> 
+<br>
 
 Then, just in R and not especially saving your table in an Excel file, 
 you can get quick and beautiful tables of descriptive statistics. 
@@ -163,10 +166,34 @@ res_fact_simpl0_tabs <- compute_factorial_table(
 res_fact_simpl0_tabs
 ```
 
+(6) And now, it is possible to describ date variables too : 
+
+```
+dt <- data.frame(
+ date1 = as.Date(c("2025-07-30", "2025-07-29", "2025-07-28", "2025-07-30", "2025-07-29", "2025-07-28")), 
+ date2 = as.POSIXct(c("2024-06-20", "2024-06-10", "2024-06-01", "2025-07-30", "2025-07-29", "2025-07-28")), 
+ fact = as.factor(c(rep("A", 3), rep("B", 3)))
+)
+get_dates(dataframe = dt, vars = names(dt))
+compute_date_table(
+  dataframe = dt,
+  vars = names(dt)
+)
+compute_date_table(
+  dataframe = dt,
+  vars = names(dt), 
+  varstrat = "fact"
+)
+```
+
+<br>
+<hr> 
+<br>
+
 To go further on statistics, you can test tables according your studied `varstat`. 
 See `test_*` functions.
 
-(6) Tests for qualitative variables
+(7) Tests for qualitative variables
 
 ``` r
 res_prop <- test_proportions(
@@ -178,7 +205,7 @@ res_prop <- test_proportions(
 res_prop
 ``` 
 
-(7) Tests for quantitative variables
+(8) Tests for quantitative variables
 
 ``` r
 res_means <- test_means(
@@ -190,7 +217,7 @@ res_means <- test_means(
 res_means
 ```
 
-(8) come with the estimated difference of means
+(9) come with the estimated difference of means
 
 ``` r
 estim_diff <- estimate_diff_mean(
@@ -202,8 +229,9 @@ estim_diff <- estimate_diff_mean(
 estim_diff
 ```
 
-(9) With `save_excel_results`, several new possibilities are available.  
-You can now describe 2 varstat crossed (one as a subgroup of the second one) is the varstrat params is provided 
+(10) With `save_excel_results`, several others situation are covered.
+
+You can now describe 2 varstat "crossed" (one as a subgroup of the second one) is the varstrat params is provided 
 as "var1*var2" or as c("var1", "var2") :
 
 ```r 
@@ -236,9 +264,9 @@ save_excel_results(
 )
 ``` 
 
-(10) The option `varstrat` can now take a continuous variable : 
+(11) The param `varstrat` can take a continuous variable : 
 
-Based on `compute_continuous_table` (transposed) table for each qualitative levels and `compute_correlation_table` with it test for quantitative vars (correlation method can be "detect_auto" or classical known approachs)
+Based on `compute_continuous_table` (transposed) table for each qualitative levels and `compute_correlation_table` with it test for quantitative vars (correlation method can be "detect_auto" or classical known approach)
 
 ```r
 save_excel_results(
@@ -263,7 +291,7 @@ compute_correlation_table(
 )
 ```
 
-(11) The option `show_OR` add the univariate OR columns when the varstrat is a binary factor. 
+(12) The option `show_OR` add the univariate OR columns when the varstrat is a binary factor. 
 It is based on `get_OR_univar` function.
 
 ```r
@@ -292,7 +320,7 @@ save_excel_results(
 )
 ```
 
-(12) The option `show_OR` and `simplify` can work together too.
+(13) The option `show_OR` and `simplify` can work together too.
 
 ```r
 save_excel_results(
@@ -310,7 +338,7 @@ save_excel_results(
 ```
 
 
-(13) you might be interested in putting labels next to your blurry variable names. Use the `dico_labels` param, putting the variable name in the first column and your labels in the second.
+(14) You might be interested in putting labels next to your blurry variable names. Use the `dico_labels` param, putting the variable name in the first column and your labels in the second.
 
 
 ```r
@@ -324,13 +352,16 @@ save_excel_results(
   varstrat = "binary_test",
   dico_labels = data.frame(
     "Vars" = c("Population", "Income", "state.division", "state.region"), 
-    "labels" = c("Population size (nb)", "Income (in dollars)", "State Division ???", "state region (cad point)")
+    "labels" = c(
+      "Population size (nb)", "Income (in dollars)", 
+      "State Division ???", "state region (cad point)"
+    )
   )
 )
 ```
 
-(14) In presence of a binary varstrat, you may want to check that your two groups are well balanced.
-If so, SMD (standardized mean difference) between the groups will provide a good indication. Check out the `show_smd` param ! 
+(15) In presence of a binary varstrat, you may want to check that your two groups are well balanced.
+If so, SMD (standardized mean difference <=> stddiff) between the groups will provide a good indication. Check out the `show_smd` param ! 
 
 ```r
 save_excel_results(
@@ -338,7 +369,7 @@ save_excel_results(
   file = file.path("tmp", "14-smd.xlsx"),
   vars = c(
     "Population", "Illiteracy", "Income",
-    "state.division", "state.region"
+    "state.division", "state.region", "binary_test"
   ),
   varstrat = "binary_test",
   show_SMD = TRUE,
@@ -358,6 +389,10 @@ save_excel_results(
   show_SMD = TRUE,
 )
 ```
+
+<br>
+<hr> 
+<br>
 
 ## Longitudinal (Paired) Data
 
@@ -432,7 +467,7 @@ compute_paired_factorial_table_and_test(
 
 (C) You can generalize the call of paired tables, for several variables of interest, saved in excel file. 
 
-For instance with 2 visits
+For instance like
 
 ```r
 save_excel_paired_results(
@@ -446,7 +481,7 @@ save_excel_paired_results(
 )
 ```
 
-(D) For instance with 2 visits
+or
 
 ```r
 save_excel_paired_results(
@@ -476,7 +511,7 @@ save_excel_paired_results(
 )
 ```
 
-(E) The option about "cross" 2 varstrats is also available in "paired" function : 
+(D) The option about "cross" 2 varstrats is also available in "paired" function : 
 
 ```r
 save_excel_paired_results(
@@ -492,7 +527,11 @@ save_excel_paired_results(
 )
 ```
 
-(F) Understand `save_excel_paired_results_filtertest` : A specific table for repeated data may be wanted in two ways: 
+<br>
+<hr> 
+<br>
+
+(E) Understand `save_excel_paired_results_filtertest` : A specific table for repeated data may be wanted in two ways: 
   To show rows with missing values to describe everything or to remove missing data to describe only the tested data.  
 Here is a code snippet to do both :
 
@@ -558,7 +597,7 @@ save_excel_paired_results_filtertest(
   vars = c("extra", "extra_with_missings", "group"),
   varstrat = "visites_2",
   patient_id = "ID2",
-  file = file.path("tmp", "desc_paired_data_tested.xlsx")
+  file = file.path("tmp", "FF-nonmissing_paired_desc.xlsx")
 )
 ```
 
