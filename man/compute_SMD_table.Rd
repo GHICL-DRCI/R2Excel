@@ -9,7 +9,7 @@ compute_SMD_table(dataframe, vars, varstrat, digits = 2)
 \arguments{
 \item{dataframe}{A data.frame. tibble or data.table}
 
-\item{vars}{A vector of characters. Names of dataframe's numeric columns.}
+\item{vars}{A vector of characters. Names of dataframe's columns.}
 
 \item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.}
 
@@ -22,12 +22,21 @@ A table of SMD values for each vars.
 standardized mean difference
 }
 \details{
-Interpretation of SMD values : The generally accepted thresholds for interpreting effect size are :  
+Interpretation of SMD values : 
+The generally accepted thresholds for interpreting effect size are :  
 SMD < 0.1: negligible difference,  
-0.1 ≤ SMD < 0.2: small difference,  
-0.2 ≤ SMD < 0.5: moderate difference,  
-SMD ≥ 0.5: large difference.  
-These thresholds help to assess the balance between groups, especially after matching or adjustment procedures.
+0.1 ≤ SMD < 0.2: "Imbalance was usually defined as "stddiff" greater than 0.1 or 0.2 (which means the small effect size)."
+0.2 ≤ SMD < 0.5: between small and moderate difference,  
+0.5 ≤ SMD < 0.8: between moderate and large difference,  
+SMD ≥ 0.8: large difference.  
+These thresholds help to assess the balance between groups,
+ especially after matching or adjustment procedures.
+
+Computation follows stddiff r pkg implementation : https://cran.r-project.org/web/packages/stddiff/index.html
+Reading of thresholds are based on :
+  Cohen, J. (1988).  Cohen J. Statistical Power Analysis for the Behavioral Sciences (2nd ed). Lawrence Erlbaum Associates Publishers: Hillsdale, NJ. 
+  also quoted in https://www.utstat.toronto.edu/brunner/oldclass/378f16/readings/CohenPower.pdf (page 40 – num 57/579)
+  also quoted in SAS documentation : https://support.sas.com/resources/papers/proceedings12/335-2012.pdf
 }
 \examples{
 \dontrun{
@@ -35,7 +44,8 @@ compute_SMD_table(
   dataframe = modified_state,
   vars = c(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
-    "HS Grad", "Frost", "Area"
+    "HS Grad", "Frost", "Area", "yes_no_french_question", "binary_test",
+    "state.division", "state.region"
   ),
   varstrat = "election",
   digits = 2

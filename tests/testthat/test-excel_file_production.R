@@ -505,14 +505,15 @@ test_that("test labels", {
   expect_equal(is.na(sheet_08quali$Label), is.na(sheet_08quali$Variable))
 })
 
-#### SMD add ####
+#### show_SMD ####
 
 path09 <- save_excel_results(
   dataframe = modified_state,
   file = file.path("tmp", "09-smd.xlsx"),
   vars = c(
     "Population", "Illiteracy", "Income",
-    "state.division", "state.region"
+    "state.division", "state.region",
+    "election", "yes_no_french_question"
   ),
   varstrat = "binary_test",
   show_SMD = TRUE,
@@ -522,10 +523,10 @@ sheet09quanti <- readxl::read_excel(
   file.path("tmp", "09-smd.xlsx"),
   sheet = "quantitative - binary_test"
 )
-# sheet09quali <- readxl::read_excel(
-#   file.path("tmp", "09-smd.xlsx"),
-#   sheet = "qualitative - binary_test"
-# )
+sheet09quali <- readxl::read_excel(
+  file.path("tmp", "09-smd.xlsx"),
+  sheet = "qualitative - binary_test"
+)
 # also possible in cross situation
 path09cross <- save_excel_results(
   dataframe = modified_state,
@@ -542,12 +543,69 @@ sheet09quanticross <- readxl::read_excel(
   path09cross,
   sheet = 1 # quali one
 )
+sheet09qualicross <- readxl::read_excel(
+  path09cross,
+  sheet = 2# quanti one
+)
 test_that("test smd", {
   expect_true("SMD" %in% names(sheet09quanti))
+  expect_true("SMD" %in% names(sheet09quali))
   expect_true(sheet09quanti$SMD[1] == -0.09) # test 1 value
+  expect_true(sheet09quali$SMD[1] == 0.49) # test 1 value
 
   expect_true("SMD" %in% sheet09quanticross[1, ])
   expect_true(sheet09quanticross[2, "election==red...7"] == -0.43) # test 1 value
+})
+
+#### quali varstrat ####
+save_excel_results(
+  dataframe = modified_state,
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp",
+    "HS Grad", "Frost",
+    "election", "binary_test"
+  ),
+  varstrat = "Area", 
+  file = file.path("tmp", "10-desc_by_area.xlsx"), 
+  dico_labels = data.frame(
+    "Vars" = c(
+      "Area", "Population", "Income", "state.division", "state.region",
+      "election", "binary_test"
+    ), 
+    "labels" = c(
+      "The Area measures", "Population size (nb)",
+      "Income (in dollars)", "State Division ???", "state region (cad point)",
+      "election party", "binary info test"
+    )
+  )
+)
+
+sheet_areacorr <- readxl::read_excel(
+  file.path("tmp", "10-desc_by_area.xlsx"),
+  sheet = "quantitative - Area"
+)
+sheet_area_quali <- readxl::read_excel(
+  file.path("tmp", "10-desc_by_area.xlsx"),
+  sheet = "qualitative - Area"
+)
+test_that("test quanti varstrat", {
+  expect_true(file.exists(file.path("tmp", "10-desc_by_area.xlsx")))
+  expect_true(any(grepl("correlation", names(sheet_areacorr))))
+  expect_true(all(c(
+      "Population", "Income", "Illiteracy", "Life Exp",
+      "HS Grad", "Frost"
+    ) %in% sheet_areacorr$Variable)
+  )
+  expect_true(
+    all(sheet_areacorr$correlation_method %in% "spearman")
+    # because Area is not normal. 
+  )
+  expect_true(sheet_areacorr$`Area correlation`[1] == -0.12)
+  expect_true(sheet_areacorr$`Area correlation`[6] == 0.17)
+  expect_true(
+    all(c("Label.x", "Variable", "Label.y", "varstrat") %in% names(sheet_area_quali))
+  )
+  expect_true(all(sheet_area_quali$Nb_mesures == c(50,26,24,50,25,25)))
 })
 
 #### end ####

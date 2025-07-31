@@ -33,7 +33,8 @@ Columns must be well formated with factor or numeric class (important).}
 
 \item{file}{A character. Path and name of the excel results file.}
 
-\item{vars}{A vector of characters. Name of columns to describe and test.}
+\item{vars}{A vector of characters. Name of columns to describe and test.
+Only consider numerics, factors and dates.}
 
 \item{varstrat}{A characters. Not null. Names of the stratification variable, making groups to compare (*time* or *visites* for instance).
 The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" will be set on 3 lines for each individuals).

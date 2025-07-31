@@ -15,11 +15,11 @@ get_characters(dataframe, vars = colnames(dataframe))
 A vector of characters : the names of character columns
 }
 \description{
-provide the names of numeric columns
+provide the names of character columns
 }
 \examples{
 \dontrun{
-get_numerics(
+get_characters(
   dataframe = modified_state,
   vars = c("state.division", "state.region", "Income", "Illiteracy")
 )

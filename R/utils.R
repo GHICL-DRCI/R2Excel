@@ -46,7 +46,7 @@ get_numerics <- function(
 
 #' get characters
 #'
-#' provide the names of numeric columns
+#' provide the names of character columns
 #'
 #' @param dataframe A data.frame.
 #' @param vars A vector of characters. Names of dataframe to test.
@@ -55,7 +55,7 @@ get_numerics <- function(
 #' @export
 #' @examples
 #' \dontrun{
-#' get_numerics(
+#' get_characters(
 #'   dataframe = modified_state,
 #'   vars = c("state.division", "state.region", "Income", "Illiteracy")
 #' )
@@ -67,6 +67,31 @@ get_characters <- function(
   return(vars[sapply(as.data.frame(dataframe)[, vars, drop = FALSE], is.character)])
 }
 
+#' get dates
+#'
+#' provide the names of date columns
+#'
+#' @param dataframe A data.frame.
+#' @param vars A vector of characters. Names of dataframe to test.
+#'
+#' @return A vector of dates : the names of date columns
+#' @export
+#' @examples
+#' \dontrun{
+#' 
+#' }
+get_dates <- function(
+  dataframe, 
+  vars = colnames(dataframe)
+) {
+  # v0.1.24
+  vars[
+    unlist(lapply(X = vars, FUN = function(d_coli) {
+      di <- dataframe[[d_coli]]
+      any(class(di) %in% c("POSIXct", "POSIXt", "Date"))
+    }))
+  ]
+}
 
 #' vector to character
 #'

@@ -9,6 +9,7 @@
 #'  Columns must be well formated with factor or numeric class (important).
 #' @param file A character. Path and name of the excel results file.
 #' @param vars A vector of characters. Name of columns to describe and test.
+#'   Only consider numerics, factors and dates.
 #' @param varstrat A characters. Not null. Names of the stratification variable, making groups to compare (*time* or *visites* for instance).
 #'  The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" will be set on 3 lines for each individuals).
 #'  About 2 *crossed varstrats* : you can provide "var1*var2", and so
@@ -195,8 +196,10 @@ save_excel_paired_results <- function(
     tab_na_sheet_list <- NULL
   }
 
+  ## detect vars class
   vars_quanti <- get_numerics(dataframe, vars = vars)
   vars_quali <- get_factors(dataframe, vars = vars)
+  vars_dates <- get_dates(dataframe, vars = vars)
 
   #### Quanti vars ####
   if (length(vars_quanti) > 0) {
@@ -996,12 +999,54 @@ save_excel_paired_results <- function(
     }
   }
 
+  
+  #### Variables Dates ####  v0.1.24
+  if (length(vars_dates) == 0) {
+    message("[save_excel_paired_results] ", "There is no date variables")
+    tab_date_sheet_list <- NULL
+  } else {
+    if (crossed_varstrat) {
+      levels_to_sep <- levels(dataframe[[varstrat[1]]])
+      message(paste0("[save_excel_paired_results] ", 
+                     "date (with varstat : ", varstrat[1], ")"))
+      
+      tab_date_sheet_list <- list(
+        data.table::rbindlist(
+          lapply(X = levels_to_sep, FUN = function(level1i) {
+            tab1i <- compute_date_table(
+              dataframe = dataframe[dataframe[[varstrat[1]]] %in% level1i,],
+              vars = vars_dates,
+              varstrat = varstrat[2]
+            )
+            tab1i$varstrat1 <- varstrat[1]
+            tab1i$levels1 <- level1i
+            data.table::setcolorder(x = tab1i, neworder = unique(c(
+              "varstrat1", "levels1", names(tab1i)
+            )))
+            return(tab1i)
+          }),
+          fill = TRUE, use.names = TRUE
+        )
+      )
+      names(tab_date_sheet_list) <- paste0("date - ", varstrat[1], "__", varstrat[2])
+    } else {
+      tab_date_sheet_list <- list(compute_date_table(
+        dataframe = dataframe,
+        vars = vars_dates,
+        varstrat = varstrat
+      ))
+      names(tab_date_sheet_list) <- paste0("date - ", varstrat)
+    }
+    
+  }
+  
   #### Write Excel ####
   message("[save_excel_paired_results] ", "write_xlsx")
   writexl::write_xlsx(
     x = c(
       tab_quanti_sheet_list,
       tab_quali_sheet_list,
+      tab_date_sheet_list,
       tab_na_sheet_list
     ),
     path = file,
@@ -1011,7 +1056,7 @@ save_excel_paired_results <- function(
   return(file)
 }
 
-#'
+
 #' Tables for paired-tested-data, saved in Excel file
 #'
 #' Provide descriptive statistics table with a paired level, 
@@ -1174,8 +1219,14 @@ save_excel_paired_results_filtertest <- function(
       if (file.exists(file_i)) {
         # read the excel table, quanti sheet
         if (grepl("^quanti", readxl::excel_sheets(file_i))) {
+          sheet_name <- grep(
+            "^quanti",
+            readxl::excel_sheets(file_i),
+            value = TRUE
+          )
           tab_quanti <- readxl::read_excel(
-            path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+            path = file_i,
+            sheet = sheet_name
           )
           return(tab_quanti)
         } else { 
@@ -1197,10 +1248,16 @@ save_excel_paired_results_filtertest <- function(
       if (file.exists(file_i)) {
         # read the excel table, quanti sheet
         if (
-          grepl("^quali", readxl::excel_sheets(gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)))
+          grepl("^quali", readxl::excel_sheets(file_i))
         ) {
+          sheet_name <- grep(
+            "^quali",
+            readxl::excel_sheets(file_i),
+            value = TRUE
+          )
           tab_quali <- readxl::read_excel(
-            path = gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+            path = file_i, 
+            sheet = sheet_name
           )
         } else {
           # no quali sheet
@@ -1212,6 +1269,38 @@ save_excel_paired_results_filtertest <- function(
       }
     }
   ))
+  message("[save_excel_paired_results_filtertest] Gather date lines")
+  # dates
+  desc_data_tested_sheetdate <- data.table::rbindlist(l = lapply(
+    X = vars,
+    FUN = function(var_i) {
+      file_i <- gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+      if (file.exists(file_i)) {
+        # read the excel table, quanti sheet
+        if (
+          grepl("^date", readxl::excel_sheets(file_i))
+        ) {
+          sheet_name <- grep(
+            "^date",
+            readxl::excel_sheets(file_i),
+            value = TRUE
+          )
+          tab_quali <- readxl::read_excel(
+            path = file_i, 
+            sheet = sheet_name
+          )
+        } else {
+          # no date sheet
+          return(NULL)
+        }
+      } else {
+        # no file, var ignored
+        return(NULL)
+      }
+    }
+  ))
+  
+  
   message("[save_excel_paired_results_filtertest] Clear")
   clean_temp_files <- lapply(
     X = vars,
@@ -1219,11 +1308,12 @@ save_excel_paired_results_filtertest <- function(
       file_i <- gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
       if (file.exists(file_i)) {
         unlink( # if want to clean temporary file
-          gsub(".xlsx", paste0("_", var_i, ".xlsx"), file)
+          file_i
         )
       }
     }
   )
+  
   message("[save_excel_paired_results_filtertest] Make list")
   # remake the lists
   if (nrow(desc_data_tested_sheetquanti) > 0) {
@@ -1239,11 +1329,20 @@ save_excel_paired_results_filtertest <- function(
   } else {
     tab_quali_sheet_list <- NULL
   }
+  
+  if (nrow(desc_data_tested_sheetdate) > 0) {
+    tab_date_sheet_list <- list(desc_data_tested_sheetdate)
+    names(tab_date_sheet_list) <- paste0("date - ", varstrat)
+  } else {
+    tab_date_sheet_list <- NULL
+  }
+  
   message("[save_excel_paired_results_filtertest] save ", file)
   writexl::write_xlsx(
     x = c(
       tab_quanti_sheet_list,
-      tab_quali_sheet_list
+      tab_quali_sheet_list,
+      tab_date_sheet_list
     ),
     path = file
   )

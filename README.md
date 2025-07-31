@@ -23,7 +23,7 @@ Les fonctions principales produisent des tableaux statistiques descriptifs, homo
 Ce package est utilisé pour générer les rapports statistiques produits par la cellule Méthodologie/Biostatistique du GHICL DRCI (Lomme, France).
 
 N'hésitez pas à participer à ce projet : il est conçu pour être open source sous une [Licence CECILL-2](https://cecill.info/licences/Licence_CeCILL_V2.1-fr.txt) (équivalent français de la licence GPL). 
-Toute amélioration ou aide à la documentation est la bienvenue. Pour ce faire, nous vous prions de bien vouloir procéder à la création d'une branche pour nous soumettre votre requête ("merge request"). 
+Toute amélioration ou aide à la documentation est la bienvenue. Pour ce faire, nous vous prions de bien vouloir procéder à la création d'une branche pour nous soumettre votre requête ("merge request").  
 
 ## Authors
 
@@ -32,6 +32,7 @@ in alphabetic order
   Mathilde Boissel [aut, cre],  
   Cassandra Chaldaureille [aut, cre],  
   Sahara Graf [aut],  
+  Saïd Maallem [ctb],  
   Laurène Norberciak [aut, cre],  
   Cristian Preda [aut, cre],  
   Stephane Verdun [aut]  
@@ -61,3 +62,6 @@ Usefull command to know what's new : `utils::news(package = "R2Excel")`
 ## Starter Pack
 
 See some examples in `inst/StarterPack.Rmd` (`inst/StarterPack.html`)
+
+## Publication 
+See poster in `inst/poster_epiclin_R2EXCEL.pptx` (`P58_R2Excel_MBoissel.pdf`)
