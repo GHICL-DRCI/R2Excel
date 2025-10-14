@@ -36,7 +36,7 @@
 #' @param crossed_varstrat_test A logical, Default FALSE. If turn TRUE, 
 #'  and detection of 2 varstrat "var1*var2" to cross, statistical test will be provided.
 #' @param detail_NB_mesure_sum A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) 
-#'  for each group.
+#'  for each group, in levels's order.
 #' @param show_p_adj A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.
 #' @param show_SMD A logical, Default FALSE. If turn TRUE, add SMD column (standardized mean difference) between 2 groups.
 #' @param drop_levels A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)
@@ -339,6 +339,13 @@ save_excel_results <- function(
               "Variable", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
               names(tmp2)
             ))
+            
+            # order following levels # v1.26 : 13/10/2025
+            reordercols <- setdiff(reordercols, c(
+              paste0(varstrat[2], "=", levels(dataframe[[varstrat[2]]]))
+            ))
+            reordercols <- c(reordercols, paste0(varstrat[2], "=", levels(dataframe[[varstrat[2]]])))
+            
             tmp2 <- tmp2[, .SD, .SDcols = c(reordercols)]
             return(tmp2)
           }
@@ -358,7 +365,7 @@ save_excel_results <- function(
             dataframe = dataframe[dataframe[[varstrat[1]]] %in% level_i, ],
             vars = vars_quanti,
             varstrat = varstrat[2],
-            digits = digits
+            digits = 2 # no more passing digits param v0.1.25
           )
           if (!show_SMD || is.null(SMD_tab)) {
             # tab_quanti_sheet <- tab_quanti_sheet # stay the same...
@@ -585,10 +592,17 @@ save_excel_results <- function(
                 value.var = cell_content
               )
               names(tmp2) <- gsub(varstrat_i, paste0(varstrat_i, "="), names(tmp2))
+              # order "Population_totale"
               reordercols <- unique(c(
                 "Variable", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
                 names(tmp2)
               ))
+              # order following levels' order # v1.26 : 13/10/2025
+              reordercols <- setdiff(reordercols, c(
+                paste0(varstrat_i, "=", levels(dataframe[[varstrat_i]]))
+              ))
+              reordercols <- c(reordercols, paste0(varstrat_i, "=", levels(dataframe[[varstrat_i]])))
+              
               tmp2 <- tmp2[, .SD, .SDcols = c(reordercols)]
               return(tmp2)
             }
@@ -602,7 +616,7 @@ save_excel_results <- function(
               dataframe = dataframe,
               vars = vars_quanti,
               varstrat = varstrat_i,
-              digits = digits
+              digits =  2 # no more passing digits param v0.1.25
             )
             if (!show_SMD || is.null(SMD_tab)) {
               # tab_quanti_sheet <- tab_quanti_sheet # stay the same...
@@ -761,10 +775,13 @@ save_excel_results <- function(
                   paste(tmp[[paste0("n", namei)]], tmp[[paste0("p", namei)]])
                 })
               ]
-              tmp3 <- tmp2[!Modalites %in% c("Nb_mesures", "N_NA"), .SD, .SDcols = c(
-                "Variable", "Modalites", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
-                paste0(varstrat[2], "=", levels_i_names)
-              )]
+              tmp3 <- tmp2[
+                !Modalites %in% c("Nb_mesures", "N_NA"), 
+                .SD, .SDcols = c(
+                  "Variable", "Modalites", "Nb_mesures", "Valeurs_manquantes", "Population_totale",
+                  paste0(varstrat[2], "=", levels_i_names)
+                )
+              ]
 
               if (nrow(tmp3) == 0) {
                 # because of the droplevels, this variable is not present at all for this strat of varstrat[1]
@@ -803,7 +820,7 @@ save_excel_results <- function(
             dataframe = dataframe[dataframe[[varstrat[1]]] %in% level_i, ],
             vars = vars_quali,
             varstrat = varstrat[2],
-            digits = digits
+            digits =  2 # no more passing digits param v0.1.25
           )
           if (!show_SMD || is.null(SMD_tab)) {
             # tab_quali_sheet <- tab_quali_sheet # stay the same...
@@ -1175,7 +1192,7 @@ save_excel_results <- function(
                 dataframe = dataframe,
                 vars = vars_quali,
                 varstrat = varstrat_i,
-                digits = digits
+                digits =  2 # no more passing digits param v0.1.25
               )
               if (!show_SMD || is.null(SMD_tab)) {
                 # tab_quali_sheet <- tab_quali_sheet # stay the same...

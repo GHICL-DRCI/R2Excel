@@ -339,7 +339,7 @@ save_excel_paired_results <- function(
           ),
           value.var = "cell_contents"
         )
-
+  
         ## want stat test as option
         if (crossed_varstrat_test) {
           pvaleur_quanti <- test_means(
@@ -376,7 +376,9 @@ save_excel_paired_results <- function(
         dimnames = list(NA, names(tab_all_varstrat_quanti2))
       ))
 
-      tab_quanti_sheet_tab <- data.table::rbindlist(l = list(first_line, tab_all_varstrat_quanti2))
+      tab_quanti_sheet_tab <- data.table::rbindlist(
+        l = list(first_line, tab_all_varstrat_quanti2)
+      )
       # finish to format
       # names(tab_quanti_sheet_tab) <- gsub("(.*)__(.*)", "\\1", names(tab_quanti_sheet_tab))
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
@@ -413,9 +415,12 @@ save_excel_paired_results <- function(
       }), fill = TRUE)
 
       # order : message at the very end
-      data.table::setcolorder(x = tab_quanti_sheet_tab, neworder = c(
-        setdiff(names(tab_quanti_sheet_tab), "message"), "message"
-      ))
+      data.table::setcolorder(
+        x = tab_quanti_sheet_tab, 
+        neworder = c(
+          setdiff(names(tab_quanti_sheet_tab), "message"), "message"
+        )
+      )
 
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- paste0("quantitative - ", varstrat[1])
@@ -571,7 +576,9 @@ save_excel_paired_results <- function(
         x = tab_all_varstrat_sep
       )
       # order folling levels
-      tab_all_varstrat_quali_gather$Variable <- factor(tab_all_varstrat_quali_gather$Variable, levels = vars_quali)
+      tab_all_varstrat_quali_gather$Variable <- factor(
+        tab_all_varstrat_quali_gather$Variable, levels = vars_quali
+      )
       tab_all_varstrat_quali_gather <- tab_all_varstrat_quali_gather[order(Variable), ]
 
       first_line <- data.table::as.data.table(matrix(
