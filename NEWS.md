@@ -1,3 +1,19 @@
+# Version 0.1.26
+
+13/10/2025
+
+-    Order of the columns corrected to match the breakdown of the counts in detail NB (`detail_NB_mesure_sum`), in quanti sheet - according levels order 
+
+-    Add unit tests
+
+# Version 0.1.25
+
+14/08/2025
+
+-    Precise SMD documentation (interpretation & use cases).
+
+-    SMD computation returned with 2 digits (no more passing digits param from `save_excel` call). 
+
 # Version 0.1.24
 
 30/07/2025 - 31/07/2025
@@ -449,3 +465,4 @@ Improvements
 31/07/2024
 
 -   Initial build.
+
