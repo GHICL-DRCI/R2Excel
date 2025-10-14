@@ -233,9 +233,6 @@ test_that("final_varstrat_file", {
   )
 })
 
-#### test 6 ####
-# about some content...
-
 
 #### Test generation of 1 when only 0 (7) ####
 
@@ -360,10 +357,10 @@ sheet_padj <- readxl::read_excel(
 
 test_that("test order p adj", {
   expect_true(file.exists(path04))
-  expect_equal(  
+  expect_equal(
     names(sheet_padj), # test order
     c("Variable", "Nb_mesures", "Valeurs_manquantes", 
-     "election=blue", "election=red",
+      "election=red", "election=blue",
      "P_valeur", "P_adj_holm",
      "Test", "message"
     )
@@ -608,6 +605,172 @@ test_that("test quanti varstrat", {
   expect_true(all(sheet_area_quali$Nb_mesures == c(50,26,24,50,25,25)))
 })
 
+#### levels order & detail NB  & contente ####
+
+pathdetail <- save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "11-test_detail_varstrat.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
+  ),
+  varstrat = "election",
+  digits = 3,
+  simplify = FALSE,
+  prop_table_margin = 2, 
+  detail_NB_mesure_sum = TRUE
+)
+tab_quali_stratdet <- readxl::read_excel(
+  path = pathdetail,
+  sheet = "qualitative - election"
+)
+tab_quanti_stratdet <- readxl::read_excel(
+  path = pathdetail, 
+  sheet = "quantitative - election"
+)
+
+test_that("varstrat_file_content", {
+  # "red"  "blue" # true level order
+  expect_true(which(
+    names(tab_quali_stratdet) %in% 
+    paste0("election=", levels(modified_state$election))[1]
+  ) <
+  which(
+    names(tab_quali_stratdet) %in% 
+      paste0("election=", levels(modified_state$election))[2]
+  ))
+  # "election=red" "election=blue"
+  expect_true(which(
+    names(tab_quanti_stratdet) %in% 
+      paste0("election=", levels(modified_state$election))[1]
+  ) <
+    which(
+      names(tab_quanti_stratdet) %in% 
+        paste0("election=", levels(modified_state$election))[2]
+    ))
+
+  detail <- data.frame(table(modified_state$election))$Freq
+  # red blue 
+  # 26   24 
+  expect_equal(
+    tab_quali_stratdet$Nb_mesures[1], #  "50 (26+24)
+    paste0(sum(detail), " (", detail[1], "+", detail[2], ")")
+  )
+  expect_equal(
+    tab_quanti_stratdet$Nb_mesures[1], #  "50 (26+24)
+    paste0(sum(detail), " (", detail[1], "+", detail[2], ")")
+  )
+
+  # median, not norm
+  expect_true(
+    grepl(
+      round(
+        median(modified_state$Population[modified_state$election %in% "red"]), 3
+      ),
+      tab_quanti_stratdet[["election=red"]][tab_quanti_stratdet$Variable %in% "Population"]
+    )
+  )
+  expect_true(shapiro.test(modified_state$Population)$p.value < 0.05)
+  
+  # mean, norm
+  expect_true(
+    grepl(
+      round(mean(modified_state$Income[modified_state$election %in% "blue"]), 3),
+      tab_quanti_stratdet[["election=blue"]][tab_quanti_stratdet$Variable %in% "Income"]
+    )
+  )
+  expect_true(shapiro.test(modified_state$Income)$p.value > 0.05)
+  
+  
+})
+
+tmp11 <- data.table::copy(modified_state)
+tmp11$elect_reorder <- tmp11$election
+tmp11$elect_reorder <- relevel(tmp11$elect_reorder, "blue")
+pathdetail_revel <- save_excel_results(
+  dataframe = tmp11,
+  file = file.path("tmp", "11-test_detailreo_varstrat.xlsx"),
+  vars = c(
+    "Population", "Income", "state.region", "binary_test"
+  ),
+  varstrat = "elect_reorder",
+  digits = 3,
+  simplify = FALSE,
+  prop_table_margin = 2, 
+  detail_NB_mesure_sum = TRUE
+)
+tab_quali_stratdetreorder <- readxl::read_excel(
+  path = pathdetail_revel,
+  sheet = "qualitative - elect_reorder"
+)
+tab_quanti_stratdetreorder  <- readxl::read_excel(
+  path = pathdetail_revel, 
+  sheet = "quantitative - elect_reorder"
+)
+
+test_that("varstrat_file_order", {
+
+  expect_true(
+    which(
+      names(tab_quali_stratdetreorder) %in% 
+        paste0("elect_reorder=", levels(tmp11$elect_reorder))[1]
+    ) <
+    which(
+      names(tab_quali_stratdetreorder) %in% 
+        paste0("elect_reorder=", levels(tmp11$elect_reorder))[2]
+    )
+  )
+  expect_true(which(
+    names(tab_quanti_stratdetreorder) %in% 
+      paste0("elect_reorder=", levels(tmp11$elect_reorder))[1]
+  ) <
+    which(
+      names(tab_quanti_stratdetreorder) %in% 
+        paste0("elect_reorder=", levels(tmp11$elect_reorder))[2]
+    ))
+  
+  detail <- data.frame(table(tmp11$elect_reorder))$Freq
+  # blue  red 
+  # 24   26 
+  expect_equal(
+    tab_quali_stratdetreorder$Nb_mesures[1], #  "50 (24+26)
+    paste0(sum(detail), " (", detail[1], "+", detail[2], ")")
+  )
+  expect_equal(
+    tab_quanti_stratdetreorder$Nb_mesures[1], #  "50 (24+26)
+    paste0(sum(detail), " (", detail[1], "+", detail[2], ")")
+  )
+  
+  # median, not norm
+  expect_true(
+    grepl(
+      round(
+        median(tmp11$Population[tmp11$elect_reorder %in% "red"]), 3
+      ),
+      tab_quanti_stratdetreorder[["elect_reorder=red"]][
+        tab_quanti_stratdetreorder$Variable %in% "Population"
+      ]
+    )
+  )
+  expect_true(shapiro.test(tmp11$Population)$p.value < 0.05)
+  
+  # mean, norm
+  expect_true(
+    grepl(
+      round(mean(tmp11$Income[tmp11$elect_reorder %in% "blue"]), 3),
+      tab_quanti_stratdetreorder[["elect_reorder=blue"]][
+        tab_quanti_stratdetreorder$Variable %in% "Income"
+      ]
+    )
+  )
+  expect_true(shapiro.test(tmp11$Income)$p.value > 0.05)
+  
+  
+})
+
+
+
 #### end ####
 # clear tmp test folder
 unlink("tmp", recursive = TRUE)
+
