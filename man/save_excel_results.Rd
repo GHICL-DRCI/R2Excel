@@ -74,7 +74,7 @@ Valeurs manquantes et p will be repeated.}
 and detection of 2 varstrat "var1*var2" to cross, statistical test will be provided.}
 
 \item{detail_NB_mesure_sum}{A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) 
-for each group.}
+for each group, in levels's order.}
 
 \item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.}
 
