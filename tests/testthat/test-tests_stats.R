@@ -1,3 +1,5 @@
+message("test tests stat - done v0.1.27")
+
 # Deploy test on functions "tests_stats"
 
 #### test cochran ####
@@ -79,18 +81,36 @@ test_that("test_proportions", {
   expect_true(class(res_prop$details$state.region$Test) == "htest")
 
   # 4 digits signif by default
-  expect_equal(res_prop$results$P_valeur[1], signif(res_prop$details$state.region$Test$p.value, 4))
-  expect_equal(res_prop$results$P_valeur[2], signif(res_prop$details$state.division$Test$p.value, 4))
-  expect_equal(res_prop$results$P_valeur[3], signif(res_prop$details$binary_test$Test$p.value, 4))
+  expect_equal(
+    res_prop$results$P_valeur[1], 
+    signif(res_prop$details$state.region$Test$p.value, 4))
+  expect_equal(
+    res_prop$results$P_valeur[2], 
+    signif(res_prop$details$state.division$Test$p.value, 4))
+  expect_equal(
+    res_prop$results$P_valeur[3], 
+    signif(res_prop$details$binary_test$Test$p.value, 4))
 
-  expect_true(grepl(res_prop$results$Test[1], res_prop$details$state.region$Test$method, ignore.case = TRUE))
-  expect_true(grepl(res_prop$results$Test[2], res_prop$details$state.region$Test$method, ignore.case = TRUE))
   expect_true(
-    grepl(gsub("\\)", "", unlist(strsplit(x = res_prop$results$Test[3], split = "(", fixed = TRUE))[2]), res_prop$details$binary_test$Test$method, ignore.case = TRUE)
+    grepl(res_prop$results$Test[1], 
+          res_prop$details$state.region$Test$method, ignore.case = TRUE))
+  expect_true(
+    grepl(res_prop$results$Test[2],
+          res_prop$details$state.region$Test$method, ignore.case = TRUE))
+  expect_true(
+    grepl(
+      gsub("\\)", "", 
+      unlist(strsplit(
+        x = res_prop$results$Test[3], 
+        split = "(", fixed = TRUE))[2]),
+      res_prop$details$binary_test$Test$method, ignore.case = TRUE
+    )
   )
 
   # selection
-  expect_equal(res_prop$selection, c("state.region", "state.division")) # binary test is not selected because p>0.05
+  expect_equal(
+    res_prop$selection, c("state.region", "state.division")
+  ) # binary test is not selected because p>0.05
 })
 
 test_that("test_proportions_fisher", {
@@ -132,6 +152,7 @@ test_that("test_means", {
     ),
     res_means$results$Test[1] %in% "Wilcoxon rank sum exact test (Mann-Whitney)"
   )
+  
   expect_equal(
     all(
       c(
@@ -161,7 +182,8 @@ test_that("test_means", {
     )
   )
   expect_true(
-    grepl(gsub("Student T-test", "Two Sample t-test", res_means$results$Test[2]), res_means$details$Income$Test$method, ignore.case = TRUE)
+    grepl(gsub("Student T-test", "Two Sample t-test", 
+               res_means$results$Test[2]), res_means$details$Income$Test$method, ignore.case = TRUE)
   )
 
   # selection
@@ -182,6 +204,50 @@ test_that("test_means", {
     res_means_inf_4$results$message[1] ==
       "Error : L'effectif est < 4 dans au moins l un des groupes ! Pas de test possible"
   )
+  
+  
+  ## --here test news options
+  ## --todo
+  # default :
+  # test_means(
+  #   dataframe = modified_state[, c("Population", "Income", "election")],
+  #   vars = c("Population", "Income"),
+  #   varstrat = "election"
+  # )
+  # force parametric
+  res <- test_means(
+    dataframe = modified_state[, c("Population", "Income", "election")],
+    vars = c("Population", "Income"),
+    varstrat = "election", 
+    force_parametric_test = TRUE
+  )
+  expect_equal(
+    res$results$Test, c("Student T-test", "Student T-test")
+  )
+  
+  # force non parametric
+  res <- test_means(
+    dataframe = modified_state[, c("Population", "Income", "election")],
+    vars = c("Population", "Income"),
+    varstrat = "election", 
+    force_non_parametric_test = TRUE
+  )
+  expect_equal(
+    res$results$Test,
+    c("Wilcoxon rank sum exact test (Mann-Whitney)", "Wilcoxon rank sum exact test (Mann-Whitney)")
+  )
+  
+  # error handling
+  expect_error(
+    test_means(
+      dataframe = modified_state[, c("Population", "Income", "election")],
+      vars = c("Population", "Income"),
+      varstrat = "election", 
+      force_parametric_test = TRUE,
+      force_non_parametric_test = TRUE
+    )
+  )
+  
 })
 
 test_that("estimation_diff_means", {
@@ -190,7 +256,7 @@ test_that("estimation_diff_means", {
     dataframe = modified_state[, c("Population", "Income", "election")],
     vars = c("Population", "Income"),
     varstrat = "election",
-    digits = 2
+    precision = 2
   )
 
   expect_true(is.data.frame(estim_diff))
@@ -250,5 +316,65 @@ test_that("test force_non_parametric_test", {
 
 })
 
-#### test shapi ####
-# res_means_error_shapi --here to imagine
+
+#### new test v0.1.27 #####
+
+# =
+# Tests pour check_normality()
+# =
+
+test_that("check_normality returns correct structure", {
+  # Données normales
+  normal_data <- rnorm(100, mean = 50, sd = 10)
+  
+  result_simple <- check_normality(normal_data, return_messages = FALSE)
+  expect_true(is.logical(result_simple))
+  expect_length(result_simple, 1)
+  
+  result_detailed <- check_normality(normal_data, return_messages = TRUE)
+  expect_true(is.list(result_detailed))
+  expect_true(all(c("is_normal", "message") %in% names(result_detailed)))
+  expect_true(is.logical(result_detailed$is_normal))
+  expect_true(is.character(result_detailed$message))
+})
+
+test_that("check_normality detects normal data", {
+  set.seed(123)
+  normal_data <- rnorm(100, mean = 50, sd = 10)
+  
+  result <- check_normality(normal_data, return_messages = TRUE)
+  expect_true(result$is_normal)
+  expect_equal(result$message, "")
+})
+
+test_that("check_normality detects non-normal data", {
+  set.seed(123)
+  # Distribution très asymétrique (non-normale)
+  non_normal_data <- rexp(100, rate = 0.5)
+  
+  result <- check_normality(non_normal_data, return_messages = TRUE)
+  expect_false(result$is_normal)
+  expect_equal(result$message, "")
+})
+
+test_that("check_normality handles edge cases", {
+  # Vecteur avec valeurs identiques (shapiro échoue)
+  constant_data <- rep(5, 50)
+  result <- check_normality(constant_data, return_messages = TRUE)
+  expect_false(result$is_normal)
+  expect_true(nchar(result$message) > 0)  # Un message d'erreur devrait être présent
+  
+  # Vecteur très court (< 3 observations)
+  short_data <- c(1, 2)
+  result <- check_normality(short_data, return_messages = TRUE)
+  expect_false(result$is_normal)
+  expect_true(nchar(result$message) > 0)
+})
+
+test_that("check_normality handles NA values", {
+  data_with_na <- c(rnorm(50), NA, NA, NA)
+  result <- check_normality(data_with_na, return_messages = TRUE)
+  expect_true(is.logical(result$is_normal))
+  # Le test devrait fonctionner en retirant les NA
+})
+

@@ -1,3 +1,5 @@
+message("test compute tables - done v0.1.27") # classique
+
 #### continuous tables ####
 
 vars_wanted <- c(
@@ -10,7 +12,7 @@ res_conti_tabs <- compute_continuous_table(
   dataframe = modified_state,
   vars = vars_wanted,
    varstrat = varstrat_wanted,
-   digits = 2
+   precision = 2
 )
 
 test_that("test multi conti list", {
@@ -23,22 +25,21 @@ test_that("test dim in conti tab", {
   expect_equal(ncol(res_conti_tabs[[1]]), 11)
   expect_identical(
     rownames(res_conti_tabs[[1]]),
-    c("", paste0(varstrat_wanted, unique(modified_state$election)))
+    c("Population", paste0(varstrat_wanted, unique(modified_state$election)))
   )
   expect_identical(
     colnames(res_conti_tabs[[1]]),
-    c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal") # default
+    c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "Valeurs_manquantes",
+      "Nb_mesures", "is_Normal") # default
   )
 })
 
 test_that("test values in conti tab", {
   expect_equal(
     res_conti_tabs[[1]][1, "mean"],
-    mean(modified_state[[vars_wanted[1]]])
+    round(mean(modified_state[[vars_wanted[1]]]), 2)
   )
-  expect_false( # round 1 digits
-    res_conti_tabs[[1]][1, "mean"] == round(mean(modified_state[[vars_wanted[1]]]), 1)
-  )
+  #  0.1.27 round digit 1
   expect_equal(
     res_conti_tabs[[1]][1, "sd"],
     sd(modified_state[[vars_wanted[1]]]),
@@ -71,7 +72,7 @@ test_that("test values in conti tab", {
     tolerance = 0
   )
   expect_equal(
-    res_conti_tabs[[1]]["electionred", "N_NA"],
+    res_conti_tabs[[1]]["electionred", "Valeurs_manquantes"],
     sum(is.na(modified_state[[vars_wanted[1]]][modified_state$election %in% "red"])),
     tolerance = 0
   )
@@ -96,7 +97,7 @@ test_that("test values in conti tab", {
 test_that("test NAs in conti tab", {
   # in Frost
   expect_equal(
-    res_conti_tabs[["Frost"]][1, "N_NA"],
+    res_conti_tabs[["Frost"]][1, "Valeurs_manquantes"],
     sum(is.na(modified_state[["Frost"]]))
   )
   expect_equal(
@@ -110,7 +111,7 @@ res_conti_tabs_subset <- compute_continuous_table(
   vars = vars_wanted[1],
   varstrat = varstrat_wanted,
   stats_choice = c("mean", "sd", "N"),
-  digits = 2
+  precision = 2
 )
 
 test_that("test dim in conti subset tab", {
@@ -119,7 +120,7 @@ test_that("test dim in conti subset tab", {
   expect_equal(ncol(res_conti_tabs_subset[[1]]), 3) # "mean", "sd", "N"
   expect_identical(
     rownames(res_conti_tabs_subset[[1]]),
-    c("", paste0(varstrat_wanted, unique(modified_state$election)))
+    c("Population", paste0(varstrat_wanted, unique(modified_state$election)))
   )
   expect_identical(
     colnames(res_conti_tabs_subset[[1]]),
@@ -127,7 +128,58 @@ test_that("test dim in conti subset tab", {
   )
 })
 
+
+
+# Données avec différentes précisions
+data <- data.frame(
+  age = c(25, 30, 35, 40),           # Entiers -> 0 décimale
+  poids = c(70.5, 75.2, 68.9, 72.1), # 1 décimale
+  taille = c(1.75, 1.82, 1.68, 1.79), # 2 décimales
+  biomarqueur = c(0.0125, 0.0138, 0.0142, 0.0129) # 4 décimales
+)
+
+# Avec precision auto
+result_auto <- compute_continuous_table(
+  dataframe = data,
+  precision = "auto"
+)
+# result_auto
+# age -> moyenne à 1 décimale, sd à 2 (max 3)
+# poids -> moyenne à 2 décimales, sd à 3
+# taille -> moyenne à 3 décimales, sd à 3 (max atteint)
+# biomarqueur -> moyenne à 5 décimales, sd à 3 (max atteint)
+
+# Avec digits fixe (mode classique)
+result_fixed <- compute_continuous_table(
+  dataframe = data,
+  precision = 2
+)
+# result_fixed
+
+test_that("test precision", {
+  expect_equal(
+    result_auto$mean,
+    c(32.5, 71.67, 1.760, 0.01335)
+  )
+  expect_equal(
+    result_auto$sd,
+    c(6.450, 2.689, 0.061, 0.001)
+  )
+
+  expect_equal(
+    result_fixed$mean,
+    c(32.50, 71.67, 1.76, 0.01)
+  )
+  expect_equal(
+    result_fixed$sd,
+    c(6.45, 2.69, 0.06, 0.00)
+  )
+
+})
+
+
 #### shapi ####
+
 # v0.1.22 test shapiro to skip
 # shapiro.test not executable with less than 3 point (in overall population, in bivar mode)
 modified_state$twovalues <- c(3.3, 4.4, rep(NA, nrow(modified_state)-2))
@@ -158,7 +210,7 @@ res_fact_tabs <- compute_factorial_table(
   dataframe = modified_state,
   vars = vars_wanted,
   varstrat = varstrat_wanted,
-  digits = 2,
+  precision = 2,
   simplify = FALSE
 )
 
@@ -177,7 +229,7 @@ test_that("test dim in fact tab", {
   )
   expect_identical(
     rownames(res_fact_tabs[[1]]),
-    c(levels(modified_state[[vars_wanted[1]]]), "N_NA", "Nb_mesures")
+    c(levels(modified_state[[vars_wanted[1]]]), "Valeurs_manquantes", "Nb_mesures")
   )
   expect_true(
     all(
@@ -248,7 +300,7 @@ res_fact_simpl_tabs <- compute_factorial_table(
   dataframe = modified_state,
   vars = vars_wanted,
   varstrat = varstrat_wanted,
-  digits = 2,
+  precision = 2,
   simplify = TRUE
 )
 # res_fact_simpl_tabs
@@ -272,7 +324,7 @@ res_fact_simpl0_tabs <- compute_factorial_table(
   dataframe = modified_state,
   vars = vars_wanted,
   varstrat = varstrat_wanted,
-  digits = 2,
+  precision = 2,
   simplify = TRUE,
   force_generate_1_when_0 = TRUE
 )
@@ -292,7 +344,7 @@ res_fact_simpl0_tabs_2 <- compute_factorial_table(
   dataframe = modified_state,
   vars = vars_wanted,
   varstrat = varstrat_wanted,
-  digits = 2,
+  precision = 2,
   simplify = FALSE,
   force_generate_1_when_0 = TRUE
 )
@@ -305,7 +357,7 @@ res_fact_NAN_tab <- compute_factorial_table(
   dataframe = modified_state,
   vars = c("yes_no_french_question", "var_ab_NAN", "election"),
   varstrat = varstrat_wanted,
-  digits = 2,
+  precision = 2,
   simplify = FALSE,
   force_generate_1_when_0 = FALSE
 )
@@ -327,7 +379,7 @@ corr_tab <- compute_correlation_table(
   ),
   varstrat = "Area",
   method_corr = "detect_auto",
-  digits = 2
+  precision = 2
 )
 test_that("test correlation tab", {
   expect_equal(nrow(corr_tab), 6)
@@ -354,7 +406,7 @@ SMD_tab <- compute_SMD_table(
     "HS Grad", "Frost", "Area"
   ),
   varstrat = "election",
-  digits = 2
+  precision = 2
 )
 
 SMD_tab2 <- compute_SMD_table(
@@ -363,7 +415,7 @@ SMD_tab2 <- compute_SMD_table(
     "Population", "Income", "Area"
   ),
   varstrat = "binary_test",
-  digits = 3
+  precision = 3
 )
 
 test_that("smd computation", {
@@ -413,8 +465,77 @@ test_that("error no smd ", {
         "HS Grad", "Frost", "Area"
       ),
       varstrat = "special_condition",
-      digits = 2
+      precision = 2
     )
   )
 })
 
+
+
+# =
+# Tests pour compute_continuous_table()
+# =
+
+test_that("compute_continuous_table returns correct structure", {
+  df <- data.frame(
+    var1 = c(10, 20, 30, 40, 50),
+    var2 = c(1, 2, 3, 4, 5)
+  )
+  
+  result <- compute_continuous_table(dataframe = df, vars = "var1", precision = 2)
+  
+  expect_true(is.list(result))
+  expect_true(all(
+    c("mean", "sd", "median", "Q1", "Q3", 
+      "Valeurs_manquantes", "Nb_mesures") %in% names(result)))
+  expect_true(all(sapply(result, is.numeric)))
+})
+
+test_that("compute_continuous_table calculates correct statistics", {
+  df <- data.frame(
+    var1 = c(10, 20, 30, 40, 50)
+  )
+  
+  result <- compute_continuous_table(dataframe = df, vars = "var1", precision = 2)
+  
+  expect_equal(result$mean, 30)
+  expect_equal(result$median, 30)
+  expect_equal(result$Q1[[1]], 20)
+  expect_equal(result$Q3[[1]], 40)
+  expect_equal(result$Valeurs_manquantes, 0)
+  expect_equal(result$Nb_mesures, 5)
+})
+
+test_that("compute_group_summary handles missing values", {
+  df <- data.frame(
+    var1 = c(10, 20, NA, 40, 50, NA)
+  )
+  
+  result <- compute_continuous_table(dataframe = df, vars = "var1", precision = 2)
+  
+  expect_equal(result$mean, 30)  # (10+20+40+50)/4
+  expect_equal(result$Valeurs_manquantes, 2)
+  expect_equal(result$Nb_mesures, 4)
+})
+
+test_that("compute_group_summary respects digits parameter", {
+  df <- data.frame(
+    var1 = c(10.12345, 20.67890, 30.11111)
+  )
+  
+  result_2dig <- compute_continuous_table(dataframe = df, vars = "var1", precision = 2)
+  result_4dig <- compute_continuous_table(dataframe = df, vars = "var1", precision = 4)
+  
+  expect_equal(result_2dig$mean, 20.3)
+  expect_equal(result_4dig$mean,  20.3045)
+})
+
+test_that("compute_group_summary handles all NA = NULL", {
+  df <- data.frame(
+    var1 = c(NA, NA, NA)
+  )
+  
+  result <- compute_continuous_table(dataframe = df, vars = "var1", precision = 2)
+  
+  expect_true(is.null(result))
+})
