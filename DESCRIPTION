@@ -1,7 +1,7 @@
 Package: R2Excel
 Type: Package
 Title: R2Excel : Production Of Statistical Tables in *R*, Save Into (*2*) *Excel* File
-Version: 0.1.26
+Version: 0.1.27
 Author: 
   Mathilde Boissel [aut, cre],
   Cassandra Chaldaureille [aut, cre],
@@ -40,6 +40,7 @@ Imports:
     coin,
     RVAideMemoire,
     rstatix,
+    readxl,
     writexl,
     finalfit,
     data.table
@@ -50,5 +51,4 @@ Suggests:
     testthat (>= 3.0.0),
     usethis
 Config/testthat/edition: 3
-RoxygenNote: 7.3.1
-
+RoxygenNote: 7.3.3
