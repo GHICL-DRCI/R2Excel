@@ -47,7 +47,9 @@ get_OR_univar <- function(
   stopifnot(length(explanatory_vars) > 0)
   stopifnot(all(explanatory_vars %in% names(dataframe)))
 
-  dataframe <- data.table::setDT(dataframe)[, .SD, .SDcols = c(dependent_var, explanatory_vars)]
+  dataframe <- data.table::setDT(data.table::copy(dataframe))[
+    , .SD, .SDcols = c(dependent_var, explanatory_vars)
+  ]
 
   ## Remove variables with 0 levels (and keep numeric vars) ##
   if (check_n_levels) {
@@ -56,7 +58,9 @@ get_OR_univar <- function(
     }))
     are_numeric <- explanatory_vars %in% get_numerics(dataframe = dataframe, vars = explanatory_vars)
     explanatory_vars <- explanatory_vars[have_levels | are_numeric]
-    dataframe <- data.table::setDT(dataframe)[, .SD, .SDcols = c(dependent_var, explanatory_vars)]
+    dataframe <- data.table::setDT(data.table::copy(dataframe))[
+      , .SD, .SDcols = c(dependent_var, explanatory_vars)
+    ]
     message("[get_OR_univar] ", length(explanatory_vars), " variables remaines (numeric or with levels>0)")
   }
 

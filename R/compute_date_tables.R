@@ -53,7 +53,7 @@ compute_date_table <- function(
   
   
   if (is.null(varstrat) || varstrat %in% "") { # univariate analyse
-    message("[compute_date_table] dates (without varstrat)")
+    message("[compute_date_table] without varstrat")
     desc_date_final <- data.table::rbindlist(
       lapply(X = vars_dates, FUN = function(date_coli) {
         # date_coli <- "DDN"
@@ -91,7 +91,7 @@ compute_date_table <- function(
     
   } else { 
     # bivariate analyse
-    message("[compute_date_table] dates (with varstrat:", varstrat, ")")
+    message("[compute_date_table] with varstrat ", varstrat)
     # possible only on factorial varstrat
     stopifnot(varstrat %in% names(dataframe))
     stopifnot(is.factor(dataframe[, varstrat]))

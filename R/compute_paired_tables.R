@@ -1,27 +1,580 @@
 # Core function of the pkg, compute descriptive tables for paired data
 
+# =
+#### Numerics ####
+# =
+
+# =
+# Fonctions utilitaires
+# =
+
+
+
+#' Formater le contenu de cellule selon la métrique
+format_cell_content <- function(
+  stats, 
+  metric = "mean"
+) {
+  # message("[format_cell_content]")
+  if (metric == "mean") {
+    if (is.na(stats$mean) || is.nan(stats$mean)) {
+      return("/")
+    }
+    return(paste0(stats$mean, " +/- ", stats$sd))
+  } else {
+    # median
+    if (is.na(stats$median) || is.nan(stats$median)) {
+      return("/")
+    }
+    return(paste0(
+      stats$median," [", stats$Q1, ";", stats$Q3, "]"
+    ))
+  }
+}
+
+#' Formater la description de population globale
+format_global_summary <- function(
+  dataframe,
+  variable,
+  metric = "mean",
+  patient_id = NULL,
+  digits_central,
+  digits_sd
+) {
+  # message("[format_global_summary]")
+  if (metric == "mean") {
+    result <- paste0(
+      round(mean(dataframe[[variable]], na.rm = TRUE), digits = digits_central),
+      " +/- ", round(stats::sd(dataframe[[variable]], na.rm = TRUE), digits = digits_sd)
+    )
+  } else {
+    result <- paste0(
+      round(stats::median(dataframe[[variable]], na.rm = TRUE), digits = digits_central),
+      " [", round(stats::quantile(dataframe[[variable]], 0.25, na.rm = TRUE), digits = digits_central), " ; ",
+      round(stats::quantile(dataframe[[variable]], 0.75, na.rm = TRUE), digits = digits_central), "]"
+    )
+  }
+  
+  if (!is.null(patient_id)) {
+    result <- paste0(result, " (n=", length(unique(dataframe[[patient_id]])), ")")
+  }
+  
+  return(result)
+}
+
+# =
+# Fonction pour le cas : 2 niveaux
+# avec gestion variable absente d'un niveau
+# =
+handle_two_levels <- function(
+  dt_wide, 
+  variable_interest, 
+  varstrat,
+  patient_id,
+  digits_central,
+  digits_sd,
+  show_metric,
+  force_parametric_test, 
+  force_non_parametric_test, 
+  global_summary, 
+  dt
+) {
+  
+  message("[handle_two_levels] 2 levels in ", varstrat)
+  
+  # === VÉRIFICATION : La variable est-elle présente dans les 2 niveaux ? ===
+  if (ncol(dt_wide) != 3) {
+    # La variable n'est présente que dans 1 seul niveau
+    ongoing_message <- "Variable present only in 1 level of varstrat, no paired test applicable"
+    message("[handle_two_levels] ", ongoing_message)
+    
+    N_individuals <- nrow(dt_wide)
+    test_result <- list(p.value = NA)
+    test_used <- "/"
+    normal_data <- NA
+    
+    # Déterminer quelle métrique utiliser
+    metric_to_show <- if (show_metric %in% c("auto", "median")) {
+      "median"
+    } else {
+      "mean"
+    }
+    
+    Population_totale <- if (global_summary) {
+      format_global_summary(
+        dataframe = dt,
+        variable = variable_interest,
+        metric = metric_to_show, 
+        digits_central = digits_central,
+        digits_sd = digits_sd
+      )
+    } else {
+      NULL
+    }
+    
+    return(list(
+      test_result = test_result,
+      test_used = test_used,
+      ongoing_message = ongoing_message,
+      normal_data = normal_data,
+      N_individuals = N_individuals,
+      metric_to_show = metric_to_show,
+      Population_totale = Population_totale,
+      Difference_description = NULL
+    ))
+  }
+  
+  # === CODE EXISTANT (seulement si ncol == 3) ===
+  dt_wide <- stats::na.omit(dt_wide)
+  N_individuals <- nrow(dt_wide)
+  
+  vec1 <- unlist(dt_wide[, 2], use.names = FALSE)
+  vec2 <- unlist(dt_wide[, 3], use.names = FALSE)
+  diff <- vec2 - vec1
+  
+  # Description de la différence
+  Difference_description <- paste0(
+    "mean = ", round(mean(diff, na.rm = TRUE), digits = digits_central),
+    " +/- ", round(stats::sd(diff, na.rm = TRUE), digits = digits_sd),
+    " ",
+    "median = ", round(stats::median(diff, na.rm = TRUE), digits = digits_central),
+    " [", round(stats::quantile(diff, 0.25, na.rm = TRUE), digits = digits_central), " ; ",
+    round(stats::quantile(diff, 0.75, na.rm = TRUE), digits = digits_central), "]"
+  )
+  
+  # Test de normalité sur la différence
+  normality_check <- check_normality(diff, return_messages = TRUE)
+  normal_data <- normality_check$is_normal
+  msg_captured_norm <- normality_check$message
+  
+  # Décision du test
+  use_parametric <- (normal_data || force_parametric_test) && !force_non_parametric_test
+  
+  if (use_parametric) {
+    # ========== Paired t-test ==========
+    test_result <- stats::t.test(vec2, vec1, paired = TRUE)
+    test_used <- "Paired t-test"
+    
+    # Message si forcé
+    ongoing_message <- if (force_parametric_test && !normal_data) {
+      "force_parametric_test.\n"
+    } else {
+      ""
+    }
+    
+    # Déterminer la métrique à afficher
+    if (show_metric %in% c("auto", "mean")) {
+      metric_to_show <- "mean"
+      Difference_description <- gsub("mean = (.*) median = (.*)", "\\1", Difference_description)
+    } else {
+      metric_to_show <- "median"
+      message(
+        "[handle_two_levels]",
+        " /!\\ Caution median forced in cell content. ",
+        "It may cause a disconnection between metrics and tests /!\\"
+      )
+      Difference_description <- gsub("mean = (.*) median = (.*)", "\\2", Difference_description)
+    }
+    
+  } else {
+    # ========== Wilcoxon signed-rank test ==========
+    
+    # Exécuter le test avec gestion d'erreurs
+    has_issues_w <- try(tools::assertCondition(
+      test_result <- stats::wilcox.test(vec2, vec1, paired = TRUE)
+    ), silent = TRUE)
+    
+    has_issues_w <- has_issues_w[
+      sapply(has_issues_w, function(el) {
+        length(base::intersect(class(el), c("warning", "error"))) != 0
+      })
+    ]
+    
+    msg_captured_wilcox <- if (length(has_issues_w) == 0) {
+      ""
+    } else {
+      paste(
+        unique(sapply(has_issues_w, function(el) {
+          paste0("[", class(el)[2], "] ", el$message)
+        })),
+        collapse = ";"
+      )
+    }
+    
+    test_used <- "Wilcoxon signed-rank test (paired data)"
+    
+    # Message si forcé
+    ongoing_message <- if (force_non_parametric_test && normal_data) {
+      "force_non_parametric_test.\n"
+    } else {
+      ""
+    }
+    ongoing_message <- paste0(ongoing_message, msg_captured_wilcox, msg_captured_norm)
+    
+    # Déterminer la métrique à afficher
+    if (force_non_parametric_test || show_metric %in% c("auto", "median")) {
+      metric_to_show <- "median"
+      Difference_description <- gsub("mean = (.*) median = (.*)", "\\2", Difference_description)
+    } else {
+      metric_to_show <- "mean"
+      message(
+        "[handle_two_levels]",
+        " /!\\ Caution mean forced in cell content. ",
+        "It may cause a disconnection between metrics and tests /!\\"
+      )
+      ongoing_message <- paste0(
+        ongoing_message,
+        "!Caution mean forced in cell content. ",
+        "It may cause a disconnection between metrics and tests!"
+      )
+      Difference_description <- gsub("mean = (.*) median = (.*)", "\\1", Difference_description)
+    }
+  }
+  
+  # Préparer la population totale si demandée
+  Population_totale <- if (global_summary) {
+    format_global_summary(
+      dataframe = dt, 
+      variable = variable_interest, 
+      metric = metric_to_show,
+      digits_central = digits_central,
+      digits_sd = digits_sd,
+      patient_id = if (metric_to_show == "median") patient_id else NULL #--here to valid ! 
+    )
+    
+  } else {
+    NULL
+  }
+  
+  return(list(
+    test_result = test_result,
+    test_used = test_used,
+    ongoing_message = ongoing_message,
+    normal_data = normal_data,
+    N_individuals = N_individuals,
+    metric_to_show = metric_to_show,
+    Population_totale = Population_totale,
+    Difference_description = Difference_description
+  ))
+}
+
+# =
+# Fonction pour le cas : Plus de 2 niveaux
+# =
+handle_multiple_levels <- function(
+  dt_wide, 
+  variable_interest, 
+  varstrat, 
+  patient_id,
+  digits_central,
+  digits_sd,
+  show_metric, 
+  force_parametric_test,
+  force_non_parametric_test,
+  global_summary,
+  do_test,
+  dt
+) {
+  message("[handle_multiple_levels] levels in ", varstrat)
+  
+  # Convertir dt_wide en data.table si ce n'est pas déjà le cas
+  if (!data.table::is.data.table(dt_wide)) {
+    dt_wide <- data.table::setDT(dt_wide)
+  }
+  
+  # Test de normalité sur chaque colonne
+  cols_to_test <- setdiff(names(dt_wide), patient_id)
+  
+  # Initialiser
+  normal_data <- rep(FALSE, length(cols_to_test))
+  names(normal_data) <- cols_to_test
+  msg_captured_norm <- ""
+  
+  for (col in cols_to_test) {
+    x <- stats::na.omit(dt_wide[[col]])
+    
+    if (length(x) < 3 || length(unique(x)) == 1) {
+      normal_data[col] <- FALSE
+      next
+    }
+    
+    # Test de normalité avec gestion d'erreurs
+    normality_result <- check_normality(x, return_messages = TRUE)
+    normal_data[col] <- normality_result$is_normal
+    
+    if (nchar(normality_result$message) > 0) {
+      msg_captured_norm <- paste0(
+        msg_captured_norm,
+        if (nchar(msg_captured_norm) > 0) "; " else "",
+        normality_result$message
+      )
+    }
+  }
+  
+  # Créer format long
+  dt_long <- data.table::melt(data = dt_wide, id.vars = patient_id)
+  # NE PAS convertir patient_id en facteur - garder tel quel
+  dt_long$variable <- as.factor(dt_long$variable)
+  
+  # Vérifier si design complet
+  any_na_in_dt <- sapply(cols_to_test, function(col) {
+    any(is.na(dt_wide[[col]]))
+  })
+  not_complete_design <- any(any_na_in_dt)
+  
+  # Décision du test
+  use_parametric <- (all(normal_data) || force_parametric_test) && 
+    !not_complete_design && !force_non_parametric_test
+  
+  if (use_parametric) {
+    # ========== ANOVA repeated measures ==========
+    normal_data <- unique(normal_data)
+    N_individuals <- length(unique(dt_long[[patient_id]]))
+    
+    if (do_test) {
+      # Convertir patient_id en facteur SEULEMENT pour l'ANOVA
+      dt_long_anova <- data.table::copy(dt_long)
+      dt_long_anova[[patient_id]] <- as.factor(dt_long_anova[[patient_id]])
+      
+      test_result <- rstatix::anova_test(
+        data = dt_long_anova, dv = "value",
+        wid = dplyr::all_of(patient_id), within = "variable"
+      )
+      test_result$p.value <- test_result$ANOVA$p  # fix v0.1.27
+      test_used <- "Repeated measures ANOVA: within-Subjects designs"
+      ongoing_message <- "Repeated measures ANOVA to valid !"
+    } else {
+      test_result <- list(p.value = NA)
+      test_used <- "/"
+      ongoing_message <- "Repeated measures ANOVA can be explored with option do_test."
+    }
+    
+    if (force_parametric_test) {
+      ongoing_message <- paste0(ongoing_message, "\nforce_parametric_test.")
+    }
+    
+    # Métrique à afficher
+    metric_to_show <- if (show_metric %in% c("auto", "mean")) {
+      "mean"
+    } else {
+      message(
+        "[handle_multiple_levels]",
+        " /!\\ Caution median forced in cell content. ",
+        "It may cause a disconnection between metrics and tests /!\\"
+      )
+      ongoing_message <- paste0(
+        ongoing_message,
+        "!Caution median forced in cell content. ",
+        "It may cause a disconnection between metrics and tests!"
+      )
+      "median"
+    }
+    
+    # Détection des outliers
+    res_outliers <- rstatix::identify_outliers(dt_long, variable = "value")
+    if (nrow(res_outliers) > 0) {
+      msg <- paste0(
+        "Detection of ", nrow(res_outliers), " points outliers on ", variable_interest, ".\n",
+        "Check individuals with id ", paste0(unique(res_outliers[[patient_id]]), collapse = ",")
+      )
+      message("[handle_multiple_levels] ", msg)
+      ongoing_message <- paste0(ongoing_message, msg)
+    }
+    
+  } else {
+    # ========== Tests non-paramétriques ==========
+    normal_data <- all(normal_data)
+    
+    # Messages explicatifs
+    ongoing_message <- paste0(
+      paste0(
+        c("force_non_parametric_test", "Normal data", "not complete design")[
+          c(force_non_parametric_test, normal_data, not_complete_design)
+        ],
+        collapse = " with "
+      ), 
+      "."
+    )
+    
+    if (!not_complete_design) {
+      # ----- Quade test (design complet) -----
+      N_individuals <- length(unique(dt_long[[patient_id]]))
+      
+      if (do_test) {
+        quade_form <- stats::as.formula(paste0(
+          "value ~ variable | ", "`", patient_id, "`"
+        ))
+        test_result <- stats::quade.test(quade_form, data = dt_long)
+        test_used <- "Quade Test"
+        ongoing_message <- "Quade test to valid"
+      } else {
+        test_result <- list(p.value = NA)
+        test_used <- "/"
+        ongoing_message <- "Quade Test can be explored with option do_test."
+      }
+      
+    } else {
+      # ----- Skillings-Mack test (design incomplet) -----
+      
+      if (do_test) {
+        # Retirer les patients avec une seule observation
+        count_block <- dt_long[, .(Nobs = sum(is.na(value))), by = c(patient_id)]
+        
+        # Identifier les patients à retirer (ceux avec seulement 1 observation)
+        n_levels_var <- nlevels(dt_long[["variable"]])
+        remove_patient_id <- count_block[Nobs == n_levels_var - 1][[patient_id]]
+        
+        if (length(remove_patient_id) > 0) {
+          ongoing_message <- paste0(
+            ongoing_message,
+            "\nRemove ", length(remove_patient_id), " patients with only 1 observation.\n"
+          )
+        }
+        
+        # Filtrer : convertir en data.frame standard, filtrer, reconvertir
+        dt_long_ski <- as.data.frame(dt_long)
+        dt_long_ski <- dt_long_ski[!dt_long_ski[[patient_id]] %in% remove_patient_id, ]
+        dt_long_ski <- data.table::as.data.table(dt_long_ski)
+        
+        # Créer IDENT_PAT
+        unique_ids <- sort(unique(dt_long_ski[[patient_id]]))
+        dt_long_ski$IDENT_PAT <- factor(
+          dt_long_ski[[patient_id]],
+          levels = unique_ids,
+          labels = unique_ids
+        )
+        
+        Ski_result <- utils::capture.output(Skillings.Mack::Ski.Mack(
+          y = dt_long_ski$value,
+          groups = dt_long_ski$variable,
+          blocks = dt_long_ski$IDENT_PAT,
+          simulate.p.value = TRUE, B = 10000
+        ))
+        
+        test_result <- list(
+          full_capture = Ski_result,
+          p.value = as.numeric(
+            gsub(" ", "", unlist(strsplit(Ski_result[[2]], split = "p-value ="))[[2]])
+          ),
+          nblocks_patients = length(unique(dt_long_ski$IDENT_PAT)),
+          ngroups_times = length(unique(dt_long_ski$variable)),
+          df = Ski_result[[3]],
+          simulation = Ski_result[[4]]
+        )
+        test_used <- "Skillings-Mack test"
+        N_individuals <- length(unique(dt_long_ski$IDENT_PAT))
+        ongoing_message <- paste0(ongoing_message, "Skillings.Mack to valid")
+        
+      } else {
+        N_individuals <- length(unique(dt_long[[patient_id]]))
+        test_result <- list(p.value = NA)
+        test_used <- "/"
+        ongoing_message <- paste0(
+          ongoing_message,
+          "Skillings-Mack test can be explored with option do_test."
+        )
+      }
+    }
+    
+    # Métrique à afficher
+    metric_to_show <- if (show_metric %in% c("auto", "median")) {
+      "median"
+    } else {
+      message(
+        "[handle_multiple_levels]",
+        " /!\\ Caution mean forced in cell content. ",
+        "It may cause a disconnection between metrics and tests /!\\"
+      )
+      ongoing_message <- paste0(
+        ongoing_message,
+        "!Caution mean forced in cell content. ",
+        "It may cause a disconnection between metrics and tests!"
+      )
+      "mean"
+    }
+  }
+  
+  ongoing_message <- paste0(msg_captured_norm, ongoing_message)
+  
+  # Préparer la population totale si demandée
+  if (global_summary) {
+    message(
+      "[handle_multiple_levels] ",
+      "Caution! global_summary on longitudinal data is not really relevant... but ok if you want it"
+    )
+    Population_totale <- format_global_summary(
+      dataframe = dt,
+      variable = variable_interest,
+      metric = metric_to_show,
+      digits_central = digits_central,
+      digits_sd = digits_sd
+    )
+  } else {
+    Population_totale <- NULL
+  }
+  
+  return(list(
+    test_result = test_result,
+    test_used = test_used,
+    ongoing_message = ongoing_message,
+    normal_data = normal_data,
+    N_individuals = N_individuals,
+    metric_to_show = metric_to_show,
+    Population_totale = Population_totale,
+    Difference_description = NULL
+  ))
+}
+
+
+
 #' compute continuous table for paired data
 #'
 #' provide descriptive statistics table for continuous data with a paired level (time or visites)
-#'
+#' 
+#' Cases handled :
+#' + Variable with all NA values → no test  
+#' + Variable present in only 1 level → no paired test  
+#' + 2 levels of varstrat:  
+#'   + Normal data (diff) → Paired t-test  
+#'   + Non-normal data → Wilcoxon signed-rank test  
+#' + More than 2 levels:  
+#'   + Complete design + normality → Repeated measures ANOVA  
+#'   + Complete design + non-normality → Quade test  
+#'   + Incomplete design → Skillings-Mack test  
+#'  
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
 #' @param variable_interest A character. Name of dataframe's continuous columns to describe and test.
-#' @param varstrat A character. Name of the stratification variable, making groups to compare (time or visites).
-#'   the repeated measures must be presented in line (for instance, "V1", "V2", "V3" will be set on 3 line for each individuals)
-#' @param digits A integer, Default 1. Integer indicating the number of decimal places (round).
-#' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
+#' @param varstrat A character. Name of the stratification variable, 
+#'  making groups to compare (time or visites).
+#'  The repeated measures must be presented in line 
+#'  (for instance, "V1", "V2", "V3" will be set on 3 line for each individuals)
+#' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
+#'   Integer indicating the number of decimal places (round).
+#' @param signif_digits A integer, Default 4. Integer indicating the number of 
+#'  decimal places (signif) for pvalues.
 #' @param patient_id A character., Default "patientid". Name of identifiant patient id column.
-#'   the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)
+#'  the repeated measures must be presented in line 
+#'  (for instance, "id1" will be set on 3 line if he has 3 visits)
 #' @param global_summary A logical. Default TRUE. Do you want to get global summary.
-#'  Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.
-#' @param force_non_parametric_test A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+#'  Caution! global_summary on longitudinal data is not really relevant...
+#'  but ok if you want it, you can.
+#' @param force_non_parametric_test A logical. Default FALSE. 
+#'  You can turn it TRUE if you want to force the use of
 #'  non parametric test, whatever shapiro test said about normality.
-#' @param metric_show A character, Default "auto". What is the metric to show in cell content ?
-#'   "auto" = mean or median, automatic choice according statistic test,
-#'   "mean" = mean +/- sd forced, whatever shapiro said,
-#'   "median" = media [Q1;Q3] forced, whatever shapiro said.
-#' @param test_more_2_levels A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels
-#'
+#' @param force_parametric_test A logical. Default FALSE. 
+#'  You can turn it TRUE if you want to force the use of
+#'  parametric test, whatever shapiro test said about normality. 
+#'  (so will use and show means instead of medians)
+#'  This may be useful when considering the central limit theorem or small deviations. 
+#' @param show_metric A character, Default "auto". What is the metric to show in cell content ?
+#'  "auto" = mean or median, automatic choice according statistic test,
+#'  "mean" = mean +/- sd forced, whatever shapiro said,
+#'  "median" = media [Q1;Q3] forced, whatever shapiro said.
+#'  Caution, if you force_non_parametric_test as TRUE, show_metric is forced 
+#'  as 'median' and if you force_parametric_test as TRUE, show_metric is forced 
+#'  as 'mean', to be consistent. 
+#' @param do_test A logicial, Default FALSE, do not return stat test. Turn TRUE if wanted.
+#' 
 #' @return a list of 2 elements :
 #'   line_res : the data.frame with one line containing needed results
 #'   test_result : the test object if more detail wanted about the stat test.
@@ -41,7 +594,7 @@
 #'   variable_interest = "extra",
 #'   varstrat = "visites_2",
 #'   patient_id = "ID2",
-#'   digits = 2, signif_digits = 2,
+#'   precision = 2, signif_digits = 2,
 #'   global_summary = FALSE
 #' )
 #' compute_paired_continuous_table_and_test(
@@ -49,7 +602,7 @@
 #'   variable_interest = "extra_with_missings",
 #'   varstrat = "visites_2",
 #'   patient_id = "ID2",
-#'   digits = 2, signif_digits = 2,
+#'   precision = 2, signif_digits = 2,
 #'   global_summary = FALSE
 #' )
 #' compute_paired_continuous_table_and_test(
@@ -57,7 +610,7 @@
 #'   variable_interest = "extra_with_missings",
 #'   varstrat = "visites_2",
 #'   patient_id = "ID2",
-#'   digits = 2, signif_digits = 2,
+#'   precision = 2, signif_digits = 2,
 #'   global_summary = TRUE
 #' )
 #' ## Anova on paired data
@@ -66,7 +619,7 @@
 #'   variable_interest = "extra",
 #'   varstrat = "visites_4",
 #'   patient_id = "ID",
-#'   digits = 2, signif_digits = 2,
+#'   precision = 2, signif_digits = 2,
 #'   global_summary = FALSE
 #' )
 #' compute_paired_continuous_table_and_test(
@@ -74,7 +627,7 @@
 #'   variable_interest = "extra",
 #'   varstrat = "visites_5",
 #'   patient_id = "ID",
-#'   digits = 2, signif_digits = 2,
+#'   precision = 2, signif_digits = 2,
 #'   global_summary = FALSE
 #' )
 #' ## test no normal measure : Paired Wilcoxon signed-rank test
@@ -83,642 +636,335 @@
 #'   variable_interest = "mesure3",
 #'   varstrat = "visites_2",
 #'   patient_id = "ID2",
-#'   digits = 2, signif_digits = 2,
+#'   precision = 2, signif_digits = 2,
 #'   global_summary = FALSE
 #' )
 #' }
-
 compute_paired_continuous_table_and_test <- function(
   dataframe,
   variable_interest,
   varstrat,
-  digits = 2,
+  precision = 2,
   signif_digits = 4,
   patient_id = "patientid",
   global_summary = TRUE,
   force_non_parametric_test = FALSE,
-  metric_show = "auto",
-  test_more_2_levels = FALSE
+  force_parametric_test = FALSE,
+  show_metric = "auto",
+  do_test = FALSE
 ) {
-
+  
   `.SD` <- `.` <- `.N` <- `:=` <- NULL
   `Q1` <- `Q3` <- cell_content <- IDENT_PAT <- value <- n_group <- NULL
-
-  # `:=` <- data.table::`:=`
-
-  message("[compute_paired_continuous_table_and_test] Compute tab for ", variable_interest)
+  
+  message("[compute_paired_continuous_table] ", variable_interest)
+  
+  # ========== Validations ==========
   stopifnot(length(variable_interest) == 1)
   stopifnot(variable_interest %in% names(dataframe))
   stopifnot(is.numeric(dataframe[[variable_interest]]))
   stopifnot(varstrat %in% names(dataframe))
   stopifnot(is.factor(dataframe[[varstrat]]))
   stopifnot(patient_id %in% names(dataframe))
-  stopifnot(digits >= 0)
+  # stopifnot(digits >= 0)
+  stopifnot(precision == "auto" || is.numeric(precision))
   stopifnot(signif_digits >= 0)
-  stopifnot(metric_show %in% c("mean", "median", "auto"))
+  stopifnot(show_metric %in% c("mean", "median", "auto"))
   stopifnot(is.logical(global_summary))
   stopifnot(is.logical(force_non_parametric_test))
-  stopifnot(is.logical(test_more_2_levels))
-
-  dt <- data.table::setDT(dataframe)
-
+  stopifnot(is.logical(force_parametric_test))
+  stopifnot(sum(c(force_parametric_test, force_non_parametric_test)) <= 1)
+  stopifnot(is.logical(do_test))
+  
+  # ========== Préparation des données ==========
+  dt <- data.table::setDT(data.table::copy(dataframe))
   N_init <- nrow(dt)
   dt <- dt[, .SD, .SDcols = c(variable_interest, varstrat, patient_id)]
-  N_missingval <- sum(is.na(dt[[variable_interest]])) # in total
+  N_missingval <- sum(is.na(dt[[variable_interest]]))
+  
+  
+  # Déterminer les digits à utiliser
+  if (precision %in% "auto") {
+    base_decimals <- detect_decimal_places(dt[[variable_interest]])
+    digits_central <- compute_precision_digits(dt[[variable_interest]], "central", base_decimals)
+    digits_sd <- compute_precision_digits(
+      dt[[variable_interest]], "sd", base_decimals, max_decimals = 3
+    )
+  } else {
+    digits_central <- precision
+    digits_sd <- precision
+  }
+  
+  
+  # Calcul des statistiques par groupe
   sumup <- unique(
     data.table::copy(dt)[,
-      `:=`(
-        mean = mean(.SD[[1]], na.rm = TRUE),
-        sd = stats::sd(.SD[[1]], na.rm = TRUE),
-        median = stats::median(.SD[[1]], na.rm = TRUE),
-        Q1 = stats::quantile(.SD[[1]], na.rm = TRUE)["25%"],
-        Q3 = stats::quantile(.SD[[1]], na.rm = TRUE)["75%"],
-        n_missing = sum(is.na(.SD[[1]])),
-        n_group = .N
-      ),
-      by = varstrat,
-      .SDcols = variable_interest
+       `:=`(
+         mean = round(mean(.SD[[1]], na.rm = TRUE), digits = digits_central),
+         sd = round(stats::sd(.SD[[1]], na.rm = TRUE), digits = digits_sd),
+         median = round(stats::median(.SD[[1]], na.rm = TRUE), digits = digits_central),
+         Q1 = round(stats::quantile(.SD[[1]], na.rm = TRUE)["25%"], digits = digits_central),
+         Q3 = round(stats::quantile(.SD[[1]], na.rm = TRUE)["75%"], digits = digits_central),
+         n_missing = sum(is.na(.SD[[1]])),
+         n_group = .N
+       ),
+       by = varstrat,
+       .SDcols = variable_interest
     ][
       , .SD,
       .SDcols = -c(patient_id, variable_interest)
     ]
   )[, n_group := n_group - n_missing]
-  # sumup
-
-  resN <- data.table::transpose(sumup[, .SD, .SDcols = c(varstrat, "n_group")], make.names = TRUE)
+  
+  resN <- data.table::transpose(
+    sumup[, .SD, .SDcols = c(varstrat, "n_group")], make.names = TRUE
+  )
   names(resN) <- paste0(names(resN), "_N")
-
-  if (all(resN %in% 0)) {
-    # v0.1.19 : case when the numeric vars is all NA. dcast can't be applied
-    N_individuals <- N_init - N_missingval
-    test_result <- list()
-    test_result$p.value <- NA
+  
+  # ========== CAS 1 : Toutes les valeurs sont NA ==========
+  if (all(resN == 0)) {
+    N_individuals <- length(unique(dt[[patient_id]])) #N_init - N_missingval
+    test_result <- list(p.value = NA)
     test_used <- "/"
     ongoing_message <- "Variable present have no data (all NA), no desc, no test applicable"
     message("[compute_paired_continuous_table_and_test] ", ongoing_message)
-
+    
     tab <- data.table::data.table(
       Variable = variable_interest,
-      # Nb_mesures_init = N_init, # no more wanted
       Valeurs_manquantes = N_missingval,
-      N_individuals = N_individuals, # NB mesures reelles
+      N_individuals = N_individuals,
       resN,
       is_Normal = NA,
       P_valeur = NA,
       Test = test_used,
       message = ongoing_message
     )
-    # exit 
-    return(list(
-      "line_res" = tab,
-      "test_result" = test_result
-    ))
-  } 
+    
+    return(list(line_res = tab, test_result = test_result))
+  }
   
-  # else, ok continue...
+  # ========== Préparer format wide ==========
   dt_wide <- data.table::dcast(
-    data = stats::na.omit(
-      dt[, .SD, .SDcols = c(patient_id, varstrat, variable_interest)]
-    ),
-    formula = stats::as.formula(paste0(
-      "`", patient_id, "`", " ~ ", "`", varstrat, "`"
-    )),
+    data = stats::na.omit(dt[, .SD, .SDcols = c(patient_id, varstrat, variable_interest)]),
+    formula = stats::as.formula(paste0("`", patient_id, "` ~ `", varstrat, "`")),
     value.var = variable_interest
   )
-  # dt_wide
-
+  
+  # ========== CAS 2 : Une seule visite/groupe ==========
   if (ncol(dt_wide) == 2) {
-    ## test case where ncol(dt_wide) == 2 => it means it only remaines 1 visit + ID col.
-    ## only do the desc, nothing to test...
-
     ongoing_message <- "Variable present only in 1 visit/group, no paired test applicable"
-    N_individuals <- N_init - N_missingval
-    test_result <- list()
-    test_result$p.value <- NA
+    N_individuals <- length(unique(dt_wide[[patient_id]])) # N_init - N_missingval
+    test_result <- list(p.value = NA)
     test_used <- "/"
-    normal_data <- apply(
-      X = dt_wide[, .SD, .SDcols = base::setdiff(names(dt_wide), patient_id)],
-      MARGIN = 2, # cols
-      FUN = function(xcol) {
-        stats::shapiro.test(stats::na.omit(xcol))$`p.value` > 0.05
+    
+    # # Test de normalité
+    # normal_data <- apply(
+    #   X = dt_wide[, .SD, .SDcols = base::setdiff(names(dt_wide), patient_id)],
+    #   MARGIN = 2,
+    #   FUN = function(xcol) {
+    #     stats::shapiro.test(stats::na.omit(xcol))$p.value > 0.05
+    #   }
+    # )
+    cols_to_check <- base::setdiff(names(dt_wide), patient_id)
+    normal_data <- sapply(cols_to_check, function(col) {
+      x <- stats::na.omit(dt_wide[[col]])
+      if (length(x) < 3 || length(unique(x)) == 1) {
+        return(FALSE)
       }
-    )
-    if ((normal_data && metric_show %in% "auto") || metric_show %in% "mean") {
-      sumup <- sumup[, cell_content := ifelse(
-        is.na(mean) | is.nan(mean),
-        "/",
-        paste0(
-          round(mean, digits), " +/- ", round(sd, digits)
-          # , " (n=", n_group, ")"
-        )
-      )]
-      if (global_summary) {
-        Population_totale <- paste0(
-          round(mean(dt[[variable_interest]], na.rm = TRUE), digits),
-          " +/- ", round(stats::sd(dt[[variable_interest]], na.rm = TRUE), digits)# ,
-          # " (n=", sum(!is.na(dt[[variable_interest]])), ")"
-        )
-      }
+      check_normality(x, return_messages = FALSE)
+    })
+    
+    # Décider de la métrique
+    metric_to_show <- if ((normal_data && show_metric == "auto") || show_metric == "mean") {
+      "mean"
+    } else {
+      "median"
     }
-    if ((!normal_data && metric_show %in% "auto") || metric_show %in% "median") {
-      sumup <- sumup[, cell_content := ifelse(
-        is.na(median) | is.nan(median),
-        "/",
-        paste0(
-          round(median, digits), " [", round(Q1, digits), ";", round(Q3, digits), "]"
-          # , " (n=", n_group, ")"
-        )
-      )]
-      if (global_summary) {
-        Population_totale <- paste0(
-          round(median(dt[[variable_interest]], na.rm = TRUE), digits),
-          " [", round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["25%"], digits), " ; ",
-          round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["75%"], digits), "]"#,
-          # " (n=", sum(!is.na(dt[[variable_interest]])), ")"
-        )
-      }
+    
+    # Formater les cellules
+    for (i in 1:nrow(sumup)) {
+      sumup[i, cell_content := format_cell_content(sumup[i, ], metric_to_show)]
     }
-  } else {
-    ongoing_message <- ""
+    
+    # Population totale
+    Population_totale <- if (global_summary) {
+      format_global_summary(
+        dataframe = dt, 
+        variable = variable_interest,
+        metric = metric_to_show, 
+        digits_central = digits_central, 
+        digits_sd = digits_sd
+      )
+    } else {
+      NULL
+    }
 
+    Difference_description <- NULL
+    
+  } 
+  
+  # ========== NOUVEAU CAS : Toutes les valeurs sont identiques ==========
+  cols_to_check <- setdiff(names(dt_wide), patient_id)
+  all_values <- unlist(dt_wide[, .SD, .SDcols = cols_to_check], use.names = FALSE)
+  all_values_clean <- all_values[!is.na(all_values)]
+  
+  if (length(unique(all_values_clean)) <= 1) {
+    ongoing_message <- "toutes les valeurs de 'x' sont identiques"
+    message("[compute_paired_continuous_table_and_test] ", ongoing_message)
+    
+    N_individuals <- length(unique(dt_wide[[patient_id]])) # nrow(dt_wide)
+    test_result <- list(p.value = NA)
+    test_used <- "/"
+    normal_data <- NA
+    metric_to_show <- "median"
+    
+    # Valeur unique
+    unique_value <- if (length(all_values_clean) > 0) {
+      unique(all_values_clean)[1]
+    } else {
+      0
+    }
+    
+    # Formater les cellules
+    for (i in 1:nrow(sumup)) {
+      sumup[i, cell_content := paste0(
+        unique_value, " [", unique_value, ";", unique_value, "]"
+      )]
+    }
+    
+    Population_totale <- if (global_summary) {
+      paste0(
+        unique_value, " [", unique_value, " ; ", unique_value, "]"
+      )
+    } else {
+      NULL
+    }
+    
+    Difference_description <- NULL
+    
+  } else { 
+    
+    # ========== CAS 3 & 4 : Tests appariés ==========
+    
+    # Adapter show_metric si forcé
     if (force_non_parametric_test) {
       message(
         "[compute_paired_continuous_table_and_test]",
-        "Because force_non_parametric_test is TRUE, metric_show is forced as 'median'."
+        "Because force_non_parametric_test is TRUE, show_metric is forced as 'median'."
       )
-      metric_show <- "median"
+      show_metric <- "median"
     }
-
+    if (force_parametric_test) {
+      message(
+        "[compute_paired_continuous_table_and_test]",
+        "Because force_parametric_test is TRUE, show_metric is forced as 'mean'."
+      )
+      show_metric <- "mean"
+    }
+    
     if (nlevels(dt[[varstrat]]) == 2) {
-      
-      #### 2 levels ####
-
-      message("[compute_paired_continuous_table_and_test] 2 levels in ", varstrat)
-      dt_wide <- stats::na.omit(dt_wide)
-      N_individuals <- nrow(dt_wide) # here n pairs
-
-      vec1 <- unlist(dt_wide[, 2], use.names = FALSE)
-      vec2 <- unlist(dt_wide[, 3], use.names = FALSE)
-      diff <- vec2 - vec1 ## --here v0.1.18
-
-      ## describ diff
-      Difference_description <- paste0(
-        "mean = ",
-        round(mean(diff, na.rm = TRUE), digits),
-        " +/- ", round(stats::sd(diff, na.rm = TRUE), digits),
-        " ",
-        "median = ",
-        round(median(diff, na.rm = TRUE), digits),
-        " [", round(stats::quantile(diff, na.rm = TRUE)["25%"], digits), " ; ",
-        round(stats::quantile(diff, na.rm = TRUE)["75%"], digits), "]"
+      # ========== CAS 3 : 2 niveaux ==========
+      result <- handle_two_levels(
+        dt_wide = dt_wide,
+        variable_interest = variable_interest,
+        varstrat = varstrat,
+        patient_id = patient_id,
+        digits_central = digits_central,
+        digits_sd = digits_sd,
+        show_metric = show_metric,
+        force_parametric_test = force_parametric_test,
+        force_non_parametric_test = force_non_parametric_test,
+        global_summary = global_summary,
+        dt = dt
       )
-
-      # normal_data <- shapiro.test(diff)$`p.value` > 0.05
-      has_issues_norm <- try(tools::assertCondition(
-        normal_data <- stats::shapiro.test(diff)$`p.value` > 0.05
-      ), silent = TRUE)
-      has_issues_norm <- has_issues_norm[
-        sapply(has_issues_norm, function(el) {
-          length(base::intersect(class(el), c("warning", "error"))) != 0
-        })
-      ]
-
-      if (length(has_issues_norm) == 0 && normal_data && !force_non_parametric_test) { # If no error and normality ok
-
-        #### Paired T test ####
-        # Test t de Student pour données appariées (si les données sont normalement distribuées)
-        test_result <- stats::t.test(vec2, vec1, paired = TRUE)
-        test_used <- "Paired t-test"
-        if (metric_show %in% c("auto", "mean")) {
-          sumup <- sumup[, cell_content := paste0(
-            round(mean, digits), " +/- ", round(sd, digits) # , " (n=", n_group, ")"
-          )]
-          Difference_description <- gsub("mean = (.*) median = (.*)", "\\1", Difference_description)
-        }
-        if (metric_show %in% c("median")) {
-          message(
-            "[compute_paired_continuous_table_and_test]",
-            " /!\\ Caution median forced in cell content. It may cause a disconnection between metrics and tests /!\\"
-          )
-          sumup <- sumup[, cell_content := paste0(
-            round(median, digits), " [", round(Q1, digits), ";", round(Q3, digits), "]" # , " (n=", n_group, ")"
-          )]
-          Difference_description <- gsub("mean = (.*) median = (.*)", "\\2", Difference_description)
-        }
-
-        if (global_summary) {
-          if (metric_show %in% c("auto", "mean")) {
-            Population_totale <- paste0(
-              round(mean(dt[[variable_interest]], na.rm = TRUE), digits),
-              " +/- ", round(stats::sd(dt[[variable_interest]], na.rm = TRUE), digits)# ,
-              # " (n=", sum(!is.na(dt[[variable_interest]])), ")"
-            )
-          }
-          if (metric_show %in% c("median")) {
-            Population_totale <- paste0(
-              round(median(dt[[variable_interest]], na.rm = TRUE), digits),
-              " [", round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["25%"], digits), " ; ",
-              round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["75%"], digits), "]",
-              " (n=", length(unique(dt[[patient_id]])), ")"
-            )
-          }
-        }
-      } else {
-        #### Wilcoxon signed ranks test ####
-
-        # Test des rangs signés de Wilcoxon 
-        # si les données ne sont pas normalement distribuées
-        # ou si force_non_parametric_test
-        # ou si shapiro test has error
-
-        if (length(has_issues_norm) != 0) {
-          msg_captured_norm <- paste(
-            unique(sapply(
-              X = has_issues_norm, # from shapiro
-              FUN = function(el) {
-                paste0("[", class(el)[2], "] ", el$message)
-              }
-            )),
-            collapse = ";"
-          )
-          normal_data <- FALSE
-        } else {
-          msg_captured_norm <- ""
-        }
-
-        # test_result <- wilcox.test(vec1, vec2, paired = TRUE)
-        has_issues_w <- try(tools::assertCondition(
-          test_result <- stats::wilcox.test(vec2, vec1, paired = TRUE)
-        ), silent = TRUE)
-        has_issues_w <- has_issues_w[
-          sapply(has_issues_w, function(el) {
-            length(base::intersect(class(el), c("warning", "error"))) != 0
-          })
-        ]
-        if (length(has_issues_w) == 0) {
-          # wilcox.test no error # nothing to keep for wilcoxon msg
-          msg_captured_wilcox <- ""
-        } else {
-          msg_captured_wilcox <- paste(
-            unique(sapply(
-              X = has_issues_w, # from wilcoxon
-              FUN = function(el) {
-                paste0("[", class(el)[2], "] ", el$message)
-              }
-            )),
-            collapse = ";"
-          )
-        }
-        if (force_non_parametric_test && normal_data) {
-          ongoing_message <- "force_non_parametric_test.\n"
-        } else {
-          ongoing_message <- ""
-        }
-        ongoing_message <- paste0(ongoing_message, msg_captured_wilcox, msg_captured_norm)
-
-        test_used <- "Wilcoxon signed-rank test (paired data)"
-
-        if (force_non_parametric_test || metric_show %in% c("auto", "median")) {
-          sumup <- sumup[, cell_content := paste0(
-            round(median, digits), " [", round(Q1, digits), ";", round(Q3, digits), "]" # , " (n=", n_group, ")"
-          )]
-          Difference_description <- gsub("mean = (.*) median = (.*)", "\\2", Difference_description)
-        } else {
-          # metric_show %in% c("mean")
-          message(
-            "[compute_paired_continuous_table_and_test]",
-            " /!\\ Caution mean forced in cell content. It may cause a disconnection between metrics and tests /!\\"
-          )
-          ongoing_message <- paste0(ongoing_message, "!Caution mean forced in cell content. It may cause a disconnection between metrics and tests!")
-          sumup <- sumup[, cell_content := paste0(
-            round(mean, digits), " +/- ", round(sd, digits) # , " (n=", n_group, ")"
-          )]
-          Difference_description <- gsub("mean = (.*) median = (.*)", "\\1", Difference_description)
-        }
-
-        if (global_summary) {
-          if (force_non_parametric_test || metric_show %in% c("auto", "median")) {
-            Population_totale <- paste0(
-              round(median(dt[[variable_interest]], na.rm = TRUE), digits),
-              " [", round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["25%"], digits), " ; ",
-              round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["75%"], digits), "]"#,
-              # " (n=", sum(!is.na(dt[[variable_interest]])), ")"
-            )
-          }
-          if (metric_show %in% c("mean")) {
-            Population_totale <- paste0(
-              round(mean(dt[[variable_interest]], na.rm = TRUE), digits),
-              " +/- ", round(stats::sd(dt[[variable_interest]], na.rm = TRUE), digits),
-              " (n=", length(unique(dt[[patient_id]])), ")"
-            )
-          }
-        }
-      }
     } else {
-      #### More than 2 levels ####
-
-      ## do not apply stat test any more # version 0.1.14
-      ## use Anova on paired data if measure are normal for each time ?
-      ## else use Quade test or Skilling-Mack
-
-      has_issues_norm <- try(tools::assertCondition(
-        normal_data <- apply(
-          X = dt_wide[, .SD, .SDcols = base::setdiff(names(dt_wide), patient_id)],
-          MARGIN = 2, # cols
-          FUN = function(xcol) {
-            stats::shapiro.test(stats::na.omit(xcol))$`p.value` > 0.05
-          }
-        )
-      ), silent = TRUE)
-      has_issues_norm <- has_issues_norm[
-        sapply(has_issues_norm, function(el) {
-          length(base::intersect(class(el), c("warning", "error"))) != 0
-        })
-      ]
-      if (length(has_issues_norm) == 0) {
-        # no error when test normality
-        msg_captured_norm <- ""
-      } else {
-        normal_data <- FALSE
-        msg_captured_norm <- paste(
-          unique(sapply(
-            X = has_issues_norm, # from shapiro
-            FUN = function(el) {
-              paste0("[", class(el)[2], "] ", el$message)
-            }
-          )),
-          collapse = ";"
-        )
-      }
-      
-      dt_long <- data.table::melt(data = dt_wide, id.vars = patient_id)
-      dt_long[[patient_id]] <- as.factor(dt_long[[patient_id]])
-      dt_long$variable <- as.factor(dt_long$variable) # visite times
-
-      any_na_in_dt <- apply(
-        X = dt_wide[, .SD, .SDcols = base::setdiff(names(dt_wide), patient_id)],
-        MARGIN = 2, # cols
-        FUN = function(xcol) {
-          any(is.na(xcol))
-        }
+      # ========== CAS 4 : Plus de 2 niveaux ==========
+      result <- handle_multiple_levels(
+        dt_wide  = dt_wide,
+        variable_interest = variable_interest, 
+        varstrat = varstrat, 
+        patient_id = patient_id,
+        digits_central = digits_central,
+        digits_sd = digits_sd,
+        show_metric = show_metric, 
+        force_parametric_test = force_parametric_test,
+        force_non_parametric_test = force_non_parametric_test,
+        global_summary = global_summary,
+        do_test = do_test,
+        dt = dt
       )
-      not_complete_design <- any(any_na_in_dt)
-
-      if (all(normal_data) && !not_complete_design && !force_non_parametric_test) {
-        normal_data <- TRUE
-        N_individuals <- length(unique(dt_long[[patient_id]]))
-
-        if (test_more_2_levels) {
-          #### Anova on paired data ####
-          test_result <- rstatix::anova_test(
-            data = dt_long, dv = "value", wid = dplyr::all_of(patient_id), within = "variable"
-          )
-          # les degrés de liberté du numérateur (DFn) et du dénominateur (DFd), respectivement ;
-          # F Indique que nous comparons à une distribution F (test F) => la valeur statistique F obtenue
-          # p spécifie la p-value
-          # ges est la taille de l’effet généralisé (taille de la variabilité due au facteur intra-sujets)
-          test_result$p.value <- test_result$p
-          test_used <- "Repeated measures ANOVA: within-Subjects designs"
-          ongoing_message <- "WARNING : dev of Repeated measures ANOVA not validated yet !!"
-        } else {
-          test_result <- list()
-          test_result$p.value <- NA
-          test_used <- "/"
-          ongoing_message <- "Repeated measures ANOVA can be explored with option test_more_2_levels."
-        }
-
-        if (metric_show %in% c("auto", "mean")) {
-          sumup <- sumup[, cell_content := paste0(
-            round(mean, digits), " +/- ", round(sd, digits) # , " (n=", n_group, ")"
-          )]
-        }
-        if (metric_show %in% c("median")) {
-          message(
-            "[compute_paired_continuous_table_and_test]",
-            " /!\\ Caution median forced in cell content. It may cause a disconnection between metrics and tests /!\\"
-          )
-          ongoing_message <- paste0(ongoing_message, "!Caution median forced in cell content. It may cause a disconnection between metrics and tests!")
-          
-          sumup <- sumup[, cell_content := paste0(
-            round(median, digits), " [", round(Q1, digits), ";", round(Q3, digits), "]"
-          )]
-        }
-
-        if (global_summary) {
-          message(
-            "[compute_paired_continuous_table_and_test] ",
-            "Caution! global_summary on longitudinal data is not really relevant... but ok if you want it"
-          )
-
-          if (metric_show %in% c("auto", "mean")) {
-            Population_totale <- paste0(
-              round(mean(dt[[variable_interest]], na.rm = TRUE), digits),
-              " +/- ", round(stats::sd(dt[[variable_interest]], na.rm = TRUE), digits)
-            )
-          }
-          if (metric_show %in% c("median")) {
-            Population_totale <- paste0(
-              round(stats::median(dt[[variable_interest]], na.rm = TRUE), digits),
-              " [", round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["25%"], digits), " ; ",
-              round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["75%"], digits), "]"
-            )
-          }
-        }
-
-        ## Valeurs aberrantes
-        # identify_outliers()
-        res_outliers <- rstatix::identify_outliers(dt_long, variable = "value")
-        if (nrow(res_outliers) > 0) {
-          msg <- paste0(
-            "Detection of ", nrow(res_outliers), " points outliers on ", variable_interest, ".\n",
-            "Check individuals with id ", paste0(unique(res_outliers[[patient_id]]), collapse = ",")
-          )
-          message("[compute_paired_continuous_table_and_test] ", msg)
-          ongoing_message <- paste0(ongoing_message, msg)
-        }
-
-        ## Hypothèse de sphéricité (automatiquement vérifiée dans rstatix::anova_test()
-        ## Le test de Mauchly est utilisé en interne pour évaluer l’hypothèse de sphéricité.
-        ## --here to dev : capture message from rstatix::anova_test to get test de Mauchly (message or error?)
-      } else {
-        # when :
-        # not all(normal_data) or not_complete_design or force_non_parametric_test
-
-        normal_data <- all(normal_data)
-
-        # Quade test if complete design or Skilling-Mack otherwise
-
-        if (!not_complete_design) {
-          N_individuals <- length(unique(dt_long[[patient_id]]))
-
-          if (test_more_2_levels) {
-            #### Quade ####
-            # Quade test if we do have a complet design
-            quade_form <- stats::as.formula(paste0(
-              "value ~ variable | ", "`", patient_id, "`"
-            ))
-            test_result <- stats::quade.test(quade_form, data = dt_long)
-            test_used <- "Quade Test"
-            ongoing_message <- "WARNING : dev of Quade test not validated yet !!"
-          } else {
-            test_result <- list()
-            test_result$p.value <- NA
-            test_used <- "/"
-            ongoing_message <- "Quade Test can be explored with option test_more_2_levels."
-          }
-          
-        } else {
-          ongoing_message <- paste0(paste0(
-            c("force_non_parametric_test", "Normal data", "not complete design")[
-              c(force_non_parametric_test, normal_data, not_complete_design)
-            ],
-            collapse = " with "
-          ), ".")
-
-          if (test_more_2_levels) {
-            #### Skilling-Mack ####
-            # Skilling-Mack test
-            # Le test de Skilling-Mack s'utilise à la place de Quade en cas de blocs incomplets
-            # attention pour Skilling-Mack : doit voir apparaitre tous les groupes pour chaque patient,
-            # même ceux qui ont des valeurs manquantes
-            # ne pas supprimer les lignes, mais mettre un NA
-            # ici "dt_long" a bien les info NA
-
-            ## to avoid Erreur dans Ski.Mack(...) : "Block#n has only one observation. Please remove this block"
-            count_block <- dt_long[, .(Nobs = sum(is.na(value))), by = eval(patient_id)]
-            ## in Ski.Mack, remove patient with only one obs <=> with nlevels-1 missing data
-            remove_patient_id <- count_block[[patient_id]][count_block$Nobs == nlevels(dt_long[["variable"]]) - 1]
-            if (length(remove_patient_id) > 0) {
-              ongoing_message <- paste0(
-                ongoing_message,
-                "\nRemove ", length(remove_patient_id), " patients with only 1 observation.\n"
-              )
-            }
-            dt_long_ski <- dt_long[!dt_long[[patient_id]] %in% remove_patient_id, ]
-            dt_long_ski <- dt_long_ski[
-              ,
-              IDENT_PAT := factor(
-                dt_long_ski[[patient_id]],
-                levels = sort(unique(dt_long_ski[[patient_id]])),
-                labels = sort(unique(dt_long_ski[[patient_id]]))
-              )
-            ]
-
-            # capture.output used to capture element and be able to return them in report later
-            Ski_result <- utils::capture.output(Skillings.Mack::Ski.Mack(
-              y = dt_long_ski$value,
-              groups = dt_long_ski$variable, # times = visites
-              blocks = dt_long_ski$IDENT_PAT,
-              simulate.p.value = TRUE, B = 10000
-            ))
-            # Ski_result[[2]]
-            # Ski_result[[3]]
-            # Ski_result[[4]]
-
-            test_result <- list(
-              full_capture = Ski_result,
-              p.value = as.numeric(gsub(" ", "", unlist(strsplit(Ski_result[[2]], split = "p-value ="))[[2]])),
-              nblocks_patients = length(unique(dt_long_ski$IDENT_PAT)),
-              ngroups_times = length(unique(dt_long_ski$variable)), # = visites
-              df = Ski_result[[3]],
-              simulation = Ski_result[[4]]
-            )
-            test_used <- "Skillings-Mack test"
-            N_individuals <- length(unique(dt_long_ski$IDENT_PAT))
-            ongoing_message <- paste0(ongoing_message, "WARNING : dev of Skillings.Mack not validated yet !!")
-          } else {
-            N_individuals <- length(unique(dt_long[[patient_id]]))
-
-            test_result <- list()
-            test_result$p.value <- NA
-            test_used <- "/"
-            ongoing_message <- paste0(
-              ongoing_message,
-              "Skillings-Mack test can be explored with option test_more_2_levels."
-            )
-          }
-
-        }
-        
-        if (metric_show %in% c("auto", "median")) {
-          sumup <- sumup[, cell_content := paste0(
-            round(median, digits), " [", round(Q1, digits), ";", round(Q3, digits), "]" # , " (n=", n_group, ")"
-          )]
-        }
-        if (metric_show %in% c("mean")) {
-          message(
-            "[compute_paired_continuous_table_and_test]",
-            " /!\\ Caution mean forced in cell content. It may cause a disconnection between metrics and tests /!\\"
-          )
-          ongoing_message <- paste0(ongoing_message, "!Caution mean forced in cell content. It may cause a disconnection between metrics and tests!")
-          sumup <- sumup[, cell_content := paste0(
-            round(mean, digits), " +/- ", round(sd, digits) # , " (n=", n_group, ")"
-          )]
-        }
-        
-        if (global_summary) {
-          message(
-            "[compute_paired_continuous_table_and_test] ",
-            "Caution! global_summary on longitudinal data is not really relevant... but ok if you want it"
-          )
-          
-          if (metric_show %in% c("auto", "median")) {
-            Population_totale <- paste0(
-              round(median(dt[[variable_interest]], na.rm = TRUE), digits),
-              " [", round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["25%"], digits), " ; ",
-              round(stats::quantile(dt[[variable_interest]], na.rm = TRUE)["75%"], digits), "]"# ,
-              # " (n=", sum(!is.na(dt[[variable_interest]])), ")"
-            )
-          }
-          if (metric_show %in% c("mean")) {
-            Population_totale <- paste0(
-              round(mean(dt[[variable_interest]], na.rm = TRUE), digits),
-              " +/- ", round(stats::sd(dt[[variable_interest]], na.rm = TRUE), digits)# ,
-              # " (n=", sum(!is.na(dt[[variable_interest]])), ")"
-            )
-          }
-        }
-        
-      }
-      ongoing_message <- paste0(msg_captured_norm, ongoing_message)
+    }
+    
+    # Extraire les résultats
+    test_result <- result$test_result
+    test_used <- result$test_used
+    ongoing_message <- result$ongoing_message
+    normal_data <- result$normal_data
+    N_individuals <- result$N_individuals
+    metric_to_show <- result$metric_to_show
+    Population_totale <- result$Population_totale
+    Difference_description <- result$Difference_description
+    
+    # Formater les cellules
+    for (i in 1:nrow(sumup)) {
+      sumup[i, cell_content := format_cell_content(sumup[i, ], metric_to_show)]
     }
   }
-  message("[compute_paired_continuous_table_and_test] ", test_used)
-
-  ## format tab results
+  
+  # message("[compute_paired_continuous_table_and_test] ", test_used)
+  
+  # ========== Construire le tableau final ==========
   res <- data.frame(
     Variable = variable_interest,
-    # Nb_mesures_init = N_init, # no more wanted
     Valeurs_manquantes = N_missingval,
-    N_individuals = N_individuals # NB mesures reelles
+    N_individuals = N_individuals
+      ## N_individuals : no more useful ? because of N col for each levels => bellow add of resN V 0.1.27
   )
-  if (global_summary) {
-    res <- cbind(
-      res, Population_totale
-    )
+  
+  if (global_summary && !is.null(Population_totale)) {
+    res <- cbind(res, Population_totale)
   }
-
+  
   tab <- cbind(
     res,
     data.table::transpose(sumup[, .SD, .SDcols = c(varstrat, "cell_content")], make.names = varstrat),
-    resN # intercaller les N for each visite
+    resN
   )
-  # reorder
-  cols_visits <- unlist(lapply(X = sumup[[varstrat]], FUN = function(x) paste0(x, c("", "_N"))))
+  
+  # # Réorganiser les colonnes
+  # cols_visits <- unlist(lapply(X = sumup[[varstrat]], FUN = function(x) paste0(x, c("", "_N"))))
+  # data.table::setcolorder(x = tab, neworder = c(
+  #   setdiff(names(tab), cols_visits), cols_visits
+  # ))
+  
+  # === CORRECTION v0.1.27 : Réorganiser selon l'ordre des levels de varstrat ===
+  varstrat_levels_ordered <- levels(dt[[varstrat]])
+  cols_visits <- unlist(
+    lapply(varstrat_levels_ordered, FUN = function(x) paste0(x, c("", "_N")))
+  )
+  
+  # Colonnes de base (avant les visites)
+  base_cols <- intersect(c(
+    "Variable", "Valeurs_manquantes", 
+    "N_individuals", # keep ? v0.1.27
+    "Population_totale"
+  ), names(tab))
+  # Colonnes de fin (après les visites)
+  end_cols <- intersect(c(
+    "Difference_description", "is_Normal", "P_valeur", "Test", "message"
+  ), names(tab))
+  # Réorganiser
   data.table::setcolorder(x = tab, neworder = c(
-    setdiff(names(tab), cols_visits), cols_visits
+    base_cols, cols_visits, end_cols
   ))
-
-  if (nlevels(dt[[varstrat]]) == 2 && ncol(dt_wide) != 2) {
-    tab <- cbind(
-      tab, Difference_description
-    )
+  
+  # Ajouter Difference_description si applicable
+  if (!is.null(Difference_description)) {
+    tab <- cbind(tab, Difference_description)
   }
-
+  
+  # Formater p-value
   P_valeur <- signif(test_result$p.value, digits = signif_digits)
-  # ifelse(
-  #   test_result$p.value < 0.0001, "<0.0001", signif(test_result$p.value, digits = signif_digits)
-  # )
   if (is.nan(P_valeur)) {
     P_valeur <- NA
     test_used <- "/"
@@ -734,42 +980,461 @@ compute_paired_continuous_table_and_test <- function(
       message = ongoing_message
     )
   )
-
+  
   return(list(
-    "line_res" = tab,
-    "test_result" = test_result
+    line_res = tab,
+    test_result = test_result
   ))
+}
+
+
+
+# =
+#### Factors ####
+# =
+
+# =
+# Fonctions utilitaires pour variables factorielles appariées
+# =
+
+#' Gérer force_generate_1_when_0
+#' @return Liste avec var_levels et var_nlevels mis à jour, et dt modifié
+handle_force_generate <- function(
+  dt, 
+  variable_interest, 
+  force_generate_1_when_0
+) {
+  var_nlevels <- nlevels(dt[[variable_interest]])
+  var_levels <- levels(dt[[variable_interest]])
+  
+  if (force_generate_1_when_0 && var_nlevels == 1 && 
+      (var_levels == 0 || tolower(var_levels) == "non")) {
+    
+    message(
+      "[handle_force_generate] force_generate_1_when_0 for ",
+      variable_interest
+    )
+    
+    new_level <- ifelse(var_levels %in% 0, 1, "Oui")
+    var_levels <- c(var_levels, new_level)
+    dt[[variable_interest]] <- factor(
+      dt[[variable_interest]], 
+      levels = var_levels, 
+      labels = var_levels
+    )
+    var_nlevels <- nlevels(dt[[variable_interest]])
+  }
+  
+  return(list(
+    dt = dt,
+    var_levels = var_levels,
+    var_nlevels = var_nlevels
+  ))
+}
+
+#' Calculer le tableau de fréquences avec effectifs et pourcentages
+compute_frequency_table <- function(
+  dt,
+  variable_interest,
+  varstrat,
+  varstrat_levels, 
+  digits = 1
+) {
+  # message("[compute_frequency_table]")
+  
+  # Comptages
+  sumup <- data.table::as.data.table(table(
+    dt[[varstrat]], 
+    dt[[variable_interest]], 
+    useNA = "always"
+  ))
+  names(sumup) <- c(varstrat, variable_interest, "n_group_mod")
+  
+  # === SOLUTION ROBUSTE : Conversion temporaire en data.frame ===
+  sumup <- as.data.frame(sumup)
+  sumup <- sumup[!is.na(sumup[[varstrat]]), ]
+  sumup <- data.table::as.data.table(sumup)
+  
+  # Calculer Nb_mesures et N_by_visit
+  sumup[, Nb_mesures := sum(n_group_mod), by = variable_interest]
+  sumup[, N_by_visit := sum(n_group_mod), by = varstrat]
+  
+  # Fixer N_by_visit pour les niveaux (sans lignes NA)
+  sumup$is_level_line <- !is.na(sumup[[variable_interest]])
+  sumup[, N_by_visit_level := sum(n_group_mod), by = c(varstrat, "is_level_line")]
+  
+  sumup$N_by_visit <- ifelse(
+    !is.na(sumup[[variable_interest]]),
+    sumup$N_by_visit_level,
+    sumup$N_by_visit
+  )
+  sumup$N_by_visit_level <- NULL
+  sumup$is_level_line <- NULL
+  
+  # Calculer les pourcentages
+  var_levels <- levels(dt[[variable_interest]])
+  
+  # Conversion temporaire pour filtrer
+  sumup_df <- as.data.frame(sumup)
+  rows_to_update <- sumup_df[[variable_interest]] %in% var_levels
+  
+  if (any(rows_to_update)) {
+    # Utiliser les indices numériques pour la mise à jour
+    row_indices <- which(rows_to_update)
+    
+    sumup[row_indices,
+          p := ifelse(
+            sum(n_group_mod) == 0,
+            "",
+            paste0("(", round(100 * n_group_mod / N_by_visit, digits = digits), "%)")
+          ),
+          by = c(varstrat, variable_interest)
+    ]
+  }
+  
+  # Formater le contenu des cellules
+  sumup$cell_content <- ifelse(
+    test = is.na(sumup[[variable_interest]]),
+    sumup[["n_group_mod"]],
+    paste0(sumup[["n_group_mod"]], " ", sumup[["p"]])
+  )
+  
+  return(sumup)
+}
+
+#' Créer le tableau d'effectifs formaté
+format_effectif_table <- function(
+  sumup,
+  variable_interest, 
+  varstrat, 
+  varstrat_levels, 
+  keep_missing_line
+) {
+  # message("[format_effectif_table]")
+  # Tableau principal
+  res <- data.table::dcast(
+    data = sumup,
+    stats::as.formula(paste0("`", variable_interest, "` + Nb_mesures ~ `", varstrat, "`")),
+    value.var = "cell_content"
+  )
+  
+  # Tableau des N
+  resN <- data.table::dcast(
+    data = sumup,
+    stats::as.formula(paste0("`", variable_interest, "` ~ `", varstrat, "`")),
+    value.var = "N_by_visit"
+  )
+  names(resN)[-1] <- paste0(names(resN)[-1], "_N")
+  
+  # Fusion
+  effectif_tab <- merge(res, resN, by = variable_interest, sort = FALSE)
+  names(effectif_tab)[1] <- "Modalites"
+  
+  # Réorganiser les colonnes
+  cols_visits <- unlist(lapply(varstrat_levels, FUN = function(x) paste0(x, c("", "_N"))))
+  data.table::setcolorder(
+    x = effectif_tab, 
+    neworder = c("Modalites", "Nb_mesures", cols_visits)
+  )
+  
+  # Gérer les données manquantes
+  effectif_tab[is.na(Modalites), "Modalites"] <- "Missing data"
+  if (!keep_missing_line) {
+    effectif_tab <- effectif_tab[!Modalites %in% "Missing data"]
+  }
+  
+  return(effectif_tab)
+}
+
+#' Ajouter la colonne Population_total si demandée
+add_global_summary <- function(
+  effectif_tab,
+  dt, 
+  variable_interest, 
+  digits = 1
+) {
+  # message("[add_global_summary]")
+  sumup_global <- data.table::as.data.table(table(dt[[variable_interest]], useNA = "always"))
+  names(sumup_global) <- c(variable_interest, "n_group_mod")
+  sumup_global <- sumup_global[!is.na(sumup_global[[variable_interest]]), ]
+  
+  sumup_global <- sumup_global[, `:=`(
+    Population_total = paste0(
+      n_group_mod,
+      " (", round(100 * n_group_mod / sum(sumup_global[["n_group_mod"]], na.rm = TRUE), digits = digits), "%)"
+    )
+  )][, n_group_mod := NULL]
+  
+  names(sumup_global)[1] <- "Modalites"
+  
+  effectif_tab <- merge(
+    x = effectif_tab, 
+    y = sumup_global, 
+    by = "Modalites", 
+    all = TRUE, 
+    sort = FALSE
+  )
+  
+  # Réorganiser
+  data.table::setcolorder(
+    x = effectif_tab, 
+    neworder = c(
+      unique(c("Modalites", "Nb_mesures", "Population_total", names(effectif_tab)))
+    )
+  )
+  
+  return(effectif_tab)
+}
+
+#' Effectuer le test de McNemar
+perform_mcnemar_test <- function(
+  mcnemar_dt,
+  varstrat_levels,
+  variable_interest
+) {
+  message("[perform_mcnemar_test]")
+  # Créer la table pour McNemar
+  effobs_mcnemar <- table(
+    data.frame(
+      mcnemar_dt[, .SD, .SDcols = varstrat_levels[1]],
+      mcnemar_dt[, .SD, .SDcols = varstrat_levels[2]]
+    )
+  )
+  
+  # Vérifier les conditions du test
+  if (!all(dim(effobs_mcnemar) %in% 2) || ncol(mcnemar_dt) != 3) {
+    return(NULL)  # Conditions non remplies
+  }
+  
+  # Test de McNemar
+  test_result <- stats::mcnemar.test(effobs_mcnemar, correct = TRUE)
+  
+  # Message si peu de paires discordantes
+  ongoing_message <- if (effobs_mcnemar[2, 1] + effobs_mcnemar[1, 2] < 10) {
+    "Less than 10 discordant pairs"
+  } else {
+    ""
+  }
+  
+  test_used <- "McNemar's Chi-squared test"
+  # message("[perform_mcnemar_test] ", test_used)
+  
+  return(list(
+    test_result = test_result,
+    test_used = test_used,
+    ongoing_message = ongoing_message
+  ))
+}
+
+#' Effectuer le test d'homogénéité marginale
+perform_marginal_homogeneity_test <- function(
+  dt,
+  variable_interest, 
+  varstrat,
+  patient_id
+) {
+  message("[perform_marginal_homogeneity_test]")
+  dt_mh <- base::droplevels(dt)
+  check_mh_dt <- as.data.frame(table(dt_mh[[varstrat]]))
+  check_mh <- all(check_mh_dt$Freq == check_mh_dt$Freq[1])  # Design complet ?
+  
+  if (!check_mh) {
+    return(list(
+      test_result = list(p.value = NA, method = "/"),
+      test_used = "/",
+      ongoing_message = "Not balanced design, Marginal Homogeneity Test not applicable"
+    ))
+  }
+  
+  if (nrow(check_mh_dt) < 2) {
+    return(list(
+      test_result = list(p.value = NA, method = "/"),
+      test_used = "/",
+      ongoing_message = "nrow(check_mh_dt) < 2, Marginal Homogeneity Test not applicable."
+    ))
+  }
+  
+  # === CORRECTION : Convertir patient_id en facteur ===
+  if (!is.factor(dt_mh[[patient_id]])) {
+    dt_mh[[patient_id]] <- as.factor(dt_mh[[patient_id]])
+  }
+  
+  # Test d'homogénéité marginale
+  test_used <- "Marginal Homogeneity Test"
+  ongoing_message <- "Marginal Homogeneity Test to valid"
+  
+  # Exécuter le test avec gestion d'erreurs
+  has_issues_hm <- try(tools::assertCondition( # correction v0.1.27
+    raw_mh_result <- coin::mh_test(
+      formula = stats::as.formula(paste0(
+        "`", variable_interest, "` ~ `", varstrat, "` | `", patient_id, "`"
+      )),
+      data = dt_mh
+    )
+  ), silent = TRUE)
+  
+  has_issues_hm <- has_issues_hm[
+    sapply(has_issues_hm, function(el) {
+      length(base::intersect(class(el), c("warning", "error"))) != 0
+    })
+  ]
+  
+  msg_captured_hm <- if (length(has_issues_hm) == 0) {
+    ""
+  } else {
+    paste(
+      unique(sapply(has_issues_hm, function(el) {
+        paste0("[", class(el)[2], "] ", el$message)
+      })),
+      collapse = ";"
+    )
+  }
+  
+  if (grepl("error", msg_captured_hm)) {
+    raw_mh_result <- NA
+    p_value_hm <- NA
+    ongoing_message <- paste0(ongoing_message, ";", msg_captured_hm)
+  } else {
+    p_value_hm <- coin::pvalue(raw_mh_result)
+  }
+
+  test_result <- list(
+    raw_result = raw_mh_result,
+    p.value = p_value_hm,
+    message = ongoing_message
+  )
+  
+  # message("[perform_marginal_homogeneity_test] ", test_used)
+  
+  return(list(
+    test_result = test_result,
+    test_used = test_used,
+    ongoing_message = ongoing_message
+  ))
+}
+
+#' Choisir et effectuer le test statistique approprié
+perform_paired_factorial_test <- function(
+  dt, 
+  variable_interest, 
+  varstrat,
+  patient_id,
+  varstrat_levels
+) {
+  # message("[perform_paired_factorial_test]")
+  # Préparer les données pour McNemar
+  mcnemar_dt <- data.table::dcast(
+    data = stats::na.omit(dt[, .SD, .SDcols = c(patient_id, varstrat, variable_interest)]),
+    formula = stats::as.formula(paste0("`", patient_id, "` ~ `", varstrat, "`")),
+    value.var = variable_interest
+  )
+  
+  # Vérifier si le test est applicable
+  dt_applicable <- stats::na.omit(dt)
+  if (length(unique(dt_applicable[[varstrat]])) == 1) {
+    ongoing_message <- "Variable present only in 1 visit/group, no paired test applicable"
+    message("[perform_paired_factorial_test] ", ongoing_message)
+    
+    return(list(
+      test_result = list(p.value = NA, method = "/", message = ongoing_message),
+      test_used = "/",
+      ongoing_message = ongoing_message
+    ))
+  }
+  
+  if (length(varstrat_levels) == 2) {
+    # Tenter le test de McNemar
+    mcnemar_result <- perform_mcnemar_test(
+      mcnemar_dt = mcnemar_dt,
+      varstrat_levels = varstrat_levels, 
+      variable_interest = variable_interest
+    )
+    
+    if (!is.null(mcnemar_result)) {
+      return(mcnemar_result)
+    }
+  }
+  
+  # Sinon, test d'homogénéité marginale
+  test_homogeneite_marginal <- perform_marginal_homogeneity_test(
+    dt = dt, 
+    variable_interest = variable_interest, 
+    varstrat = varstrat, 
+    patient_id = patient_id
+  )
+  return(test_homogeneite_marginal)
+}
+
+#' Simplifier le tableau si demandé (variables binaires)
+simplify_factorial_table <- function(effectif_tab) {
+  # message("[simplify_factorial_table]")
+  if (is.null(effectif_tab)) {
+    return(effectif_tab)
+  }
+  
+  is_binary <- all(c("0", "1") %in% effectif_tab$Modalites) ||
+    all(c("oui", "non") %in% tolower(effectif_tab$Modalites))
+  
+  if (!is_binary) {
+    return(effectif_tab)
+  }
+  
+  # Garder seulement la ligne "1" ou "Oui"
+  if (any(grepl("1", effectif_tab$Modalites))) {
+    effectif_tab <- effectif_tab[effectif_tab$Modalites %in% 1, ]
+  } else {
+    row_select <- grep("OUI", effectif_tab$Modalites, ignore.case = TRUE)
+    effectif_tab <- effectif_tab[row_select, ]
+  }
+  
+  return(effectif_tab)
 }
 
 #' compute factorial table for paired data
 #'
-#' provide descriptive statistics table for factorial data with a paired level (time or visites)
+#' provide descriptive statistics table for factorial data with a paired level 
+#'   (time or visites)
 #'
 #' The McNemar test is a statistical test used to compare qualitative data sets.
 #' That is to say, for comparing frequencies or percentages on matched data.
-#' This test is particularly suitable for situations where you have matched measurements (the same patients)
-#'  before and after an intervention => only applicable on 2x2 contingency table.
+#' This test is particularly suitable for situations where you have matched 
+#'   measurements (the same patients) before and after an intervention => 
+#'   only applicable on 2x2 contingency table.
+#'   
 #'   example of Assumptions:
-#'   H0: The proportion of paracetamol given intravenously is the same before and after the campaign. Vs
-#'   H1: The proportion of paracetamol given intravenously is different after campaign compared to before.
+#'   H0: The proportion of paracetamol given intravenously is the same before 
+#'     and after the campaign. Vs
+#'   H1: The proportion of paracetamol given intravenously is different after 
+#'     campaign compared to before.
 #'
-#' for more than 2x2 tc : Test d'homogénéité marginale --todev
-#' Ce test s'utilise lorsque la variable à étudier a plus de 2 modalités et que les groupes sont appariés
+#' for more than 2x2 tc : Test d'homogénéité marginale 
+#' Ce test s'utilise lorsque la variable à étudier a plus de 2 modalités et 
+#'   que les groupes sont appariés
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
 #' @param variable_interest A character. Name of dataframe's factorial columns to describe and test.
 #' @param varstrat A character. Name of the stratification variable, making groups to compare (time or visites).
-#' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
-#' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
-#' @param simplify A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
-#'   TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.
-#' @param patient_id A character., Default "patientid". Name of identifant patient id column.
-#' @param force_generate_1_when_0 A logical, Default TRUE. If TRUE, will test if the unique modality is 0 or "non" and
-#'    add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to only show the modality (1).
-#' @param keep_missing_line A logical, Default TRUE. Do you want to keep the missing data count (like a level)
+#' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
+#'   Integer indicating the number of decimal places (round).
+#' @param signif_digits A integer, Default 4. Integer indicating the number of 
+#'   decimal places (signif) for pvalues.
+#' @param simplify A logical. Default FALSE. Boolean indicating if one or two 
+#'   lines should be displayed for binary variables.
+#'   TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
+#'   FALSE = both levels of the variables.
+#' @param patient_id A character., Default "patientid". Name of identifant 
+#'   patient id column.
+#' @param force_generate_1_when_0 A logical, Default TRUE. If TRUE, will test
+#'    if the unique modality is 0 or "non" and
+#'    add the level 1 or "oui" so it can be display in counts. Can be combined 
+#'    with simplify to only show the modality (1).
+#' @param keep_missing_line A logical, Default TRUE. Do you want to keep the 
+#'   missing data count (like a level)
 #' @param global_summary A logical. Default FALSE Do you want to get global summary.
-#'  Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.
-#' @param test_more_2_levels A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels
+#'  Caution! global_summary on longitudinal data is not really relevant... 
+#'  but ok if you want it, you can.
+#' @param do_test A logicial, Default FALSE, do not return stat test. Turn TRUE if wanted.
+#' 
 #' @return a list of 2 elements :
 #'   line_res : the data.frame with one line containing needed results
 #'   test_result : the test object if more detail wanted about the stat test.
@@ -787,7 +1452,7 @@ compute_paired_continuous_table_and_test <- function(
 #'   dataframe = modified_sleep,
 #'   variable_interest = "fact1",
 #'   varstrat = "visites_2",
-#'   digits = 1,
+#'   precision = 1,
 #'   patient_id = "ID2",
 #'   force_generate_1_when_0 = FALSE,
 #'   keep_missing_line = TRUE
@@ -796,7 +1461,7 @@ compute_paired_continuous_table_and_test <- function(
 #'   dataframe = modified_sleep,
 #'   variable_interest = "fact1_na",
 #'   varstrat = "visites_2",
-#'   digits = 1,
+#'   precision = 1,
 #'   patient_id = "ID2",
 #'   force_generate_1_when_0 = FALSE,
 #'   keep_missing_line = TRUE
@@ -805,7 +1470,7 @@ compute_paired_continuous_table_and_test <- function(
 #'   dataframe = modified_sleep,
 #'   variable_interest = "fact3",
 #'   varstrat = "visites_2",
-#'   digits = 1,
+#'   precision = 1,
 #'   patient_id = "ID2",
 #'   force_generate_1_when_0 = FALSE,
 #'   keep_missing_line = TRUE
@@ -813,7 +1478,7 @@ compute_paired_continuous_table_and_test <- function(
 #' # dataframe = modified_sleep;
 #' # variable_interest = "fact3";
 #' # varstrat = "visites_2";
-#' # digits = 1;
+#' # precision = 1;
 #' # patient_id = "ID2";
 #' # force_generate_1_when_0 = FALSE;
 #' # keep_missing_line = TRUE;
@@ -822,344 +1487,176 @@ compute_paired_factorial_table_and_test <- function(
   dataframe,
   variable_interest,
   varstrat,
-  digits = 2,
+  precision = 2,
   signif_digits = 4,
   simplify = FALSE,
   patient_id = "patientid",
   force_generate_1_when_0 = TRUE,
   keep_missing_line = TRUE,
   global_summary = FALSE,
-  test_more_2_levels = FALSE
+  do_test = FALSE
 ) {
+  
   `.SD` <- `.` <- `.N` <- `:=` <- NULL
   cell_content <- IDENT_PAT <- value <- n_group_mod <- Nb_mesures <- Modalites <- NULL
-
-  message("[compute_paired_factorial_table_and_test] Compute tab for ", variable_interest)
+  
+  message(
+    "[compute_paired_factorial_table] ", #"Compute tab for ",
+    variable_interest
+  )
+  
+  # ========== Validations ==========
   stopifnot(length(variable_interest) == 1)
-
-  dt <- data.table::setDT(dataframe)
-
+  
+  dt <- data.table::setDT(data.table::copy(dataframe))
+  
   stopifnot(variable_interest %in% names(dt))
   stopifnot(varstrat %in% names(dt))
   stopifnot(is.factor(dt[[variable_interest]]))
   stopifnot(is.factor(dt[[varstrat]]))
-  stopifnot(!all(is.na(dt[[varstrat]]))) # no missing data in varstart
+  stopifnot(!all(is.na(dt[[varstrat]])))
   stopifnot(patient_id %in% names(dt))
-  stopifnot(digits >= 0)
+  # stopifnot(digits >= 0)
+  stopifnot(precision == "auto" || is.numeric(precision))
   stopifnot(signif_digits >= 0)
   stopifnot(is.logical(simplify))
   stopifnot(is.logical(force_generate_1_when_0))
   stopifnot(is.logical(keep_missing_line))
-
+  stopifnot(is.logical(global_summary))
+  stopifnot(is.logical(do_test))
+  
+  # ========== Préparation des données ==========
   N_init <- nrow(dt)
   dt <- dt[, .SD, .SDcols = c(variable_interest, varstrat, patient_id)]
-  N_missingval <- sum(is.na(dt)) # in total
-  # dt <- na.omit(dt) # do not apply, so missing values are count
-
+  N_missingval <- sum(is.na(dt))
+  
   varstrat_levels <- levels(dt[[varstrat]])
-  # varstrat_nlevels <- nlevels(dt[[varstrat]])
-  var_nlevels <- nlevels(dt[[variable_interest]])
-  var_levels <- levels(dt[[variable_interest]])
-
-  if (force_generate_1_when_0 && var_nlevels == 1 && (var_levels == 0 || tolower(var_levels) == "non")) {
-    message("[compute_paired_factorial_table_and_test] force_generate_1_when_0 for ", variable_interest)
-    new_level <- ifelse(
-      var_levels %in% 0,
-      1,
-      "Oui"
-    )
-    var_levels <- c(var_levels, new_level)
-    dt[[variable_interest]] <- factor(dt[[variable_interest]], levels = var_levels, labels = var_levels)
-    var_nlevels <- nlevels(dt[[variable_interest]])
+  
+  # Gérer force_generate_1_when_0
+  force_result <- handle_force_generate(
+    dt = dt, variable_interest = variable_interest,
+    force_generate_1_when_0 = force_generate_1_when_0
+  )
+  dt <- force_result$dt
+  var_levels <- force_result$var_levels
+  var_nlevels <- force_result$var_nlevels
+  
+  # Déterminer les digits à utiliser
+  if (precision %in% "auto") {
+    digits <- 1 
+  } else {
+    digits <- precision
   }
-
-  ## count, N and p ##
-  sumup <- data.table::as.data.table(table(dt[[varstrat]], dt[[variable_interest]], useNA = "always"))
-  names(sumup) <- c(varstrat, variable_interest, "n_group_mod")
-  sumup <- sumup[!is.na(sumup[[varstrat]]), ]
-
-  sumup <- sumup[, `:=`(
-    Nb_mesures = sum(n_group_mod)
-  ),
-  by = variable_interest
-  ][, `:=`(
-    N_by_visit = sum(n_group_mod) # ,
-    # p =  paste( ## this p use NA lines
-    #   "(", round(100 * n_group_mod / sum(n_group_mod), digits), "%)",
-    #   sep = ""
-    # )
-  ), by = varstrat]
-
-  ## fix N_by_visit for levels, without N missing values
-  sumup$is_level_line <- !is.na(sumup[[variable_interest]])
-  sumup <- sumup[, `:=`(
-    N_by_visit_level = sum(n_group_mod)
-  ),
-  by = c(varstrat, "is_level_line")
-  ]
-  sumup$N_by_visit <- ifelse(
-    !is.na(sumup[[variable_interest]]),
-    sumup$N_by_visit_level,
-    sumup$N_by_visit
+  
+  # ========== Calcul du tableau de fréquences ==========
+  sumup <- compute_frequency_table(
+    dt = dt, 
+    variable_interest = variable_interest,
+    varstrat = varstrat,
+    varstrat_levels = varstrat_levels,
+    digits = digits
   )
-  sumup$N_by_visit_level <- NULL
-  sumup$is_level_line <- NULL
-
-  # compute P without NA lines ie. only on levels
-
-  ## --error
-  # sumup <- sumup[
-  #   sumup[[variable_interest]] %in% var_levels,
-  #   `:=`(
-  #     p = ifelse(
-  #       sum(n_group_mod) == 0,
-  #       "",
-  #       paste(
-  #         "(", round(100 * n_group_mod / sum(n_group_mod), digits), "%)",
-  #         sep = ""
-  #       )
-  #     )
-  #   ),
-  #   by = varstrat
-  # ]
-  ## --fixed
-  sumup <- sumup[
-    sumup[[variable_interest]] %in% var_levels,
-    `:=`(
-      p = ifelse(
-        sum(n_group_mod) == 0,
-        "",
-        paste(
-          "(", round(100 * n_group_mod / N_by_visit, digits), "%)",
-          sep = ""
-        )
-      )
-    ),
-    by = c(varstrat, variable_interest)
-  ]
-
-  sumup$cell_content <- ifelse(
-    test = is.na(sumup[[variable_interest]]),
-    sumup[["n_group_mod"]],
-    paste0(sumup[["n_group_mod"]], " ", sumup[["p"]])
+  
+  # ========== Formater le tableau d'effectifs ==========
+  effectif_tab <- format_effectif_table(
+    sumup = sumup,
+    variable_interest = variable_interest, 
+    varstrat = varstrat,
+    varstrat_levels = varstrat_levels,
+    keep_missing_line = keep_missing_line
   )
-
-  res <- data.table::dcast(
-    data = sumup,
-    stats::as.formula(paste0(
-      "`", variable_interest, "`", " + Nb_mesures ~ ", "`", varstrat, "`"
-    )),
-    value.var = "cell_content"
-  )
-
-  resN <- data.table::dcast(
-    data = sumup,
-    stats::as.formula(paste0(
-      "`", variable_interest, "`", " ~ ", "`", varstrat, "`"
-    )),
-    value.var = "N_by_visit"
-  )
-  names(resN)[-1] <- paste0(names(resN)[-1], "_N")
-
-  # merge resN et res
-  effectif_tab <- merge(res, resN, by = variable_interest, sort = FALSE)
-  names(effectif_tab)[1] <- "Modalites"
-
-  cols_visits <- unlist(lapply(varstrat_levels, FUN = function(x) paste0(x, c("", "_N"))))
-  data.table::setcolorder(x = effectif_tab, neworder = c(
-    "Modalites", "Nb_mesures", cols_visits
-  ))
-
-  effectif_tab[is.na(Modalites), "Modalites"] <- "Missing data"
-  if (!keep_missing_line) effectif_tab <- effectif_tab[!Modalites %in% "Missing data"]
-  # effectif_tab
-
+  
+  # ========== Ajouter Population_total si demandé ==========
   if (global_summary) {
-    sumup_global <- data.table::as.data.table(table(dt[[variable_interest]], useNA = "always"))
-    names(sumup_global) <- c(variable_interest, "n_group_mod")
-    sumup_global <- sumup_global[!is.na(sumup_global[[variable_interest]]), ]
-
-    sumup_global <- sumup_global[, `:=`(
-      Population_total = paste0(
-        n_group_mod,
-        " (", round(100 * n_group_mod / sum(sumup_global[["n_group_mod"]], na.rm = TRUE), digits), "%)"
-      )
-    )][
-      ,
-      n_group_mod := NULL
-    ]
-    names(sumup_global)[1] <- "Modalites"
-
-    effectif_tab <- merge(x = effectif_tab, y = sumup_global, by = "Modalites", all = TRUE, sort = FALSE)
-    # order
-    data.table::setcolorder(x = effectif_tab, neworder = c(
-      unique(c("Modalites", "Nb_mesures", "Population_total", names(effectif_tab)))
-    ))
+    effectif_tab <- add_global_summary(
+      effectif_tab = effectif_tab, 
+      dt = dt,
+      variable_interest = variable_interest, 
+      digits = digits
+    )
   }
-
-  #### Stat test part ####
-  message("[compute_paired_factorial_table_and_test] Go for stat test")
-
-  # table of observed counts
-  # mcnemar_dt <- dt %>% pivot_wider(id_cols = patient_id, names_from = varstrat, values_from = variable_interest)
-  # data.table style
-  mcnemar_dt <- data.table::dcast(
-    data = stats::na.omit(
-      dt[, .SD, .SDcols = c(patient_id, varstrat, variable_interest)]
-    ),
-    formula = stats::as.formula(paste0(
-      "`",patient_id, "`", " ~ ", "`", varstrat, "`"
-    )),
-    value.var = variable_interest
-  )
-
-  dt_applicable <- na.omit(dt)
-  if (length(unique(dt_applicable[[varstrat]])) == 1) {
-    ongoing_message <- "Variable present only in 1 visit/group, no paired test applicable"
-    message("[compute_paired_factorial_table_and_test] ", ongoing_message)
-    test_used <- "/"
-    test_result <- list(
-      "p.value" = NA,
-      method = test_used,
+  
+  # ========== Simplification si demandée ==========
+  if (simplify) {
+    effectif_tab <- simplify_factorial_table(
+      effectif_tab = effectif_tab
+    )
+  }
+  
+  if (do_test) {
+    # ========== Tests statistiques ==========
+    message("[compute_paired_factorial_table_and_test] Go for stat test")
+    
+    test_results <- perform_paired_factorial_test(
+      dt = dt, 
+      variable_interest = variable_interest, 
+      varstrat = varstrat, 
+      patient_id = patient_id,
+      varstrat_levels = varstrat_levels
+    )
+  
+    test_result <- test_results$test_result
+    test_used <- test_results$test_used
+    ongoing_message <- test_results$ongoing_message
+    
+    tab_test <- data.table::data.table(
+      P_valeur = as.numeric(signif(test_result$p.value, digits = signif_digits)), 
+      Test = test_used,
       message = ongoing_message
     )
-  } else {
-    # effobs <- table(dt[, .SD, .SDcols = c(variable_interest, varstrat)])
-    effobs_mcnemar <- table(
-      data.frame(
-        mcnemar_dt[, .SD, .SDcols = varstrat_levels[1]],
-        mcnemar_dt[, .SD, .SDcols = varstrat_levels[2]]
-      )
+    tab_test <- data.table::rbindlist(
+      l = list(
+        tab_test,
+        as.data.table(matrix(
+          data = NA,
+          nrow = nrow(effectif_tab) - 1, ncol = ncol(tab_test)
+        ))[, V1 := as.numeric(V1)][, V2 := as.character(V2)][, V3 := as.character(V3)]
+      ), 
+      use.names = FALSE
     )
-    # efftheo <- as.table(round(rowSums(effobs) %*% t(colSums(effobs)) / sum(effobs), 2))
-    # names(dimnames(efftheo)) <- names(dimnames(effobs))
-    # rownames(efftheo) <- rownames(effobs)
-    # colnames(efftheo) <- colnames(effobs)
-
-    if (all(dim(effobs_mcnemar) %in% 2) && ncol(mcnemar_dt) == 3) {
-      # only 2 labels for var i and 2 levels for varstrat = ok : McNemar test
-
-      #### McNemar test ####
-      test_result <- stats::mcnemar.test(effobs_mcnemar, correct = TRUE)
-      if (effobs_mcnemar[2, 1] + effobs_mcnemar[1, 2] < 10) {
-        ongoing_message <- "Less than 10 discordant pairs"
-      } else {
-        ongoing_message <- ""
-      }
-      test_used <- "McNemar's Chi-squared test"
-      message("[compute_paired_factorial_table_and_test] ", test_used)
-    } else {
-      #### Marginal Homogeneity Test ####
-
-      # Q de cochran ? if more than 2 modalités
-      # or
-      # # Marginal Homogeneity Tests
-      # # La table est en long, par exemple une variable visite (x),
-      # # une variable catégorielle (y) et une variable patient_id (block)
-      # dt_mh <- stats::na.omit(dt[, .SD, .SDcols = c(variable_interest, varstrat, patient_id)])
-      # format as factor the 3 variables ? (inclusing patient id) -here to check
-
-      dt_mh <- base::droplevels(dt)
-      check_mh_dt <- as.data.frame(table(dt_mh[[varstrat]]))
-      check_mh <- all(check_mh_dt$Freq == check_mh_dt$Freq[1]) ## complete block design
-
-      if (check_mh) {
-        ## need a balanced design = same visite available for all sample
-
-        if (nrow(check_mh_dt) >= 2 && test_more_2_levels) {
-          test_used <- "Marginal Homogeneity Test"
-          ongoing_message <- "WARNING : dev of Marginal Homogeneity Test not validated yet !!"
-          raw_mh_result <- coin::mh_test(
-            formula = stats::as.formula(paste0(
-              "`", variable_interest, "`", " ~ ", "`", varstrat, "`", " | ", "`", patient_id, "`"
-            )),
-            data = dt_mh
-          )
-          test_result <- list(
-            raw_result = raw_mh_result,
-            "p.value" = coin::pvalue(raw_mh_result),
-            message = ongoing_message
-          )
-          message("[compute_paired_factorial_table_and_test] ", test_used)
-        } else {
-          ongoing_message <- "Marginal Homogeneity Test can be explored with option test_more_2_levels."
-          test_used <- "/"
-          test_result <- list(
-            "p.value" = NA,
-            method = test_used,
-            message = ongoing_message
-          )
-        }
-      } else {
-        ongoing_message <- "Not balanced design, Marginal Homogeneity Test not applicable"
-        ##  ‘x’ is not a balanced factor
-        test_used <- "/"
-        test_result <- list(
-          "p.value" = NA,
-          method = test_used,
-          message = ongoing_message
-        )
-      }
-    }
+    
+  } else {
+    # tab_test <- data.table::data.table(
+    #   P_valeur = NA, 
+    #   Test = "/",
+    #   message = ""
+    # )
+    test_result <- NA
   }
-
-  #### format tab results ####
+  
+  # ========== Formater le tableau final ==========
   res <- data.frame(
     Variable = variable_interest,
-    # Nb_mesures_init = N_init, # no more wanted
-    Valeurs_manquantes = N_missingval
+    Valeurs_manquantes = N_missingval, 
+    N_individuals = length(unique(dt[[patient_id]]))
   )
-
-  tab_test <- data.table::data.table(
-    P_valeur = signif(test_result$p.value, digits = signif_digits),
-    # ifelse(
-    #   test_result$p.value < 0.0001, "<0.0001", signif(test_result$p.value, digits = signif_digits)
-    # ),
-    Test = test_used,
-    message = ongoing_message
+  res <- data.table::rbindlist(
+    l = list(
+      res,
+      as.data.frame(matrix(data = NA, nrow = nrow(effectif_tab) - 1, ncol = ncol(res)))
+    ), 
+    use.names = FALSE
   )
-
-
-  if (simplify) {
-    # on effectif_tab
-    if (!is.null(effectif_tab) && nrow(effectif_tab) == 2) {
-      if (
-        all(c("0", "1") %in% effectif_tab$Modalites) |
-          all(c("oui", "non") %in% tolower(effectif_tab$Modalites))
-      ) {
-        if (any(grepl("1", effectif_tab$Modalites))) {
-          effectif_tab <- effectif_tab[effectif_tab$Modalites %in% 1, ]
-        } else {
-          # ignore.case about oui
-          row_select <- grep("OUI", effectif_tab$Modalites, ignore.case = TRUE)
-          effectif_tab <- effectif_tab[row_select, ]
-        }
-      }
-    }
+  
+  # Retirer Nb_mesures
+  effectif_tab$Nb_mesures <- NULL
+  
+  # Assembler le tableau final
+  if (do_test) {
+    tab <- cbind(res, effectif_tab, tab_test)
+  } else {
+    tab <- cbind(res, effectif_tab)
   }
-
-  res <- data.table::rbindlist(l = list(
-    res,
-    as.data.frame(matrix(data = NA, nrow = nrow(effectif_tab) - 1, ncol = ncol(res)))
-  ), use.names = FALSE)
-  tab_test <- data.table::rbindlist(l = list(
-    tab_test,
-    as.data.frame(matrix(data = NA, nrow = nrow(effectif_tab) - 1, ncol = ncol(tab_test)))
-  ), use.names = FALSE)
-
-  effectif_tab$Nb_mesures <- NULL # no more wanted
-  tab <- cbind(
-    res,
-    effectif_tab,
-    tab_test
+  
+  # Réorganiser les colonnes
+  data.table::setcolorder(
+    x = tab, 
+    neworder = c(unique(c("Variable", "Modalites", names(tab))))
   )
-  # order
-  data.table::setcolorder(x = tab, neworder = c(
-    unique(c("Variable","Modalites", names(tab))) # first Var and modalities
-  ))
   
   return(list(
-    "line_res" = tab,
-    "test_result" = test_result
+    line_res = tab,
+    test_result = test_result
   ))
 }
+

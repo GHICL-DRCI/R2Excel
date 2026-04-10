@@ -39,8 +39,9 @@
 #' @param dataframe A data.frame. tibble or data.table
 #' @param vars A vector of characters. Names of dataframe's columns.
 #' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
-#' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
-#' 
+#' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
+#'   Integer indicating the number of decimal places (round).
+#'   
 #' @return A table of SMD values for each vars.
 #' 
 #' @export
@@ -54,21 +55,22 @@
 #'     "state.division", "state.region"
 #'   ),
 #'   varstrat = "election",
-#'   digits = 2
+#'   precision = 2
 #'  )
 #' }
 compute_SMD_table <- function(
   dataframe, 
   vars, 
   varstrat,
-  digits = 2
+  precision = 2
 ) {
-  
+  message("[compute_SMD_table]")
   ## stops
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(varstrat %in% names(dataframe))
   stopifnot(is.factor(dataframe[[varstrat]]))
-  stopifnot(digits >= 0)
+  # stopifnot(digits >= 0)
+  stopifnot(precision == "auto" || is.numeric(precision))
   
   stopifnot(nlevels(dataframe[[varstrat]]) == 2)
   
@@ -77,25 +79,37 @@ compute_SMD_table <- function(
   vars_fact <- get_factors(dataframe, vars)
   
   SMD_tab <- data.table::rbindlist(lapply(X = vars, function(vari){
+    
     if (vari %in% vars_numeric) {
-      return(smd_num(
+      line_i <- smd_num(
         dataframe,
         varstrat = varstrat,
         vars = vari
-      ))
+      )
     }
     if (vari %in% vars_fact) {
-      return(smd_cat(
+      line_i <- smd_cat(
         dataframe,
         varstrat = varstrat,
         vars = vari
-      ))
+      )
     }
+    
+    # Déterminer les digits à utiliser
+    if (precision %in% "auto") {
+      base_decimals <- detect_decimal_places(dataframe[[vari]])
+      digits <- base_decimals + 1 
+    } else {
+      digits <- precision
+    }
+    
+    line_i$SMD <- round(line_i$SMD, digits = digits)
+    
+    return(line_i)
   }), fill = TRUE, use.names = TRUE)
-  SMD_tab$SMD <- round(SMD_tab$SMD, digits = digits)
+  
   return(SMD_tab)
 }
-
 
 
 #' Standardized mean difference for numeric (continuous) variables
@@ -104,7 +118,7 @@ compute_SMD_table <- function(
 #' 
 #' @param dataframe A data.frame. tibble or data.table
 #' @param vars A vector of characters. Names of dataframe's columns.
-#' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
+#' @param varstrat A character. Name of the stratification variable, making groups to compare.
 #' 
 #' @return A table of SMD values for each vars.
 #' 
@@ -120,7 +134,7 @@ compute_SMD_table <- function(
 #' )
 #' }
 smd_num <- function(dataframe, varstrat, vars) {
-  # stopifnot numeric ? to add  --here
+
   SMD_tab <- data.table::rbindlist(lapply(X = vars, function(vari) {
     x <- dataframe[[vari]]
     stopifnot(is.numeric(x))
@@ -139,7 +153,7 @@ smd_num <- function(dataframe, varstrat, vars) {
       )
     )
     return(
-      data.table(
+      data.table::data.table(
         Variable = vari,
         SMD = stddiff
       )
@@ -155,7 +169,7 @@ smd_num <- function(dataframe, varstrat, vars) {
 #' 
 #' @param dataframe A data.frame. tibble or data.table
 #' @param vars A vector of characters. Names of dataframe's columns.
-#' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
+#' @param varstrat A character. Name of the stratification variable, making groups to compare.
 #' 
 #' @return A table of SMD values for each vars.
 #' 
@@ -172,7 +186,7 @@ smd_num <- function(dataframe, varstrat, vars) {
 #' )
 #' }
 smd_cat <- function (dataframe, varstrat, vars) {
-  # stopifnot quali = factors ? to add  --here
+ 
   dataframe <- as.data.frame(dataframe)
   
   SMD_tab <- data.table::rbindlist(
@@ -235,7 +249,7 @@ smd_cat <- function (dataframe, varstrat, vars) {
 #' 
 #' @param dataframe A data.frame. tibble or data.table
 #' @param vars A vector of characters. Names of dataframe's columns.
-#' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
+#' @param varstrat A character. Name of the stratification variable, making groups to compare.
 #' 
 #' @return A table of SMD values for each vars.
 #' 
