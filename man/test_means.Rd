@@ -9,7 +9,7 @@ test_means(
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat,
   force_non_parametric_test = FALSE,
-  digits = 2,
+  force_parametric_test = FALSE,
   signif_digits = 4
 )
 }
@@ -20,10 +20,15 @@ test_means(
 
 \item{varstrat}{A character. Name of the stratification variable, making groups to compare.}
 
-\item{force_non_parametric_test}{A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+\item{force_non_parametric_test}{A logical. Default FALSE.
+You can turn it TRUE if you want to force the use of
 non parametric test, whatever shapiro test said about normality.}
 
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
+\item{force_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+parametric test, whatever shapiro test said about normality. 
+(so will use and show means instead of medians)
+This may be useful when considering the central limit theorem or small deviations.}
 
 \item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
 }
@@ -35,7 +40,8 @@ A list of 3 objects
 }
 \description{
 Test equality of means.
-Deploy the tests Wilcoxon-Mann-Whitney or kruskal-Wallis for difference of means with a variable of groups for non normal data.
+Deploy the tests Wilcoxon-Mann-Whitney or kruskal-Wallis for difference of
+ means with a variable of groups for non normal data.
 Otherwise Deploy the tests Student or anova.
 }
 \examples{

@@ -9,7 +9,7 @@ smd_cat(dataframe, varstrat, vars)
 \arguments{
 \item{dataframe}{A data.frame. tibble or data.table}
 
-\item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.}
+\item{varstrat}{A character. Name of the stratification variable, making groups to compare.}
 
 \item{vars}{A vector of characters. Names of dataframe's columns.}
 }

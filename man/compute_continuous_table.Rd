@@ -8,9 +8,9 @@ compute_continuous_table(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat = NULL,
-  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA",
-    "Nb_mesures", "is_Normal"),
-  digits = 2
+  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N",
+    "Valeurs_manquantes", "Nb_mesures", "is_Normal"),
+  precision = "auto"
 )
 }
 \arguments{
@@ -18,12 +18,15 @@ compute_continuous_table(
 
 \item{vars}{A vector of characters. Names of dataframe's continuous columns to describe.}
 
-\item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.}
+\item{varstrat}{A character. Default NULL. Name of the stratification variable,
+making groups to compare.}
 
-\item{stats_choice}{A vector of characters. Default provide all usual statistics to describe continuous variables,
-namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "N_NA", "Nb_mesures", "is_Normal")'}
+\item{stats_choice}{A vector of characters. Default provide all usual statistics
+to describe continuous variables,
+namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", 
+"Valeurs_manquantes", "Nb_mesures", "is_Normal")'}
 
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
 }
 \value{
 A final table or a list of tables if varstrat not null.
@@ -40,7 +43,7 @@ compute_continuous_table(
     "HS Grad", "Frost", "Area"
   ),
   varstrat = "election",
-  digits = 2
+  precision = 2
 )
 }
 }

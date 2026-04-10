@@ -9,92 +9,142 @@ save_excel_results(
   file = "tmp/description.xlsx",
   vars,
   varstrat = NULL,
-  digits = 2,
+  precision = 2,
   signif_digits = 4,
   simplify = FALSE,
   prop_table_margin = 2,
   force_generate_1_when_0 = TRUE,
   force_non_parametric_test = FALSE,
-  metric_show = "auto",
+  force_parametric_test = FALSE,
+  show_metric = "auto",
   global_summary = TRUE,
   show_OR = FALSE,
-  light_contents = TRUE,
-  crossed_varstrat_test = FALSE,
-  detail_NB_mesure_sum = FALSE,
-  show_p_adj = FALSE,
   show_SMD = FALSE,
+  detail_NB_measures = FALSE,
+  light_contents = TRUE,
+  do_test = TRUE,
+  show_exact_p = FALSE,
+  show_p_adj = FALSE,
   drop_levels = FALSE,
   dico_labels = NULL
 )
 }
 \arguments{
-\item{dataframe}{A data.frame. Columns must be well formated with factor or numeric class (important).}
+\item{dataframe}{A data.frame. Columns must be well formatted with factor or 
+numeric class (important). will be converted as data.table inside functions.}
 
-\item{file}{A character. Name of the Excel file or path + name of the Excel file (file name must end by ".xlsx").
+\item{file}{A character. Name of the Excel file or path + name of the Excel file
+(file name must end by ".xlsx").
 Default "Excel_report_description.xlsx".}
 
 \item{vars}{A vector of characters. Names of dataframe's columns to describe.
 Only consider numerics, factors and dates.}
 
-\item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.
+\item{varstrat}{A character. Default NULL. Name of the stratification variable,
+making groups to compare.
 Only one varstrat is expected in general.
-About 2 crossed varstrats : you can provide "var1*var2"
- to get a description of the 2nd varstrat for each level of the 1st varstrat.}
+About 2 crossed varstrats : you can provide "var1*var2" to get a description 
+of the 2nd varstrat for each level of the 1st varstrat.}
 
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)
+Integer indicating the number of decimal places (round).}
 
-\item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+\item{signif_digits}{A integer, Default 4. Integer indicating the number of 
+decimal places (signif) for pvalues.}
 
-\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
-TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.}
+\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two 
+lines should be displayed for binary variables.
+TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
+FALSE = both levels of the variables.}
 
-\item{prop_table_margin}{A vector giving the margins to split by. Default 2. 1 indicates rows, 2 indicates columns,
-c(1, 2) indicates rows and columns. When x has named dimnames, it can be a character vector selecting dimension names.}
+\item{prop_table_margin}{A vector giving the margins to split by. 
+Default 2. 1 indicates rows, 2 indicates columns,
+c(1, 2) indicates rows and columns. When x has named dimnames, 
+it can be a character vector selecting dimension names.}
 
-\item{force_generate_1_when_0}{A logical, Default TRUE. If TRUE, will test if the unique modality is 0 or "non" and
-add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to only show the modality (1).}
+\item{force_generate_1_when_0}{A logical, Default TRUE.
+ If TRUE, will test if the unique modality is 0 or "non" and
+ add the level 1 or "oui" so it can be display in counts.
+ Can be combined with simplify to only show the modality (1).
+This may be useful when considering the central limit theorem or small deviations.}
 
-\item{force_non_parametric_test}{A logical. Default FALSE. You can turn it TRUE if you want to force the use of
-non parametric test, whatever shapiro test said about normality. (so will use and show medians instead of means)}
+\item{force_non_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+non parametric test, whatever shapiro test said about normality. 
+(so will use and show medians instead of means)}
 
-\item{metric_show}{A character, Default "auto". What is the metric to show in cell content ?
+\item{force_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+parametric test, whatever shapiro test said about normality. 
+(so will use and show means instead of medians)}
+
+\item{show_metric}{A character, Default "auto". What is the metric to show in
+cell content ?
 "auto" = mean or median, automatic choice according shapiro test,
 "mean" = mean +/- sd forced, whatever shapiro said,
 "median" = media [Q1;Q3] forced, whatever shapiro said.
-Caution, if you force_non_parametric_test as TRUE, metric_show is forced as 'median' to be consistent.}
+Caution, if you force_non_parametric_test as TRUE, show_metric is forced 
+as 'median' and if you force_parametric_test as TRUE, show_metric is forced 
+as 'mean', to be consistent.}
 
 \item{global_summary}{A logical. Default TRUE. Do you want to get global summary.}
 
-\item{show_OR}{A logical. Default FALSE. Do you want to get OR, IC and p (when varstrat is a binary fact).}
+\item{show_OR}{A logical. Default FALSE. Do you want to get OR, IC and p
+(when varstrat is a binary fact).}
 
-\item{light_contents}{A logical, Default TRUE. If FALSE, the information like Nb_mesures,
-Valeurs manquantes et p will be repeated.}
+\item{show_SMD}{A logical, Default FALSE. If turn TRUE, add SMD column
+(standardized mean difference) between 2 groups.}
 
-\item{crossed_varstrat_test}{A logical, Default FALSE. If turn TRUE, 
-and detection of 2 varstrat "var1*var2" to cross, statistical test will be provided.}
+\item{detail_NB_measures}{A logical, Default FALSE.
+If turn TRUE, N will be shown with detail one column by group levels's order.}
 
-\item{detail_NB_mesure_sum}{A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) 
-for each group, in levels's order.}
+\item{light_contents}{A logical, Default TRUE. If FALSE, the information like 
+Nb_mesures, Valeurs manquantes et p will be repeated.}
 
-\item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.}
+\item{do_test}{A logical, Default TRUE will apply bivariate statistical tests.
+do_test = FALSE => show_SMD and show_OR trun FALSE}
 
-\item{show_SMD}{A logical, Default FALSE. If turn TRUE, add SMD column (standardized mean difference) between 2 groups.}
+\item{show_exact_p}{A logical, Default FALSE. So if p<0.0001, 
+the character "<0.0001" is returned.
+If turn TRUE, p-values will be returned will all numbers as numeric.}
+
+\item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column 
+based on p.adjust.}
 
 \item{drop_levels}{A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)}
 
-\item{dico_labels}{A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
-the 2nd column must be the labels. Other information will be ignored.}
+\item{dico_labels}{A data.frame, Default NULL. If data.frame provided, the first
+column must be the vars' name and the 2nd column must be the labels.
+Other information will be ignored.}
 }
 \value{
 The name or path + name of the saved Excel file.
+
+Content : 
+
+"Variable"	: a given variable of interest, provided in the dataset, to describe.
+"Nb_mesures" : N (sample size) shown is the total number of observations for the given variable, not related to the varstrat (group). 
+  The '_N' shown for each levels give the sample size for each levels (with maybe missing data, so N is impacted).
+"Valeurs_manquantes" : Number of missing values for the given variable.
+Population_totale	: Statistics for the whole dataset.
+varstrat=level_i : Statistics for the level i of the varstrat (group)
+P_valeur : P-value.
+Test : Test related to the P-value
+Message : Message captured for the statistician's attention
 }
 \description{
 Create Excel file of descriptive analysis
-Provide descriptive Excel file for factorial (qualitative) and continuous (quantitative) data
+Provide descriptive Excel file for factorial (qualitative) 
+  and continuous (quantitative) data
 Add statistical test according a variable of stratification
 }
 \examples{
 \dontrun{
+save_excel_results(
+  dataframe = modified_state,
+  file = "tmp/Descriptive_bivariate_analysis_0.xlsx",
+  vars = c("Population", "Income", "state.region", "binary_test")
+)
 save_excel_results(
   dataframe = modified_state,
   file = "tmp/Descriptive_bivariate_analysis_1.xlsx",
@@ -104,11 +154,21 @@ save_excel_results(
     "state.division", "state.region", "binary_test"
   ),
   varstrat = "election",
-  digits = 2
+  precision = 2
 )
 save_excel_results(
   dataframe = modified_state,
   file = "tmp/Descriptive_bivariate_analysis_2.xlsx",
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp",
+    "state.division", "state.region", "election"
+  ),
+  varstrat = "Area",
+  precision = 2
+)
+save_excel_results(
+  dataframe = modified_state,
+  file = "tmp/Descriptive_bivariate_analysis_3.xlsx",
   vars = c(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area",
@@ -116,17 +176,7 @@ save_excel_results(
     "special_condition", "special_measures" # trap
   ),
   varstrat = "election*binary_test",
-  digits = 2, crossed_varstrat_test = TRUE
-)
-save_excel_results(
-  dataframe = modified_state,
-  file = "tmp/Descriptive_bivariate_analysis_3.xlsx",
-  vars = c(
-    "Population", "Income", "Illiteracy", "Life Exp",
-    "state.division", "state.region", "election"
-  ),
-  varstrat = "Area",
-  digits = 2
+  precision = 2
 )
 }
 }

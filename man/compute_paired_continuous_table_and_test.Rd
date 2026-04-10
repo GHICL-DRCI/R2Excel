@@ -8,13 +8,14 @@ compute_paired_continuous_table_and_test(
   dataframe,
   variable_interest,
   varstrat,
-  digits = 2,
+  precision = 2,
   signif_digits = 4,
   patient_id = "patientid",
   global_summary = TRUE,
   force_non_parametric_test = FALSE,
-  metric_show = "auto",
-  test_more_2_levels = FALSE
+  force_parametric_test = FALSE,
+  show_metric = "auto",
+  do_test = FALSE
 )
 }
 \arguments{
@@ -22,28 +23,44 @@ compute_paired_continuous_table_and_test(
 
 \item{variable_interest}{A character. Name of dataframe's continuous columns to describe and test.}
 
-\item{varstrat}{A character. Name of the stratification variable, making groups to compare (time or visites).
-the repeated measures must be presented in line (for instance, "V1", "V2", "V3" will be set on 3 line for each individuals)}
+\item{varstrat}{A character. Name of the stratification variable, 
+making groups to compare (time or visites).
+The repeated measures must be presented in line 
+(for instance, "V1", "V2", "V3" will be set on 3 line for each individuals)}
 
-\item{digits}{A integer, Default 1. Integer indicating the number of decimal places (round).}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)
+Integer indicating the number of decimal places (round).}
 
-\item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+\item{signif_digits}{A integer, Default 4. Integer indicating the number of 
+decimal places (signif) for pvalues.}
 
 \item{patient_id}{A character., Default "patientid". Name of identifiant patient id column.
-the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)}
+the repeated measures must be presented in line 
+(for instance, "id1" will be set on 3 line if he has 3 visits)}
 
 \item{global_summary}{A logical. Default TRUE. Do you want to get global summary.
-Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.}
+Caution! global_summary on longitudinal data is not really relevant...
+but ok if you want it, you can.}
 
-\item{force_non_parametric_test}{A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+\item{force_non_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
 non parametric test, whatever shapiro test said about normality.}
 
-\item{metric_show}{A character, Default "auto". What is the metric to show in cell content ?
+\item{force_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+parametric test, whatever shapiro test said about normality. 
+(so will use and show means instead of medians)
+This may be useful when considering the central limit theorem or small deviations.}
+
+\item{show_metric}{A character, Default "auto". What is the metric to show in cell content ?
 "auto" = mean or median, automatic choice according statistic test,
 "mean" = mean +/- sd forced, whatever shapiro said,
-"median" = media [Q1;Q3] forced, whatever shapiro said.}
+"median" = media [Q1;Q3] forced, whatever shapiro said.
+Caution, if you force_non_parametric_test as TRUE, show_metric is forced 
+as 'median' and if you force_parametric_test as TRUE, show_metric is forced 
+as 'mean', to be consistent.}
 
-\item{test_more_2_levels}{A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels}
+\item{do_test}{A logicial, Default FALSE, do not return stat test. Turn TRUE if wanted.}
 }
 \value{
 a list of 2 elements :
@@ -53,6 +70,18 @@ a list of 2 elements :
 \description{
 provide descriptive statistics table for continuous data with a paired level (time or visites)
 }
+\details{
+Cases handled :
++ Variable with all NA values → no test  
++ Variable present in only 1 level → no paired test  
++ 2 levels of varstrat:  
+  + Normal data (diff) → Paired t-test  
+  + Non-normal data → Wilcoxon signed-rank test  
++ More than 2 levels:  
+  + Complete design + normality → Repeated measures ANOVA  
+  + Complete design + non-normality → Quade test  
+  + Incomplete design → Skillings-Mack test
+}
 \examples{
 \dontrun{
 ## Paired t-test
@@ -61,7 +90,7 @@ compute_paired_continuous_table_and_test(
   variable_interest = "extra",
   varstrat = "visites_2",
   patient_id = "ID2",
-  digits = 2, signif_digits = 2,
+  precision = 2, signif_digits = 2,
   global_summary = FALSE
 )
 compute_paired_continuous_table_and_test(
@@ -69,7 +98,7 @@ compute_paired_continuous_table_and_test(
   variable_interest = "extra_with_missings",
   varstrat = "visites_2",
   patient_id = "ID2",
-  digits = 2, signif_digits = 2,
+  precision = 2, signif_digits = 2,
   global_summary = FALSE
 )
 compute_paired_continuous_table_and_test(
@@ -77,7 +106,7 @@ compute_paired_continuous_table_and_test(
   variable_interest = "extra_with_missings",
   varstrat = "visites_2",
   patient_id = "ID2",
-  digits = 2, signif_digits = 2,
+  precision = 2, signif_digits = 2,
   global_summary = TRUE
 )
 ## Anova on paired data
@@ -86,7 +115,7 @@ compute_paired_continuous_table_and_test(
   variable_interest = "extra",
   varstrat = "visites_4",
   patient_id = "ID",
-  digits = 2, signif_digits = 2,
+  precision = 2, signif_digits = 2,
   global_summary = FALSE
 )
 compute_paired_continuous_table_and_test(
@@ -94,7 +123,7 @@ compute_paired_continuous_table_and_test(
   variable_interest = "extra",
   varstrat = "visites_5",
   patient_id = "ID",
-  digits = 2, signif_digits = 2,
+  precision = 2, signif_digits = 2,
   global_summary = FALSE
 )
 ## test no normal measure : Paired Wilcoxon signed-rank test
@@ -103,7 +132,7 @@ compute_paired_continuous_table_and_test(
   variable_interest = "mesure3",
   varstrat = "visites_2",
   patient_id = "ID2",
-  digits = 2, signif_digits = 2,
+  precision = 2, signif_digits = 2,
   global_summary = FALSE
 )
 }

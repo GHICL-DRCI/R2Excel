@@ -9,7 +9,7 @@ compute_correlation_table(
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat = varstrat,
   method_corr = "detect_auto",
-  digits = 2,
+  precision = 2,
   signif_digits = 4
 )
 }
@@ -23,9 +23,10 @@ compute_correlation_table(
 \item{method_corr}{A character. Default "detect_auto" meaning the linear link will be detected if the R2 > 0.5.
 Otherwise, method to compute correlation is wanted "pearson", "spearman", "kendall".}
 
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
 
-\item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+\item{signif_digits}{A integer, 
+Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
 }
 \value{
 A final table of stat and correlation.
@@ -43,7 +44,7 @@ compute_correlation_table(
   ),
   varstrat = "Area",
   method_corr = "detect_auto",
-  digits = 2
+  precision = 2
 )
 }
 }

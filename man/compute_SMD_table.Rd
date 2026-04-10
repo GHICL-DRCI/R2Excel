@@ -4,7 +4,7 @@
 \alias{compute_SMD_table}
 \title{compute SMD}
 \usage{
-compute_SMD_table(dataframe, vars, varstrat, digits = 2)
+compute_SMD_table(dataframe, vars, varstrat, precision = 2)
 }
 \arguments{
 \item{dataframe}{A data.frame. tibble or data.table}
@@ -13,7 +13,8 @@ compute_SMD_table(dataframe, vars, varstrat, digits = 2)
 
 \item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.}
 
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)
+Integer indicating the number of decimal places (round).}
 }
 \value{
 A table of SMD values for each vars.
@@ -65,7 +66,7 @@ compute_SMD_table(
     "state.division", "state.region"
   ),
   varstrat = "election",
-  digits = 2
+  precision = 2
  )
 }
 }
