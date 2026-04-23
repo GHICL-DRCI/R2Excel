@@ -8,7 +8,7 @@ estimate_diff_mean(
   dataframe,
   vars,
   varstrat,
-  digits = 1,
+  precision = 1,
   force_non_parametric_test = FALSE
 )
 }
@@ -19,9 +19,10 @@ estimate_diff_mean(
 
 \item{varstrat}{A character. Name of the stratification variable, making groups to compare.}
 
-\item{digits}{A integer, Default 1. Integer indicating the number of decimal places (round).}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
 
-\item{force_non_parametric_test}{A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+\item{force_non_parametric_test}{A logical. Default FALSE. You can turn it TRUE 
+if you want to force the use of
 non parametric test, whatever shapiro test said about normality.}
 }
 \value{

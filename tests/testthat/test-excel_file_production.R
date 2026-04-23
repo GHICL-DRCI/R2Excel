@@ -1,3 +1,6 @@
+message("test excel file prod - done v0.1.27")
+
+
 dir.create("tmp", showWarnings = FALSE)
 
 #### Test errors ####
@@ -6,13 +9,14 @@ dir.create("tmp", showWarnings = FALSE)
 test_that("error No such file or directory ", {
   expect_error(save_excel_results(
     dataframe = modified_state,
-    file = file.path("tmp_not_creat", "03-test_final_novarstrat.xlsx"), # No such file or directory
+    file = file.path("tmp_not_creat", "03-test_final_novarstrat.xlsx"), 
+    # No such file or directory
     vars = c(
       "Population", "Income", "Illiteracy", "Life Exp", "Murder",
-      "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
+      "state.division", "state.region", "binary_test"
     ),
     varstrat = NULL,
-    digits = 3,
+    precision = 3,
     simplify = FALSE
   ))
 })
@@ -32,17 +36,20 @@ path03 <- save_excel_results(
   file = file.path("tmp", "03-test_final_novarstrat.xlsx"),
   vars = c(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
-    "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
+    "HS Grad", "Frost", "Area", "state.division", "state.region", 
+    "binary_test"
   ),
   varstrat = NULL,
-  digits = 3,
+  precision = 3,
   simplify = FALSE
 )
 tab_quali_3 <- readxl::read_excel(
-  path = file.path("tmp", "03-test_final_novarstrat.xlsx"), sheet = "qualitative - "
+  path = file.path("tmp", "03-test_final_novarstrat.xlsx"), 
+  sheet = "qualitative - "
 )
 tab_quanti_3 <- readxl::read_excel(
-  path = file.path("tmp", "03-test_final_novarstrat.xlsx"), sheet = "quantitative - "
+  path = file.path("tmp", "03-test_final_novarstrat.xlsx"), 
+  sheet = "quantitative - "
 )
 
 analyse_desc_quali_3 <- compute_factorial_table(
@@ -51,7 +58,7 @@ analyse_desc_quali_3 <- compute_factorial_table(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
-  varstrat = NULL, digits = 3, simplify = FALSE
+  varstrat = NULL, precision = 3, simplify = FALSE
 )
 analyse_desc_quanti_3 <- compute_continuous_table(
   dataframe = modified_state,
@@ -59,7 +66,7 @@ analyse_desc_quanti_3 <- compute_continuous_table(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
-  varstrat = NULL, digits = 3
+  varstrat = NULL, precision = 3
 )
 
 test_that("final_novarstrat_file", {
@@ -72,19 +79,23 @@ test_that("final_novarstrat_file", {
   expect_equal(ncol(tab_quanti_3), 7)
   expect_equal(
     tab_quanti_3$`Moy +/- Sd`[tab_quanti_3$Variable %in% "Area"],
-    paste(round(mean(modified_state$Area, na.rm = TRUE), 3), "+/-", round(sd(modified_state$Area, na.rm = TRUE), 3))
+    paste(round(mean(modified_state$Area, na.rm = TRUE), 3), "+/-",
+          round(sd(modified_state$Area, na.rm = TRUE), 3))
   )
-  expect_equal(length(na.omit(unique(tab_quali_3$Variable))), length(get_factors(modified_state, vars = c(
+  expect_equal(length(na.omit(unique(tab_quali_3$Variable))), 
+               length(get_factors(modified_state, vars = c(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ))))
   expect_equal(ncol(tab_quali_3), 5)
   expect_equal(
     tab_quali_3$`Effectif (%)`[tab_quali_3$Modalites %in% "1"],
-    paste0(sum(modified_state$binary_test %in% 1), " (", sum(modified_state$binary_test %in% 1) / nrow(modified_state) * 100, "%)")
+    paste0(sum(modified_state$binary_test %in% 1), 
+           " (", sum(modified_state$binary_test %in% 1) / nrow(modified_state) * 100, "%)")
   )
 
-  expect_equal(length(analyse_desc_quali_3), length(unique(na.omit(tab_quali_3$Variable))))
+  expect_equal(length(analyse_desc_quali_3), 
+               length(unique(na.omit(tab_quali_3$Variable))))
   expect_equal(nrow(analyse_desc_quanti_3), nrow(tab_quanti_3))
 
 })
@@ -99,14 +110,16 @@ path04 <- save_excel_results(
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
   varstrat = NULL,
-  digits = 3,
+  precision = 3,
   simplify = TRUE
 )
 tab_quali_simplified_4 <- readxl::read_excel(
-  path = file.path("tmp", "04-test_final_novarstrat_simplified.xlsx"), sheet = "qualitative - "
+  path = file.path("tmp", "04-test_final_novarstrat_simplified.xlsx"),
+  sheet = "qualitative - "
 )
 tab_quanti_simplified_4 <- readxl::read_excel(
-  path = file.path("tmp", "04-test_final_novarstrat_simplified.xlsx"), sheet = "quantitative - "
+  path = file.path("tmp", "04-test_final_novarstrat_simplified.xlsx"),
+  sheet = "quantitative - "
 )
 
 test_that("final_novarstrat_file_simplified_4", {
@@ -114,11 +127,16 @@ test_that("final_novarstrat_file_simplified_4", {
   expect_true(file.exists(file.path("tmp", "04-test_final_novarstrat_simplified.xlsx")))
   expect_equal(nrow(tab_quali_3), nrow(tab_quali_simplified_4) + 1)
   expect_equal(
-    tab_quali_simplified_4$`Effectif (%)`[tab_quali_simplified_4$Variable %in% "binary_test" & tab_quali_simplified_4$Modalites %in% "1"],
-    paste0(sum(modified_state$binary_test %in% 1), " (", sum(modified_state$binary_test %in% 1) / nrow(modified_state) * 100, "%)")
+    tab_quali_simplified_4$`Effectif (%)`[tab_quali_simplified_4$Variable %in% "binary_test" &
+                                            tab_quali_simplified_4$Modalites %in% "1"],
+    paste0(sum(modified_state$binary_test %in% 1),
+           " (", sum(modified_state$binary_test %in% 1) / nrow(modified_state) * 100, "%)")
   )
-  expect_true(all(tab_quali_simplified_4[, -c(1,2)] == tab_quali_3[tab_quali_3$Modalites != "0", -c(1,2)], na.rm = TRUE))
-  expect_equal(length(unique(tab_quali_simplified_4$Variable)), length(unique(tab_quali_3$Variable)))
+  expect_true(all(
+    tab_quali_simplified_4[, -c(1,2)] == tab_quali_3[tab_quali_3$Modalites != "0", -c(1,2)],
+    na.rm = TRUE))
+  expect_equal(length(unique(tab_quali_simplified_4$Variable)),
+               length(unique(tab_quali_3$Variable)))
 })
 
 
@@ -132,15 +150,17 @@ path05 <- save_excel_results(
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
   varstrat = "election",
-  digits = 3,
+  precision = 3,
   simplify = FALSE,
   prop_table_margin = 2
 )
 tab_quali_strat_5 <- readxl::read_excel(
-  path = file.path("tmp", "05-test_final_varstrat.xlsx"), sheet = "qualitative - election"
+  path = file.path("tmp", "05-test_final_varstrat.xlsx"),
+  sheet = "qualitative - election"
 )
 tab_quanti_strat_5 <- readxl::read_excel(
-  path = file.path("tmp", "05-test_final_varstrat.xlsx"), sheet = "quantitative - election"
+  path = file.path("tmp", "05-test_final_varstrat.xlsx"),
+  sheet = "quantitative - election"
 )
 
 analyse_desc_quanti_5 <- compute_continuous_table(
@@ -150,7 +170,7 @@ analyse_desc_quanti_5 <- compute_continuous_table(
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
   varstrat = "election",
-  digits = 3
+  precision = 3
 )
 analyse_desc_quali_5 <- compute_factorial_table(
   dataframe = modified_state,
@@ -159,7 +179,7 @@ analyse_desc_quali_5 <- compute_factorial_table(
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
   varstrat = "election",
-  digits = 3,
+  precision = 3,
   simplify = FALSE,
   prop_table_margin = 2
 )
@@ -170,8 +190,7 @@ test_prop_5 <- test_proportions(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
-  varstrat = "election",
-  digits = 3
+  varstrat = "election"
 )
 test_mean_5 <- test_means(
   dataframe = modified_state,
@@ -179,8 +198,7 @@ test_mean_5 <- test_means(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
-  varstrat = "election",
-  digits = 3
+  varstrat = "election"
 )
 
 test_that("final_varstrat_file", {
@@ -188,13 +206,14 @@ test_that("final_varstrat_file", {
   expect_true(file.exists(file.path("tmp", "05-test_final_varstrat.xlsx")))
   expect_equal(nrow(tab_quali_3), nrow(tab_quali_strat_5))
   expect_equal(nrow(tab_quanti_3), nrow(tab_quanti_strat_5))
-  expect_equal(ncol(tab_quali_strat_5), 10)
-  expect_equal(ncol(tab_quanti_strat_5), 9)
+  expect_equal(ncol(tab_quali_strat_5), 12)
+  expect_equal(ncol(tab_quanti_strat_5), 11)
   expect_equal(
     tab_quanti_strat_5$Population_totale[tab_quanti_strat_5$Variable %in% "Murder"],
     tab_quanti_3$`Moy +/- Sd`[tab_quanti_3$Variable %in% "Murder"]
   )
-  # tab_quanti_3$`Med [Q1-Q3]`[tab_quanti_3$Variable %in% "Murder"] # if not normal --to check
+  # tab_quanti_3$`Med [Q1-Q3]`[tab_quanti_3$Variable %in% "Murder"] 
+  # if not normal --to check
   expect_equal(
     tab_quali_strat_5$Population_totale[tab_quali_strat_5$Modalites %in% "Northeast"],
     tab_quali_3$`Effectif (%)`[tab_quali_3$Modalites %in% "Northeast"]
@@ -207,29 +226,37 @@ test_that("final_varstrat_file", {
   tmp_test_mean_5$Variable <- row.names(tmp_test_mean_5)
   tmp_test_mean_5$P_valeur <- signif(tmp_test_mean_5$P_valeur, 4)
   expect_true(all(
-    tibble::as_tibble(tmp_test_mean_5[order(tmp_test_mean_5$Variable), c("Variable", "P_valeur", "Test", "message")]) ==
-    tab_quanti_strat_5[order(tab_quanti_strat_5$Variable), c("Variable", "P_valeur", "Test", "message")]
+    tibble::as_tibble(tmp_test_mean_5[
+      order(tmp_test_mean_5$Variable),
+        c("Variable", "P_valeur", "Test", "message")]
+    ) == tab_quanti_strat_5[
+      order(tab_quanti_strat_5$Variable), 
+       c("Variable", "P_valeur", "Test", "message")]
   ))
 
   tmp_test_prop_5 <- test_prop_5$results
   tmp_test_prop_5$Variable <- row.names(tmp_test_prop_5)
   tmp_test_prop_5$P_valeur <- signif(tmp_test_prop_5$P_valeur, 4)
   expect_true(all(
-    tibble::as_tibble(tmp_test_prop_5[, c("Variable", "P_valeur", "Test", "message")]) ==
-      tab_quali_strat_5[!is.na(tab_quali_strat_5$Variable), c("Variable", "P_valeur", "Test", "message")]
+    tibble::as_tibble(
+      tmp_test_prop_5[, c("Variable", "P_valeur", "Test", "message")]) ==
+      tab_quali_strat_5[!is.na(tab_quali_strat_5$Variable), 
+                        c("Variable", "P_valeur", "Test", "message")]
   ))
 
   tmp_quanti_5 <- analyse_desc_quanti_5$Income["electionred",]
   expect_equal(
     paste0(tmp_quanti_5$mean, " +/- ", tmp_quanti_5$sd),
     # paste0(tmp_quanti_5$median, " [", tmp_quanti_5$Q1, " ; ", tmp_quanti_5$Q3, "]"), # if not normal --tocheck
-    tab_quanti_strat_5[tab_quanti_strat_5$Variable %in% "Income", "election=red"][[1]]
+    tab_quanti_strat_5[tab_quanti_strat_5$Variable %in% "Income",
+                       "election=red"][[1]]
   )
 
   tmp_quali_5 <- analyse_desc_quali_5$state.region["Northeast", ]
   expect_equal(
     paste(tmp_quali_5$nblue, tmp_quali_5$pblue),
-    tab_quali_strat_5[tab_quali_strat_5$Modalites %in% "Northeast", "election=blue"][[1]]
+    tab_quali_strat_5[tab_quali_strat_5$Modalites %in% "Northeast",
+                      "election=blue"][[1]]
   )
 })
 
@@ -243,12 +270,13 @@ path07 <- save_excel_results(
     "Population", "yes_no_french_question", "all_count_zero"
   ),
   varstrat = "election",
-  digits = 3,
+  precision = 3,
   simplify = TRUE,
   force_generate_1_when_0 = TRUE
 )
 tab_quali_7 <- readxl::read_excel(
-  path = file.path("tmp", "07-test_final_generatelevel.xlsx"), sheet = "qualitative - election"
+  path = file.path("tmp", "07-test_final_generatelevel.xlsx"),
+  sheet = "qualitative - election"
 )
 test_that("final_2varstrat_file", {
   expect_true(file.exists(file.path("tmp", "07-test_final_generatelevel.xlsx")))
@@ -311,9 +339,8 @@ path02 <- save_excel_results(
     "special_condition", "special_measures" # trap
   ),
   varstrat = "election*binary_test",
-  digits = 2,
-  crossed_varstrat_test = TRUE,
-  detail_NB_mesure_sum = TRUE
+  precision = 2,
+  detail_NB_measures = TRUE
 )
 #  add test if no quali vers  :
 path03 <- save_excel_results(
@@ -324,15 +351,15 @@ path03 <- save_excel_results(
     "HS Grad", "Frost", "Area"
   ),
   varstrat = "election*binary_test",
-  digits = 2,
-  crossed_varstrat_test = TRUE,
-  detail_NB_mesure_sum = TRUE
+  precision = 2,
+  detail_NB_measures = TRUE
 )
 
 test_that("cross vars", {
   expect_true(file.exists(path02))
   expect_true(file.exists(path03)) # no more error v0.1.18
 })
+
 
 #### Test P adj ####
 
@@ -344,7 +371,7 @@ path04 <- save_excel_results(
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
   varstrat = "election",
-  digits = 3,
+  precision = 3,
   simplify = FALSE,
   prop_table_margin = 2,
   light_contents = TRUE,
@@ -360,7 +387,7 @@ test_that("test order p adj", {
   expect_equal(
     names(sheet_padj), # test order
     c("Variable", "Nb_mesures", "Valeurs_manquantes", 
-      "election=red", "election=blue",
+      "election=red", "election=red_N", "election=blue", "election=blue_N",
      "P_valeur", "P_adj_holm",
      "Test", "message"
     )
@@ -377,12 +404,11 @@ path05 <- save_excel_results(
     "special_condition", "special_measures" # trap
   ),
   varstrat = "election*binary_test",
-  digits = 2,
-  crossed_varstrat_test = TRUE, # want P_valeur
-  detail_NB_mesure_sum = TRUE,
+  precision = 2,
+  detail_NB_measure = TRUE,
   light_contents = TRUE,
   global_summary = FALSE,
-  show_p_adj = TRUE # want P_adj_holm
+  show_p_adj = TRUE # now ignored
 )
 sheet_cross_padj <- readxl::read_excel(
   file.path("tmp", "05-test_padj_cross.xlsx"),
@@ -391,14 +417,12 @@ sheet_cross_padj <- readxl::read_excel(
 
 test_that("test p adj", {
   expect_true(file.exists(path05))
-  expect_true(
-    all(c("P_valeur", "P_adj_holm") %in% sheet_cross_padj[1, ])
-  )
 })
 
 #### drop_levels ####
 
-tmp06 <- modified_state[binary_test %in% 1, ] # keep only 1 values over the 2 levels
+tmp06 <- modified_state[modified_state$binary_test %in% 1, ]
+# keep only 1 values over the 2 levels
 path06_TRUE <- save_excel_results(
   dataframe = tmp06,
   file = file.path("tmp", "06-yesdroplevels.xlsx"),
@@ -438,7 +462,6 @@ path06_TRUE_varstrat <- save_excel_results(
 sheet_yes_varstrat <- readxl::read_excel(
   file.path("tmp", "06-yesdroplevels_varstrat.xlsx")
 )
-
 
 test_that("test drop_levels", {
   expect_true(nrow(sheet_yes) + 1 == nrow(sheet_no))
@@ -482,7 +505,8 @@ path08 <- save_excel_results(
   varstrat = "binary_test",
   dico_labels = data.frame(
     "Vars" = c("Population", "Income", "state.division", "state.region"), 
-    "labels" = c("Population size (nb)", "Income (in dollars)", "State Division ???", "state region (cad point)")
+    "labels" = c("Population size (nb)", "Income (in dollars)", 
+                 "State Division ???", "state region (cad point)")
   )
 )
 sheet_08quanti <- readxl::read_excel(
@@ -533,7 +557,7 @@ path09cross <- save_excel_results(
     "state.division", "state.region"
   ),
   varstrat = "election*binary_test",
-  digits = 2,
+  precision = 2,
   show_SMD = TRUE
 )
 sheet09quanticross <- readxl::read_excel(
@@ -600,7 +624,8 @@ test_that("test quanti varstrat", {
   expect_true(sheet_areacorr$`Area correlation`[1] == -0.12)
   expect_true(sheet_areacorr$`Area correlation`[6] == 0.17)
   expect_true(
-    all(c("Label.x", "Variable", "Label.y", "varstrat") %in% names(sheet_area_quali))
+    all(c("Label.x", "Variable", "Label.y", "varstrat") %in% 
+          names(sheet_area_quali))
   )
   expect_true(all(sheet_area_quali$Nb_mesures == c(50,26,24,50,25,25)))
 })
@@ -615,10 +640,10 @@ pathdetail <- save_excel_results(
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
   varstrat = "election",
-  digits = 3,
+  precision = 3,
   simplify = FALSE,
   prop_table_margin = 2, 
-  detail_NB_mesure_sum = TRUE
+  detail_NB_measure = TRUE
 )
 tab_quali_stratdet <- readxl::read_excel(
   path = pathdetail,
@@ -667,7 +692,8 @@ test_that("varstrat_file_content", {
       round(
         median(modified_state$Population[modified_state$election %in% "red"]), 3
       ),
-      tab_quanti_stratdet[["election=red"]][tab_quanti_stratdet$Variable %in% "Population"]
+      tab_quanti_stratdet[["election=red"]][tab_quanti_stratdet$Variable %in%
+                                              "Population"]
     )
   )
   expect_true(shapiro.test(modified_state$Population)$p.value < 0.05)
@@ -675,12 +701,12 @@ test_that("varstrat_file_content", {
   # mean, norm
   expect_true(
     grepl(
-      round(mean(modified_state$Income[modified_state$election %in% "blue"]), 3),
-      tab_quanti_stratdet[["election=blue"]][tab_quanti_stratdet$Variable %in% "Income"]
+      round(mean(modified_state$Income[modified_state$election %in% "blue"]), 1),
+      tab_quanti_stratdet[["election=blue"]][tab_quanti_stratdet$Variable %in% 
+                                               "Income"]
     )
   )
   expect_true(shapiro.test(modified_state$Income)$p.value > 0.05)
-  
   
 })
 
@@ -690,14 +716,12 @@ tmp11$elect_reorder <- relevel(tmp11$elect_reorder, "blue")
 pathdetail_revel <- save_excel_results(
   dataframe = tmp11,
   file = file.path("tmp", "11-test_detailreo_varstrat.xlsx"),
-  vars = c(
-    "Population", "Income", "state.region", "binary_test"
-  ),
+  vars = c("Population", "Income", "state.region", "binary_test"),
   varstrat = "elect_reorder",
-  digits = 3,
+  precision = 3,
   simplify = FALSE,
   prop_table_margin = 2, 
-  detail_NB_mesure_sum = TRUE
+  detail_NB_measure = TRUE
 )
 tab_quali_stratdetreorder <- readxl::read_excel(
   path = pathdetail_revel,
@@ -757,7 +781,7 @@ test_that("varstrat_file_order", {
   # mean, norm
   expect_true(
     grepl(
-      round(mean(tmp11$Income[tmp11$elect_reorder %in% "blue"]), 3),
+      round(mean(tmp11$Income[tmp11$elect_reorder %in% "blue"]), 1),
       tab_quanti_stratdetreorder[["elect_reorder=blue"]][
         tab_quanti_stratdetreorder$Variable %in% "Income"
       ]
@@ -768,6 +792,120 @@ test_that("varstrat_file_order", {
   
 })
 
+
+#### test show_exact_p ####
+save_excel_results(
+  dataframe = iris[1:99, ],
+  file = file.path("tmp", "12-test_pexact.xlsx"),
+  vars = names(iris),
+  varstrat = "Species", 
+  drop_levels = TRUE,
+  show_exact_p = TRUE
+)
+save_excel_results(
+  dataframe = iris[1:99, ],
+  file = file.path("tmp", "12-test_nonpexact.xlsx"),
+  vars = names(iris),
+  varstrat = "Species", 
+  drop_levels = TRUE,
+  show_exact_p = FALSE
+)
+tab_quanti_iris_pexact  <- readxl::read_excel(
+  path = file.path("tmp", "12-test_pexact.xlsx"),
+  sheet = 1
+)
+tab_quanti_iris_nonpexact  <- readxl::read_excel(
+  path = file.path("tmp", "12-test_nonpexact.xlsx"),
+  sheet = 1
+)
+test_that("p excat", {
+  expect_true(is.character(tab_quanti_iris_nonpexact$P_valeur))
+  expect_equal(unique(tab_quanti_iris_nonpexact$P_valeur), "<0.0001")
+  expect_true(is.numeric(tab_quanti_iris_pexact$P_valeur))
+  expect_true(all(tab_quanti_iris_pexact$P_valeur < 0.0001))
+})
+
+
+#### test force param or non param ####
+save_excel_results(
+  dataframe = iris[1:99, ],
+  file = file.path("tmp", "12-test_forceparam.xlsx"),
+  vars = names(iris),
+  varstrat = "Species", 
+  drop_levels = TRUE,
+  force_parametric_test = TRUE
+)
+save_excel_results(
+  dataframe = iris[1:99, ],
+  file = file.path("tmp", "12-test_forcenonparam.xlsx"),
+  vars = names(iris),
+  varstrat = "Species", 
+  drop_levels = TRUE,
+  force_non_parametric_test = TRUE
+)
+tab_quanti_iris_forceparam <- readxl::read_excel(
+  path = file.path("tmp", "12-test_forceparam.xlsx"),
+  sheet = 1
+)
+tab_quanti_iris_forcenonparam <- readxl::read_excel(
+  path = file.path("tmp", "12-test_forcenonparam.xlsx"),
+  sheet = 1
+)
+test_that("force test", {
+  # mean +/- sd if param
+  expect_true(all(grepl("+/-", tab_quanti_iris_forceparam$Population_totale)))
+  expect_equal(unique(tab_quanti_iris_forceparam$Test), "Student T-test")
+  # non normal groupe but still T test : 
+  expect_true(
+    nrow(tab_quanti_iris_forceparam[
+      grepl("0 group(s) normal", tab_quanti_iris_forceparam$message, fixed = T), 
+    ]) == 1
+  )
+  
+  # median [Q1 ; Q3] if non param 
+  expect_true(all(grepl(";", tab_quanti_iris_forcenonparam$Population_totale)))
+  expect_equal(unique(tab_quanti_iris_forcenonparam$Test), "Wilcoxon rank sum exact test (Mann-Whitney)")
+  # 3 normal groupe but still Wilcoxon test : 
+  expect_true(
+    nrow(tab_quanti_iris_forcenonparam[
+      grepl("0 group(s) not normal", tab_quanti_iris_forcenonparam$message, fixed = T), 
+    ]) ==3
+  )
+  
+})
+
+
+#### test show_metric ####
+save_excel_results(
+  dataframe = iris[1:99, ],
+  file = file.path("tmp", "12-test_mean.xlsx"),
+  vars = names(iris),
+  varstrat = "Species", 
+  drop_levels = TRUE, 
+  show_metric = "mean"
+)
+save_excel_results(
+  dataframe = iris[1:99, ],
+  file = file.path("tmp", "12-test_median.xlsx"),
+  vars = names(iris),
+  varstrat = "Species", 
+  drop_levels = TRUE, 
+  show_metric = "median"
+)
+tab_quanti_iris_mean <- readxl::read_excel(
+  path = file.path("tmp", "12-test_mean.xlsx"),
+  sheet = 1
+)
+tab_quanti_iris_med <- readxl::read_excel(
+  path = file.path("tmp", "12-test_median.xlsx"),
+  sheet = 1
+)
+test_that("metric", {
+  expect_true(all(grepl("+/-", tab_quanti_iris_mean$Population_totale)))
+  expect_true(all(grepl("+/-", tab_quanti_iris_mean$`Species=versicolor`)))
+  expect_true(all(grepl(";", tab_quanti_iris_med$Population_totale)))
+  expect_true(all(grepl(";", tab_quanti_iris_med$`Species=setosa`)))
+})
 
 
 #### end ####

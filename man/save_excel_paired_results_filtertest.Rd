@@ -9,19 +9,20 @@ save_excel_paired_results_filtertest(
   file = "paired_desc_table.xlsx",
   vars,
   varstrat,
-  digits = 2,
+  precision = 2,
   signif_digits = 4,
   patient_id = "patientid",
   simplify = FALSE,
   global_summary = FALSE,
   force_non_parametric_test = FALSE,
+  force_parametric_test = FALSE,
   force_generate_1_when_0 = TRUE,
   keep_missing_line = TRUE,
-  metric_show = "auto",
+  show_metric = "auto",
   light_contents = TRUE,
-  crossed_varstrat_test = FALSE,
-  detail_NB_mesure_sum = FALSE,
-  test_more_2_levels = FALSE,
+  detail_NB_measures = FALSE,
+  do_test = FALSE,
+  show_exact_p = FALSE,
   show_p_adj = FALSE,
   drop_levels = FALSE,
   dico_labels = NULL
@@ -33,58 +34,82 @@ Columns must be well formated with factor or numeric class (important).}
 
 \item{file}{A character. Path and name of the excel results file.}
 
-\item{vars}{A vector of characters. Name of columns to describe and test.}
+\item{vars}{A vector of characters. Name of columns to describe and test.
+Only consider numerics, factors and dates.}
 
-\item{varstrat}{A characters. Not null. Names of the stratification variable, making groups to compare (*time* or *visites* for instance).
-The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" will be set on 3 lines for each individuals).
+\item{varstrat}{A characters. Not null. Names of the stratification variable, 
+making groups to compare (*time* or *visites* for instance).
+The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" 
+will be set on 3 lines for each individuals).
 About 2 *crossed varstrats* : you can provide "var1*var2", and so
- get a description of the 2nd varstrat (var2) for each level of the 1st varstrat (var1).
-Attention, we except var1 as the repeated variables (time or visites) and
- var2 as the condition/group that will be tested with *not paired test* (if `crossed_varstrat_test` is set TRUE).}
+get a description of the 2nd varstrat (var2) for each level of the 1st varstrat (var1).}
 
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
+\item{precision}{mode: "auto" (adaptive) or numeric (fixed)
+Integer indicating the number of decimal places (round).}
 
-\item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+\item{signif_digits}{A integer, Default 4. Integer indicating the number of 
+decimal places (signif) for pvalues.}
 
-\item{patient_id}{A character. Default "patientid". Name of patient identifier (id) column.
-the repeated measures must be presented in line (for instance, "id1" will be set on 3 line if he has 3 visits)}
+\item{patient_id}{A character. Default "patientid". 
+Name of patient identifier (id) column.
+The repeated measures must be presented in line 
+(for instance, "id1" will be set on 3 line if he has 3 visits)}
 
-\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
-TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.}
+\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two lines
+should be displayed for binary variables.
+TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
+FALSE = both levels of the variables.}
 
 \item{global_summary}{A logical. Default FALSE Do you want to get global summary.
-Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.}
+Caution! global_summary on longitudinal data is not really relevant... 
+but ok if you want it, you can.}
 
-\item{force_non_parametric_test}{A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+\item{force_non_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
 non parametric test, whatever shapiro test said about normality.}
 
-\item{force_generate_1_when_0}{A logical, Default FALSE. If TRUE, will test if the unique modality is 0 or "non" and
-add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to
-only show the modality (1).}
+\item{force_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+parametric test, whatever shapiro test said about normality. 
+(so will use and show means instead of medians)
+This may be useful when considering the central limit theorem or small deviations.}
 
-\item{keep_missing_line}{A logical, Default TRUE. Do you want to keep the missing data count (like a level)}
+\item{force_generate_1_when_0}{A logical, Default FALSE. 
+If TRUE, will test if the unique modality is 0 or "non" and
+add the level 1 or "oui" so it can be display in counts. 
+Can be combined with simplify to only show the modality (1).}
 
-\item{metric_show}{A character, Default "auto". What is the metric to show in cell content ?
+\item{keep_missing_line}{A logical, Default TRUE. Do you want to keep the missing
+data count (like a level)}
+
+\item{show_metric}{A character, Default "auto". What is the metric to show in 
+cell content ?
 "auto" = mean or median, automatic choice according shapiro test,
 "mean" = mean +/- sd forced, whatever shapiro said,
 "median" = media [Q1;Q3] forced, whatever shapir said.
-Caution, if you force_non_parametric_test as TRUE, metric_show is forced as 'median' to be consistent.}
+Caution, if you force_non_parametric_test as TRUE, show_metric is forced 
+as 'median' and if you force_parametric_test as TRUE, show_metric is forced 
+as 'mean', to be consistent.}
 
 \item{light_contents}{A logical, Default TRUE. If FALSE,
-the information like 'Nb_mesure', 'Valeurs manquantes' et 'p' will be repeated.}
+the information like "Nb_mesure", "Valeurs manquantes" et "p" will be repeated.}
 
-\item{crossed_varstrat_test}{A logical, Default FALSE. If turn TRUE, and detection of 2 varstrat "var1*var2" to cross,
-statistical test will be provided.}
+\item{detail_NB_measures}{A logical, Default FALSE.
+If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.}
 
-\item{detail_NB_mesure_sum}{A logical, Default FALSE. If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.}
+\item{do_test}{A logical, Default TRUE. Do not return stat test if FALSE.}
 
-\item{test_more_2_levels}{A logical, Default FALSE. Do not return stat test if varstrat has more than 2 levels}
+\item{show_exact_p}{A logical, Default FALSE. 
+So if p<0.0001, the character "<0.0001" is returned.
+If turn TRUE, p-values will be returned will all numbers as numeric.}
 
-\item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column based on p.adjust.}
+\item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column
+based on p.adjust.}
 
 \item{drop_levels}{A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)}
 
-\item{dico_labels}{A data.frame, Default NULL. If data.frame provided, the first column must be the vars' name and 
+\item{dico_labels}{A data.frame, Default NULL. If data.frame provided,
+the first column must be the vars' name and 
 the 2nd column must be the labels. Other information will be ignored.}
 }
 \value{
@@ -105,4 +130,5 @@ save_excel_paired_results_filtertest(
   file = file.path("tmp", "desc_paired_data_tested.xlsx")
 )
 }
+
 }

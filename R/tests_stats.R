@@ -151,12 +151,11 @@ check_fisher <- function(tc) {
 #' test proportions
 #'
 #' Test contingency tables.
-#' Deploy the tests Khi 2 and fisher for proportions with a variable of reference
+#' Deploy the tests Khi 2 and Fisher for proportions with a variable of reference
 #'
 #' @param dataframe A data.frame containing data.
 #' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
 #' @param varstrat A character. Name of the stratification variable, making groups to compare.
-#' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
 #' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
 #'
 #' @return A list of 3 objects
@@ -177,7 +176,6 @@ test_proportions <- function(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat,
-  digits = 2,
   signif_digits = 4
 ) {
   dataframe <- as.data.frame(dataframe)
@@ -206,7 +204,9 @@ test_proportions <- function(
         sum(apply(!is.na(dataframe[, c(vari, varstrat)]), 1, all))
       )
     )
-    rownames(detailtest[[vari]][["observations"]]) <- c("Number of NA lines : ", "Number of used lines : ")
+    rownames(detailtest[[vari]][["observations"]]) <- c(
+      "Number of NA lines : ", "Number of used lines : "
+    )
     colnames(detailtest[[vari]][["observations"]]) <- ""
 
     # table of observed counts
@@ -297,15 +297,21 @@ test_proportions <- function(
 #' test means
 #'
 #' Test equality of means.
-#' Deploy the tests Wilcoxon-Mann-Whitney or kruskal-Wallis for difference of means with a variable of groups for non normal data.
+#' Deploy the tests Wilcoxon-Mann-Whitney or kruskal-Wallis for difference of
+#'  means with a variable of groups for non normal data.
 #' Otherwise Deploy the tests Student or anova.
 #'
 #' @param dataframe A data.frame containing data.
 #' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
 #' @param varstrat A character. Name of the stratification variable, making groups to compare.
-#' @param force_non_parametric_test A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+#' @param force_non_parametric_test A logical. Default FALSE.
+#'  You can turn it TRUE if you want to force the use of
 #'  non parametric test, whatever shapiro test said about normality.
-#' @param digits A integer, Default 2. Integer indicating the number of decimal places (round).
+#' @param force_parametric_test A logical. Default FALSE. 
+#'  You can turn it TRUE if you want to force the use of
+#'  parametric test, whatever shapiro test said about normality. 
+#'  (so will use and show means instead of medians)
+#'  This may be useful when considering the central limit theorem or small deviations. 
 #' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
 #'
 #' @return A list of 3 objects
@@ -327,7 +333,7 @@ test_means <- function(
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat,
   force_non_parametric_test = FALSE,
-  digits = 2,
+  force_parametric_test = FALSE, 
   signif_digits = 4
 ) {
   dataframe <- as.data.frame(dataframe)
@@ -335,6 +341,8 @@ test_means <- function(
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(all(varstrat %in% names(dataframe)))
 
+  stopifnot(force_non_parametric_test + force_parametric_test < 2)
+  
   varstrat_levels <- levels(dataframe[, varstrat])
 
   # check minimum of 4 patients per group
@@ -386,7 +394,8 @@ test_means <- function(
   detailtest <- vector("list", length(vars_numeric))
   names(detailtest) <- vars_numeric
 
-  if (force_non_parametric_test) message("[test_means] force_non_parametric_test")
+  if (force_non_parametric_test) message("[test_means] force_non_parametric_test turned TRUE")
+  if (force_parametric_test) message("[test_means] force_parametric_test truned TRUE")
 
   for (vari in vars_numeric) {
     message("[test_means] ", vari, " by ", varstrat)
@@ -405,7 +414,9 @@ test_means <- function(
 
     # statistics table
     summarizedstats <- as.data.frame(matrix(NA, nrow = nlevels(dataframe[, varstrat]) + 1, ncol = 6))
-    aggr_results <- stats::aggregate(dataframe[, vari], list(dataframe[, varstrat]), summary, simplify = FALSE)
+    aggr_results <- stats::aggregate(
+      dataframe[, vari], list(dataframe[, varstrat]), summary, simplify = FALSE
+    )
     for (l in (1:nlevels(dataframe[, varstrat]))) {
       summarizedstats[l, ] <- aggr_results[, 2][[l]][1:6]
     }
@@ -434,7 +445,7 @@ test_means <- function(
       # test equality
 
       # if no normality in one group
-      if (any(group_normality < 0.05) || force_non_parametric_test) {
+      if (( any(group_normality < 0.05) || force_non_parametric_test ) & !force_parametric_test)  {
         if (nlevels(dataframe[, varstrat]) == 2) {
           captured_wilcox_message <- try(tools::assertCondition(
             wilcox <- wilcox.test(dataframe[, vari] ~ dataframe[, varstrat])
@@ -480,45 +491,71 @@ test_means <- function(
           } else {
             mean_equal[vari, "message"] <- ""
           }
-          mean_equal[vari, "message"] <- paste0(mean_equal[vari, "message"], sum(group_normality < 0.05), " group(s) not normal.")
+          mean_equal[vari, "message"] <- paste0(
+            mean_equal[vari, "message"], sum(group_normality < 0.05), " group(s) not normal."
+          )
           mean_equal[vari, "Test"] <- "Kruskal-Wallis rank sum test"
           mean_equal[vari, "P_valeur"] <- signif(x = kruskal$p.value, digits = signif_digits)
           # mean_equal[vari, "decision"] <- ifelse(mean_equal[vari, "P_valeur"] < 0.05, "difference", "")
           detailtest[[vari]][["Test"]] <- kruskal
         }
-      } else { # if normality in all groups
+      } else { 
+        # if normality in all groups
+        # or if force_parametric_test is TRUE
 
         effectif_by_group <- vapply(X = 1:nlevels(dataframe[, varstrat]), FUN = function(g) {
           length(dataframe[[vari]][dataframe[[varstrat]] %in% varstrat_levels[g]])
         }, FUN.VALUE = 1)
         if (any(effectif_by_group < 15)) { # min 15 as param ?
           # just a message to warn, normality is eval on few points...
-          msg <- paste0("Warning:Normality assessed on few points in a group (n min = ", min(effectif_by_group), ").")
+          msg <- paste0(
+            "Warning:Normality assessed on few points in a group (n min = ", min(effectif_by_group), ")."
+          )
           message("[test_means] ", vari, " ", msg)
           mean_equal[vari, "message"] <- msg
         } else {
           mean_equal[vari, "message"] <- ""
         }
+        if (force_parametric_test) mean_equal[vari, "message"] <- paste0(
+          mean_equal[vari, "message"], "\nforce_parametric_test."
+        )
 
         if (nlevels(dataframe[, varstrat]) == 2) {
-          equalvariance <- (stats::var.test(dataframe[, vari] ~ dataframe[, varstrat])$p.value >= 0.05)
-          student <- stats::t.test(dataframe[, vari] ~ dataframe[, varstrat], var.equal = equalvariance)
-          mean_equal[vari, "message"] <- paste0(mean_equal[vari, "message"], "\nAll groups normal.")
+          equalvariance <- (stats::var.test(
+            dataframe[, vari] ~ dataframe[, varstrat]
+          )$p.value >= 0.05 )
+          student <- stats::t.test(
+            dataframe[, vari] ~ dataframe[, varstrat], var.equal = equalvariance
+          )
+          # mean_equal[vari, "message"] <- paste0(mean_equal[vari, "message"], "\nAll groups normal.")
+          # can be forced
+          mean_equal[vari, "message"] <- paste0(
+            mean_equal[vari, "message"], sum(group_normality > 0.05), " group(s) normal."
+          )
+          
           mean_equal[vari, "Test"] <- "Student T-test"
           mean_equal[vari, "P_valeur"] <- signif(x = student$p.value, digits = signif_digits)
           # mean_equal[vari, "decision"] <- ifelse(mean_equal[vari, "P_valeur"] < 0.05, "difference", "")
           detailtest[[vari]][["Test"]] <- student
         } else {
-          equalvariance <- (stats::bartlett.test(dataframe[, vari] ~ dataframe[, varstrat])$p.value >= 0.05)
-          anova_obj <- stats::oneway.test(dataframe[, vari] ~ dataframe[, varstrat], var.equal = equalvariance)
-          mean_equal[vari, "message"] <- paste0(mean_equal[vari, "message"], "\nAll groups normal.")
+          equalvariance <- (stats::bartlett.test(
+            dataframe[, vari] ~ dataframe[, varstrat]
+          )$p.value >= 0.05)
+          anova_obj <- stats::oneway.test(
+            dataframe[, vari] ~ dataframe[, varstrat], var.equal = equalvariance
+          )
+          # mean_equal[vari, "message"] <- paste0(mean_equal[vari, "message"], "\nAll groups normal.")
+          mean_equal[vari, "message"] <- paste0(
+            mean_equal[vari, "message"], sum(group_normality > 0.05), " group(s) normal."
+          )
+          
           mean_equal[vari, "Test"] <- "Anova One-Way"
           mean_equal[vari, "P_valeur"] <- signif(x = anova_obj$p.value, digits = signif_digits)
           # mean_equal[vari, "decision"] <- ifelse(mean_equal[vari, "P_valeur"] < 0.05, "difference", "")
           detailtest[[vari]][["Test"]] <- anova_obj
         }
       }
-    } else { # capture error occured during shapiro
+    } else { # capture error occurred during shapiro
       msg_captured <- paste(
         unique(sapply(
           X = has_issues,
@@ -540,7 +577,7 @@ test_means <- function(
   }
 
   ## Warning message to focus on the symetric distributions in wilcoxon test
-  ## warning in consol not wanted, ever save in mean_equal[vari, "message"] ...
+  ## warning in console not wanted, ever save in mean_equal[vari, "message"] ...
   # if (any(mean_equal[, "Test"] == "Wilcoxon rank sum exact test (Mann-Whitney)", na.rm = TRUE)) {
   #   msg_warning <- paste0(
   #     "[test_means] ",
@@ -568,12 +605,14 @@ test_means <- function(
 #' @param dataframe A data.frame containing data.
 #' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
 #' @param varstrat A character. Name of the stratification variable, making groups to compare.
-#' @param digits A integer, Default 1. Integer indicating the number of decimal places (round).
-#' @param force_non_parametric_test A logical. Default FALSE. You can turn it TRUE if you want to force the use of
+#' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
+#' @param force_non_parametric_test A logical. Default FALSE. You can turn it TRUE 
+#'  if you want to force the use of
 #'  non parametric test, whatever shapiro test said about normality.
 #'
 #' @return A data.frame,
 #'   in rows the vars and in column the stat used, the difference values and the IC95%
+#'  
 #' @export
 #' @import dplyr
 #' @importFrom simpleboot two.boot
@@ -590,11 +629,13 @@ estimate_diff_mean <- function(
   dataframe,
   vars,
   varstrat,
-  digits = 1,
+  precision = 1,
   force_non_parametric_test = FALSE
 ) {
   `%>%` <- magrittr::`%>%`
 
+  stopifnot(precision == "auto" || is.numeric(precision))
+  
   # On vérifie qu'on a bien que 2 modalités dans varstrat, et que c'est un facteur
   stopifnot(varstrat %in% names(dataframe))
   stopifnot(vars %in% names(dataframe))
@@ -636,7 +677,14 @@ estimate_diff_mean <- function(
       attr(dataframe[, vari], "label")
     )
     # nom <- vari ??? directement? --here
-
+    
+    # detection du nombre de décimal pour la diff # v0.1.27
+    if (precision %in% "auto") {
+      digits <- detect_decimal_places(dataframe[[vari]]) + 1 + 1 
+    } else {
+      digits <- precision
+    }
+    
     # si normale
     if (all(normalite[, vari] > 0.05) && !force_non_parametric_test) {
       # La différence peut être obtenue avec la fonction t.test
@@ -658,8 +706,10 @@ estimate_diff_mean <- function(
       # Sinon, difference des medianes
       # rééchantillonnage
       medb <- simpleboot::two.boot(
-        sample1 = stats::na.omit(dataframe[dataframe[, varstrat] == levels(dataframe[, varstrat])[2], vari]),
-        sample2 = stats::na.omit(dataframe[dataframe[, varstrat] == levels(dataframe[, varstrat])[1], vari]),
+        sample1 = stats::na.omit(
+          dataframe[dataframe[, varstrat] == levels(dataframe[, varstrat])[2], vari]),
+        sample2 = stats::na.omit(
+          dataframe[dataframe[, varstrat] == levels(dataframe[, varstrat])[1], vari]),
         FUN = median, R = 10000
       )
 

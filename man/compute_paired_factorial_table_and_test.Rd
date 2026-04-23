@@ -8,41 +8,54 @@ compute_paired_factorial_table_and_test(
   dataframe,
   variable_interest,
   varstrat,
-  digits = 2,
+  precision = 2,
   signif_digits = 4,
   simplify = FALSE,
   patient_id = "patientid",
   force_generate_1_when_0 = TRUE,
   keep_missing_line = TRUE,
   global_summary = FALSE,
-  test_more_2_levels = FALSE
+  do_test = FALSE
 )
 }
 \arguments{
-\item{dataframe}{A data.frame. tibble or data.table will be converted into data.table.}
+\item{dataframe}{A data.frame. tibble or data.table will be converted 
+into data.table.}
 
-\item{variable_interest}{A character. Name of dataframe's factorial columns to describe and test.}
+\item{variable_interest}{A character. Name of dataframe's factorial 
+columns to describe and test.}
 
-\item{varstrat}{A character. Name of the stratification variable, making groups to compare (time or visites).}
+\item{varstrat}{A character. Name of the stratification variable, 
+making groups to compare (time or visits).}
 
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)
+Integer indicating the number of decimal places (round).}
 
-\item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+\item{signif_digits}{A integer, Default 4. Integer indicating the number of 
+decimal places (signif) for p-values.}
 
-\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two lines should be displayed for binary variables.
-TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), FALSE = both levels of the variables.}
+\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two 
+lines should be displayed for binary variables.
+TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
+FALSE = both levels of the variables.}
 
-\item{patient_id}{A character., Default "patientid". Name of identifant patient id column.}
+\item{patient_id}{A character., Default "patientid". Name of username 
+patient id column.}
 
-\item{force_generate_1_when_0}{A logical, Default TRUE. If TRUE, will test if the unique modality is 0 or "non" and
-add the level 1 or "oui" so it can be display in counts. Can be combined with simplify to only show the modality (1).}
+\item{force_generate_1_when_0}{A logical, Default TRUE. If TRUE, will test
+if the unique modality is 0 or "non" and
+add the level 1 or "oui" so it can be display in counts. Can be combined 
+with simplify to only show the modality (1).}
 
-\item{keep_missing_line}{A logical, Default TRUE. Do you want to keep the missing data count (like a level)}
+\item{keep_missing_line}{A logical, Default TRUE. Do you want to keep the 
+missing data count (like a level)}
 
 \item{global_summary}{A logical. Default FALSE Do you want to get global summary.
-Caution! global_summary on longitudinal data is not really relevant... but ok if you want it, you can.}
+Caution! global_summary on longitudinal data is not really relevant... 
+but ok if you want it, you can.}
 
-\item{test_more_2_levels}{A logicial, Default FALSE. Do not return stat test if varstrat has more than 2 levels}
+\item{do_test}{A logical, Default FALSE, do not return stat test. 
+Turn TRUE if wanted.}
 }
 \value{
 a list of 2 elements :
@@ -50,19 +63,25 @@ a list of 2 elements :
   test_result : the test object if more detail wanted about the stat test.
 }
 \description{
-provide descriptive statistics table for factorial data with a paired level (time or visites)
+provide descriptive statistics table for factorial data with a paired level 
+  (time or visites)
 }
 \details{
 The McNemar test is a statistical test used to compare qualitative data sets.
 That is to say, for comparing frequencies or percentages on matched data.
-This test is particularly suitable for situations where you have matched measurements (the same patients)
- before and after an intervention => only applicable on 2x2 contingency table.
+This test is particularly suitable for situations where you have matched 
+  measurements (the same patients) before and after an intervention => 
+  only applicable on 2x2 contingency table.
+  
   example of Assumptions:
-  H0: The proportion of paracetamol given intravenously is the same before and after the campaign. Vs
-  H1: The proportion of paracetamol given intravenously is different after campaign compared to before.
+  H0: The proportion of paracetamol given intravenously is the same before 
+    and after the campaign. Vs
+  H1: The proportion of paracetamol given intravenously is different after 
+    campaign compared to before.
 
-for more than 2x2 tc : Test d'homogénéité marginale --todev
-Ce test s'utilise lorsque la variable à étudier a plus de 2 modalités et que les groupes sont appariés
+for more than 2x2 tc : Test d'homogénéité marginale 
+Ce test s'utilise lorsque la variable à étudier a plus de 2 modalités et 
+  que les groupes sont appariés
 }
 \examples{
 \dontrun{
@@ -71,7 +90,7 @@ compute_paired_factorial_table_and_test(
   dataframe = modified_sleep,
   variable_interest = "fact1",
   varstrat = "visites_2",
-  digits = 1,
+  precision = 1,
   patient_id = "ID2",
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE
@@ -80,7 +99,7 @@ compute_paired_factorial_table_and_test(
   dataframe = modified_sleep,
   variable_interest = "fact1_na",
   varstrat = "visites_2",
-  digits = 1,
+  precision = 1,
   patient_id = "ID2",
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE
@@ -89,7 +108,7 @@ compute_paired_factorial_table_and_test(
   dataframe = modified_sleep,
   variable_interest = "fact3",
   varstrat = "visites_2",
-  digits = 1,
+  precision = 1,
   patient_id = "ID2",
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE
@@ -97,7 +116,7 @@ compute_paired_factorial_table_and_test(
 # dataframe = modified_sleep;
 # variable_interest = "fact3";
 # varstrat = "visites_2";
-# digits = 1;
+# precision = 1;
 # patient_id = "ID2";
 # force_generate_1_when_0 = FALSE;
 # keep_missing_line = TRUE;

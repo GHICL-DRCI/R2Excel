@@ -1,3 +1,5 @@
+message("test compute OR tables - done v0.1.27")
+
 tab_or1 <- get_OR_univar(
   dataframe = modified_state,
   dependent_var = "binary_test",

@@ -1,3 +1,40 @@
+# Version 0.1.27
+
+02/2026 - 03/2026
+
+-    Fix data.table class in global user environment : copy and setDT (safe control)
+
+-    Add option `precision` = "auto" instead of "digits",
+to quickly apply our intern rule + add unit tests.
+
+Intern rule : The mean and median will be rounded to one decimal place higher than the accuracy of the original value. 
+The standard deviation will be rounded to 2 decimal places above the precision of the original value, 
+up to a maximum of 3 decimal places. 
+Percentages will be rounded to one decimal place, except for 0% and 100%. 
+
+-    Add option `do_test` to only deploy description (by default) or
+add bivariate stat test when turned true + add unit tests.
+
+-    Add option to get exact p-values (`show_exact_p`) + fix unit tests.
+
+-    Add option `force_parametric_test` : 
+This may be useful when considering the central limit theorem or small deviations + add unit tests. 
+
+-    Simplification : Remove tests when cross varstrat (`crossed_varstrat_test`) + fix unit tests.
+
+-    Change `metric_show` param into `show_metric` (harmony about show params !) + fix unit tests.
+
+-    Change `detail_NB_mesure_sum` param into `detail_NB_measures` (harmony!) + fix unit tests.
+
+-    Change "N_NA" col name into "Valeurs_manquantes".
+
+-    Uniform N columns in classic and paired tables :
+N, in detail by variable, need to be align in all tables, as columns ([level_i]_N) + documentation
+
+-    Re order label order in varstrat visit (in paired function). 
+
+-    Update vignette.
+
 # Version 0.1.26
 
 13/10/2025

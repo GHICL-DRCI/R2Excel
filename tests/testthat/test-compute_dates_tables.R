@@ -1,3 +1,5 @@
+message("test compute dates tables - done v0.1.27")
+
 dt <- data.frame(
   date1 = as.Date(c("2025-07-30", "2025-07-29", "2025-07-28")), 
   date2 = as.Date(c("2025-06-20", "2025-06-10", "2025-06-01")), 
@@ -65,8 +67,7 @@ test_that("test date file", {
   )
   expect_true(all(tab == tab_date2))
 })
-# clear tmp test folder
-unlink("tmp", recursive = TRUE)
+
 
 
 # tested
@@ -108,3 +109,7 @@ unlink("tmp", recursive = TRUE)
 #   ),
 #   varstrat = "Centre*Genre"
 # )
+
+
+# clear tmp test folder
+unlink("tmp", recursive = TRUE)

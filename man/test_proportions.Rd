@@ -8,7 +8,6 @@ test_proportions(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat,
-  digits = 2,
   signif_digits = 4
 )
 }
@@ -18,8 +17,6 @@ test_proportions(
 \item{vars}{A vector of characters. Names of dataframe's factorial columns to describe.}
 
 \item{varstrat}{A character. Name of the stratification variable, making groups to compare.}
-
-\item{digits}{A integer, Default 2. Integer indicating the number of decimal places (round).}
 
 \item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
 }
@@ -31,7 +28,7 @@ A list of 3 objects
 }
 \description{
 Test contingency tables.
-Deploy the tests Khi 2 and fisher for proportions with a variable of reference
+Deploy the tests Khi 2 and Fisher for proportions with a variable of reference
 }
 \examples{
 \dontrun{

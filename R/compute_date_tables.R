@@ -14,11 +14,11 @@
 #' @export
 #' @examples
 #' \dontrun{
-#'dt <- data.frame(
+#' dt <- data.frame(
 #'  date1 = as.Date(c("2025-07-30", "2025-07-29", "2025-07-28", "2025-07-30", "2025-07-29", "2025-07-28")), 
 #'  date2 = as.POSIXct(c("2024-06-20", "2024-06-10", "2024-06-01", "2025-07-30", "2025-07-29", "2025-07-28")), 
 #'  fact = as.factor(c(rep("A", 3), rep("B", 3)))
-#')
+#' )
 #' get_dates(dataframe = dt, vars = names(dt))
 #' compute_date_table(
 #'   dataframe = dt,
@@ -30,6 +30,7 @@
 #'   varstrat = "fact"
 #' )
 #' }
+#' 
 compute_date_table <- function(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
@@ -53,7 +54,7 @@ compute_date_table <- function(
   
   
   if (is.null(varstrat) || varstrat %in% "") { # univariate analyse
-    message("[compute_date_table] dates (without varstrat)")
+    message("[compute_date_table] without varstrat")
     desc_date_final <- data.table::rbindlist(
       lapply(X = vars_dates, FUN = function(date_coli) {
         # date_coli <- "DDN"
@@ -91,7 +92,7 @@ compute_date_table <- function(
     
   } else { 
     # bivariate analyse
-    message("[compute_date_table] dates (with varstrat:", varstrat, ")")
+    message("[compute_date_table] with varstrat ", varstrat)
     # possible only on factorial varstrat
     stopifnot(varstrat %in% names(dataframe))
     stopifnot(is.factor(dataframe[, varstrat]))
