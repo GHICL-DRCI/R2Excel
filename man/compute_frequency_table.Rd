@@ -12,6 +12,21 @@ compute_frequency_table(
   digits = 1
 )
 }
-\description{
-Calculer le tableau de fréquences avec effectifs et pourcentages
+\arguments{
+\item{dt}{A data.frame}
+
+\item{variable_interest}{A character}
+
+\item{varstrat}{A character}
+
+\item{varstrat_levels}{A character}
+
+\item{digits}{An integer}
 }
+\value{
+table of frequencies
+}
+\description{
+compute_frequency_table
+}
+\keyword{internal}

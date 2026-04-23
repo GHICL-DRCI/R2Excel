@@ -2,10 +2,19 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{format_cell_content}
 \alias{format_cell_content}
-\title{Formater le contenu de cellule selon la métrique}
+\title{format_cell_content}
 \usage{
 format_cell_content(stats, metric = "mean")
 }
-\description{
-Formater le contenu de cellule selon la métrique
+\arguments{
+\item{stats}{A data.frame}
+
+\item{metric}{A character}
 }
+\value{
+cell formated
+}
+\description{
+format_cell_content
+}
+\keyword{internal}

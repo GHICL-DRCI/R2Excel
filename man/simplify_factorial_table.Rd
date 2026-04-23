@@ -6,6 +6,13 @@
 \usage{
 simplify_factorial_table(effectif_tab)
 }
-\description{
-Simplifier le tableau si demandé (variables binaires)
+\arguments{
+\item{effectif_tab}{A data.frame}
 }
+\value{
+simplified table
+}
+\description{
+simplify_factorial_table
+}
+\keyword{internal}

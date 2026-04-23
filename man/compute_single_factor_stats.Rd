@@ -61,3 +61,4 @@ compute_single_factor_stats(
 )
 }
 }
+\keyword{internal}

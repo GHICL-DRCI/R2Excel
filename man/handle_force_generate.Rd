@@ -6,9 +6,17 @@
 \usage{
 handle_force_generate(dt, variable_interest, force_generate_1_when_0)
 }
+\arguments{
+\item{dt}{A data.frame}
+
+\item{variable_interest}{A character}
+
+\item{force_generate_1_when_0}{A logical}
+}
 \value{
 Liste avec var_levels et var_nlevels mis à jour, et dt modifié
 }
 \description{
-Gérer force_generate_1_when_0
+handle_force_generate
 }
+\keyword{internal}

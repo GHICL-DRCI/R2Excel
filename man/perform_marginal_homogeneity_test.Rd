@@ -6,6 +6,19 @@
 \usage{
 perform_marginal_homogeneity_test(dt, variable_interest, varstrat, patient_id)
 }
-\description{
-Effectuer le test d'homogénéité marginale
+\arguments{
+\item{dt}{A data.frame}
+
+\item{variable_interest}{A character}
+
+\item{varstrat}{A character}
+
+\item{patient_id}{A character}
 }
+\value{
+Eval marginal homogeneity test
+}
+\description{
+perform_marginal_homogeneity_test
+}
+\keyword{internal}

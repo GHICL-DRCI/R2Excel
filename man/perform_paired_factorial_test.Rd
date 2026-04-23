@@ -12,6 +12,21 @@ perform_paired_factorial_test(
   varstrat_levels
 )
 }
-\description{
-Choisir et effectuer le test statistique approprié
+\arguments{
+\item{dt}{A data.frame}
+
+\item{variable_interest}{A character}
+
+\item{varstrat}{A character}
+
+\item{patient_id}{A character}
+
+\item{varstrat_levels}{A character}
 }
+\value{
+choose the appropriate paired test
+}
+\description{
+perform_paired_factorial_test
+}
+\keyword{internal}

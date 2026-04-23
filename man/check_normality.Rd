@@ -17,4 +17,3 @@ Logical (normalité) ou liste avec is_normal et message
 \description{
 Tester la normalité avec gestion d'erreurs
 }
-\keyword{internal}

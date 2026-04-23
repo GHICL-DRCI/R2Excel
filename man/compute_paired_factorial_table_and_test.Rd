@@ -19,24 +19,27 @@ compute_paired_factorial_table_and_test(
 )
 }
 \arguments{
-\item{dataframe}{A data.frame. tibble or data.table will be converted into data.table.}
+\item{dataframe}{A data.frame. tibble or data.table will be converted 
+into data.table.}
 
-\item{variable_interest}{A character. Name of dataframe's factorial columns to describe and test.}
+\item{variable_interest}{A character. Name of dataframe's factorial 
+columns to describe and test.}
 
-\item{varstrat}{A character. Name of the stratification variable, making groups to compare (time or visites).}
+\item{varstrat}{A character. Name of the stratification variable, 
+making groups to compare (time or visits).}
 
 \item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)
 Integer indicating the number of decimal places (round).}
 
 \item{signif_digits}{A integer, Default 4. Integer indicating the number of 
-decimal places (signif) for pvalues.}
+decimal places (signif) for p-values.}
 
 \item{simplify}{A logical. Default FALSE. Boolean indicating if one or two 
 lines should be displayed for binary variables.
 TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
 FALSE = both levels of the variables.}
 
-\item{patient_id}{A character., Default "patientid". Name of identifant 
+\item{patient_id}{A character., Default "patientid". Name of username 
 patient id column.}
 
 \item{force_generate_1_when_0}{A logical, Default TRUE. If TRUE, will test
@@ -51,7 +54,8 @@ missing data count (like a level)}
 Caution! global_summary on longitudinal data is not really relevant... 
 but ok if you want it, you can.}
 
-\item{do_test}{A logicial, Default FALSE, do not return stat test. Turn TRUE if wanted.}
+\item{do_test}{A logical, Default FALSE, do not return stat test. 
+Turn TRUE if wanted.}
 }
 \value{
 a list of 2 elements :

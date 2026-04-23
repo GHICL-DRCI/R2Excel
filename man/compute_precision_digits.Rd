@@ -13,6 +13,12 @@ compute_precision_digits(
 }
 \arguments{
 \item{x}{a vector}
+
+\item{stat_type}{a character}
+
+\item{base_decimals}{a interger}
+
+\item{max_decimals}{a interger}
 }
 \value{
 a numeric

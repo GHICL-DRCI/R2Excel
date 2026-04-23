@@ -6,6 +6,19 @@
 \usage{
 add_global_summary(effectif_tab, dt, variable_interest, digits = 1)
 }
-\description{
-Ajouter la colonne Population_total si demandée
+\arguments{
+\item{effectif_tab}{A data.frame}
+
+\item{dt}{A data.frame}
+
+\item{variable_interest}{A character}
+
+\item{digits}{An integer}
 }
+\value{
+formated table of frequencies
+}
+\description{
+add_global_summary
+}
+\keyword{internal}

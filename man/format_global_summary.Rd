@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{format_global_summary}
 \alias{format_global_summary}
-\title{Formater la description de population globale}
+\title{format_global_summary}
 \usage{
 format_global_summary(
   dataframe,
@@ -13,6 +13,23 @@ format_global_summary(
   digits_sd
 )
 }
-\description{
-Formater la description de population globale
+\arguments{
+\item{dataframe}{A data.frame}
+
+\item{variable}{A character}
+
+\item{metric}{A character}
+
+\item{patient_id}{A character or NULL}
+
+\item{digits_central}{A integer}
+
+\item{digits_sd}{A integer}
 }
+\value{
+global summary formated
+}
+\description{
+format_global_summary
+}
+\keyword{internal}

@@ -12,6 +12,21 @@ format_effectif_table(
   keep_missing_line
 )
 }
-\description{
-Créer le tableau d'effectifs formaté
+\arguments{
+\item{sumup}{A data.frame}
+
+\item{variable_interest}{A character}
+
+\item{varstrat}{A character}
+
+\item{varstrat_levels}{A character}
+
+\item{keep_missing_line}{A logical}
 }
+\value{
+formated table of frequencies
+}
+\description{
+format_effectif_table
+}
+\keyword{internal}

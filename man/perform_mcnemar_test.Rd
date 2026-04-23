@@ -6,6 +6,17 @@
 \usage{
 perform_mcnemar_test(mcnemar_dt, varstrat_levels, variable_interest)
 }
-\description{
-Effectuer le test de McNemar
+\arguments{
+\item{mcnemar_dt}{A data.frame}
+
+\item{varstrat_levels}{A character}
+
+\item{variable_interest}{A character}
 }
+\value{
+Eval McNemar test
+}
+\description{
+perform_mcnemar_test
+}
+\keyword{internal}
