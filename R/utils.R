@@ -8,13 +8,14 @@
 #' @param vars A vector of characters. Names of dataframe to test.
 #'
 #' @return A vector of characters : the names of factorial columns
+#' 
 #' @export
 #' @examples
 #' \dontrun{
-# get_factors(
-#   dataframe = modified_state,
-#   vars = c("state.division", "state.region", "Income", "Illiteracy")
-# )
+#' get_factors(
+#'  dataframe = modified_state,
+#'  vars = c("state.division", "state.region", "Income", "Illiteracy")
+#' )
 #' }
 get_factors <- function(
   dataframe, vars = colnames(dataframe)
@@ -30,6 +31,7 @@ get_factors <- function(
 #' @param vars A vector of characters. Names of dataframe to test.
 #'
 #' @return A vector of characters : the names of numeric columns
+#' 
 #' @export
 #' @examples
 #' \dontrun{
@@ -52,6 +54,7 @@ get_numerics <- function(
 #' @param vars A vector of characters. Names of dataframe to test.
 #'
 #' @return A vector of characters : the names of character columns
+#' 
 #' @export
 #' @examples
 #' \dontrun{
@@ -75,6 +78,7 @@ get_characters <- function(
 #' @param vars A vector of characters. Names of dataframe to test.
 #'
 #' @return A vector of dates : the names of date columns
+#' 
 #' @export
 #' @examples
 #' \dontrun{
@@ -207,6 +211,9 @@ detect_decimal_places <- function(x) {
 #' precision of the original value, up to a maximum of 3 decimal places. 
 #'
 #' @param x a vector
+#' @param stat_type a character
+#' @param base_decimals a interger
+#' @param max_decimals a interger
 #' 
 #' @return a numeric
 #' 
@@ -224,10 +231,10 @@ detect_decimal_places <- function(x) {
 #' )
 #' }
 compute_precision_digits <- function(
-    x, 
-    stat_type = c("central", "sd"), 
-    base_decimals,
-    max_decimals = 3
+  x, 
+  stat_type = c("central", "sd"), 
+  base_decimals,
+  max_decimals = 3
 ) {
   # message("[compute_precision_digits]")
   
@@ -250,8 +257,10 @@ compute_precision_digits <- function(
 #'
 #' @param x Vecteur numérique à tester
 #' @param return_messages Logical, retourner les messages d'erreur ?
+#' 
 #' @return Logical (normalité) ou liste avec is_normal et message
-#' @keywords internal
+#' 
+#' @export
 check_normality <- function(x, return_messages = FALSE) {
   has_issues <- try(tools::assertCondition(
     shap_result <- stats::shapiro.test(x)

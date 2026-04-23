@@ -301,7 +301,8 @@ compute_correlation_table <- function(
   # detection of numeric varibles
   vars_numeric <- get_numerics(dt, vars)
   if (!all(vars %in% vars_numeric)) {
-    message("[compute_correlation_table] Warning, some of selected vars were ignored (not numeric).")
+    message("[compute_correlation_table] Warning, ",
+            "some of selected vars were ignored (not numeric).")
   }
   
   # compute stats corr for each variables
@@ -409,7 +410,11 @@ compute_correlation_table <- function(
       )
       if (method_corr %in% "kendall") msg <- paste0(msg, " spearman.ci")
     } else {
-      IC95 <- paste0("[", paste0(round(corr_obj$conf.int, digits = digits), collapse = " , "), "]")
+      IC95 <- paste0(
+        "[",
+        paste0(round(corr_obj$conf.int, digits = digits), collapse = " , "),
+        "]"
+      )
     }
     
     sumup <- unique(
@@ -477,7 +482,7 @@ compute_correlation_table <- function(
 #' @return a table of n and p for each levels
 #'  + Nb measures and N of missing values (Valeurs_manquantes)
 #'  
-#' @export
+#' @keywords internal
 #' @examples
 #' \dontrun{
 #' data <- data.frame(
@@ -493,13 +498,13 @@ compute_correlation_table <- function(
 #' )
 #' }
 compute_single_factor_stats <- function(
-    dataframe,
-    var_name, 
-    varstrat = NULL, 
-    varstrat_levels = NULL,
-    prop_table_margin = 2, 
-    precision = 1,
-    force_generate_1_when_0 = FALSE
+  dataframe,
+  var_name, 
+  varstrat = NULL, 
+  varstrat_levels = NULL,
+  prop_table_margin = 2, 
+  precision = 1,
+  force_generate_1_when_0 = FALSE
 ) {
   # message("[compute_single_factor_stats]")
   
@@ -590,9 +595,16 @@ compute_single_factor_stats <- function(
 }
 
 
-
 # Fonction de simplification (pour variables binaires)
-simplify_binary_table <- function(vari_tab) {
+#' simplify_binary_table
+#' @param vari_tab A data.frame. 
+#'  
+#' @return vari_tab simplifyed
+#'  
+#' @export
+simplify_binary_table <- function(
+  vari_tab
+) {
   if (!is.null(vari_tab) && nrow(vari_tab) == 4) {
     if (all(c("0", "1") %in% rownames(vari_tab)) ||
         all(c("oui", "non") %in% tolower(rownames(vari_tab)))) {

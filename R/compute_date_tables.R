@@ -14,11 +14,11 @@
 #' @export
 #' @examples
 #' \dontrun{
-#'dt <- data.frame(
+#' dt <- data.frame(
 #'  date1 = as.Date(c("2025-07-30", "2025-07-29", "2025-07-28", "2025-07-30", "2025-07-29", "2025-07-28")), 
 #'  date2 = as.POSIXct(c("2024-06-20", "2024-06-10", "2024-06-01", "2025-07-30", "2025-07-29", "2025-07-28")), 
 #'  fact = as.factor(c(rep("A", 3), rep("B", 3)))
-#')
+#' )
 #' get_dates(dataframe = dt, vars = names(dt))
 #' compute_date_table(
 #'   dataframe = dt,
@@ -30,6 +30,7 @@
 #'   varstrat = "fact"
 #' )
 #' }
+#' 
 compute_date_table <- function(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),

@@ -147,6 +147,8 @@ save_excel_paired_results <- function(
   
   message("[save_excel_paired_results] Start")
   
+  P_valeur <- NULL
+  
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(patient_id %in% names(dataframe))
   stopifnot(!is.null(varstrat))
@@ -995,6 +997,7 @@ quanti_sheet_paired <- function(
 ) {
   
   # message("[quati_sheet_paired]")
+  Variable <- Modalites <- Q1 <- Q3 <- Mean_sd <- Med_q1_q3 <- strat <- p <- NULL
   
   if (crossed_varstrat) {
     
@@ -1244,7 +1247,8 @@ quali_sheet_paired <- function(
     do_test
 ) {
   # message("[quali_sheet_paired]")
-  
+  Variable <- Modalites <- p <- NULL
+    
   if (crossed_varstrat) {
     
     ##### crossed_varstrat #####

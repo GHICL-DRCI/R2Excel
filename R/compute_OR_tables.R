@@ -42,6 +42,8 @@ get_OR_univar <- function(
 ) {
   message("[get_OR_univar] ", length(explanatory_vars), " variables wanted in OR table")
 
+  explanatory <- NULL
+  
   stopifnot(dependent_var %in% names(dataframe))
   stopifnot(is.factor(dataframe[[dependent_var]]))
   stopifnot(length(explanatory_vars) > 0)

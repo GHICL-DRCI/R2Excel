@@ -157,6 +157,8 @@ save_excel_results <- function(
   
   message("[save_excel_results] Start")
 
+  P_valeur <- NULL
+  
   stopifnot(is.data.frame(dataframe))
   stopifnot(vars %in% names(dataframe))
   # stopifnot(digits >= 0)
@@ -750,6 +752,8 @@ quanti_sheet <- function(
   
   # message("[quanti_sheet]")
   
+  Variable <- Modalites <- Q1 <- Q3 <- NULL
+  
   ##### crossed_varstrat #####
   
   if (crossed_varstrat) {
@@ -972,7 +976,7 @@ quanti_sheet <- function(
           dataframe = dataframe,
           vars = vars_quanti,
           varstrat = varstrat_i,
-          method = "detect_auto",
+          method_corr = "detect_auto",
           precision = precision,
           signif_digits = signif_digits
         )
@@ -1330,11 +1334,12 @@ quali_sheet <- function(
     do_test
 ) {
   # message("[quali_sheet]")
+  Variable <- p <- Modalites <- Q1 <- Q3 <- Nb_mesures <- NULL
   
   if (crossed_varstrat) {
     
     ##### crossed_varstrat #####
-    message("[quali_sheet] ", "crossed_varstrat")
+    message("[quali_sheet] crossed_varstrat")
     # for each level of group (varstrat[[1]]), produce a part of the table :
     levels_to_sep <- levels(dataframe[[varstrat[1]]])
     message(paste0("[quali_sheet] ", "with varstat :  ", varstrat[1], ""))
