@@ -1,4 +1,4 @@
-message("test compute paired tables - done v0.1.27")
+message("test compute paired tables - done v0.1.28")
 
 #### continuous paired tables ####
 
@@ -184,7 +184,7 @@ test_panova_done <- compute_paired_continuous_table_and_test(
 )
 
 test_that("test Paired Anova", {
-  # fixed in new version of handle_multiple_levels v0.1.27
+  # fixed in new version of handle_multiple_levels v0.1.27 & test v0.1.28
   expect_true(is.list(test_panova_notdone))
   expect_true(is.list(test_panova_done))
   expect_equal(length(test_panova_notdone), 2)
@@ -198,11 +198,14 @@ test_that("test Paired Anova", {
   ## eval content of the table (means and test)
   expect_true(test_panova_notdone$line_res$Test == "/")
 
+
+  expect_true(is.na(test_panova_notdone$line_res$P_valeur))
   expect_true(
     test_panova_done$line_res$Test %in% 
       "Repeated measures ANOVA: within-Subjects designs"
   )
-  expect_true(is.na(test_panova_notdone$line_res$P_valeur))
+  expect_true("rstatix_test" %in% class(test_panova_done$test_result$test))
+  expect_true("anova_test" %in% class(test_panova_done$test_result$test))
   expect_true(is.numeric(test_panova_done$line_res$P_valeur))
   expect_true(test_panova_done$line_res$P_valeur == 0.001)
   expect_equal(
@@ -313,7 +316,6 @@ test_that("test SkillingsMack", {
 })
 
 #### add new unit test on utils functions v 0.1.27 ####
-
 
 # =
 # Tests pour format_cell_content()
@@ -614,6 +616,7 @@ test_that("handle_two_levels formats Difference_description correctly", {
 # =
 
 test_that("handle_multiple_levels detects complete vs incomplete design", {
+  set.seed(42)
   # Design complet
   dt_wide_complete <- data.table::data.table(
     patient_id = paste0("P", 1:10),
@@ -621,7 +624,7 @@ test_that("handle_multiple_levels detects complete vs incomplete design", {
     temps2 = rnorm(10, 55, 10),
     temps3 = rnorm(10, 60, 10)
   )
-  
+  set.seed(42)
   # Design incomplet (avec NA)
   dt_wide_incomplete <- data.table::data.table(
     patient_id = paste0("P", 1:10),
@@ -681,12 +684,16 @@ test_that("handle_multiple_levels detects complete vs incomplete design", {
   )
   
   expect_true(result_complete$test_used %in% c(
-    "Repeated measures ANOVA: within-Subjects designs", "Quade Test")
-  )
+    "Repeated measures ANOVA: within-Subjects designs"#, 
+    # "Quade Test"
+  ))
+  expect_equal(result_complete$test_result$p.value, 0.709)
   expect_equal(result_incomplete$test_used, "Skillings-Mack test")
+  expect_equal(result_incomplete$test_result$p.value, 0.979599)
 })
 
 test_that("handle_multiple_levels respects test_more_2_levels parameter", {
+  set.seed(42)
   dt_wide <- data.table::data.table(
     patient_id = paste0("P", 1:10),
     temps1 = rnorm(10, 50, 10),
@@ -703,7 +710,7 @@ test_that("handle_multiple_levels respects test_more_2_levels parameter", {
   dt$varstrat <- as.factor(dt$varstrat)
   dt$patient_id <- as.factor(dt$patient_id)
   
-  # Avec test_more_2_levels = FALSE
+  # Avec do_test = FALSE
   result_no_test <- handle_multiple_levels(
     dt_wide = dt_wide,
     variable_interest = "var1",
@@ -719,7 +726,7 @@ test_that("handle_multiple_levels respects test_more_2_levels parameter", {
     dt = dt
   )
   
-  # Avec test_more_2_levels = TRUE
+  # Avec do_test = TRUE
   result_with_test <- handle_multiple_levels(
     dt_wide = dt_wide,
     variable_interest = "var1",
@@ -738,10 +745,13 @@ test_that("handle_multiple_levels respects test_more_2_levels parameter", {
   expect_equal(result_no_test$test_used, "/")
   expect_true(is.na(result_no_test$test_result$p.value))
   expect_true(result_with_test$test_used != "/")
-  # expect_true(!is.na(result_with_test$test_result$p.value))
+  expect_true(!is.na(result_with_test$test_result$p.value))
+  expect_true(result_with_test$test_result$test_name %in% "ANOVA Table (type III tests)")
+  expect_equal(result_with_test$test_result$p.value,  0.709)
 })
 
 test_that("handle_multiple_levels returns NULL for Difference_description", {
+  set.seed(42)
   dt_wide <- data.table::data.table(
     patient_id = paste0("P", 1:10),
     temps1 = rnorm(10, 50, 10),

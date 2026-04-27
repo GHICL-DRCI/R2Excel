@@ -1,3 +1,12 @@
+# Version 0.1.28
+
+24/04/2026
+
+[BUG]
+
+-    In longitudinal context, the internal function `handle_multiple_levels` has to deal with ANOVA repeated measures from `rstatix::anova_test` function.
+  A specific action has been fixed to get back the p-value from this object (class "anova_test", "list", and "rstatix_test").
+
 # Version 0.1.27
 
 02/2026 - 03/2026

@@ -339,7 +339,7 @@ handle_multiple_levels <- function(
   do_test,
   dt
 ) {
-  message("[handle_multiple_levels] levels in ", varstrat)
+  message("[handle_multiple_levels] in ", varstrat)
   Nobs <- value <- NULL
   
   # Convertir dt_wide en data.table si ce n'est pas déjà le cas
@@ -407,12 +407,12 @@ handle_multiple_levels <- function(
       )
       # test_result_table <- rstatix::get_anova_table(x = test_result_tmp)
       ## WArning test_result_tmp doesn't have always the same slotnames...
-      if("test" %in% names(test_result_tmp)) {
-        test_result_df <- test_result_tmp$test$ANOVA
+      if("ANOVA" %in% names(test_result_tmp)) {
+        test_result_df <- test_result_tmp$ANOVA
       } else {
         test_result_df <- as.data.frame(test_result_tmp)
       }
-      ## --here 
+
       test_result <- list(
         test_name = "ANOVA Table (type III tests)",
         test = test_result_tmp,
@@ -973,7 +973,7 @@ compute_paired_continuous_table_and_test <- function(
       )
     } else {
       # ========== CAS 4 : Plus de 2 niveaux ==========
-      ## --here 
+      ## --here see in v0.1.28
       result <- handle_multiple_levels(
         dt_wide  = dt_wide,
         variable_interest = variable_interest, 
