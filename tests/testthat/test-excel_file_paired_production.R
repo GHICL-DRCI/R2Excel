@@ -1,5 +1,4 @@
-message("test excel file paired prod - ")
-
+message("test excel file paired prod - v 0.1.28")
 
 dir.create("tmp", showWarnings = FALSE)
 
@@ -65,6 +64,7 @@ tab10 <- readxl::read_excel(
   path10,
   sheet = "quantitative - visites_2"
 )
+
 test_that("Test Paired excel", {
   expect_true(file.exists(path10df))
   expect_true(file.exists(path10))
@@ -156,7 +156,24 @@ test_that("simplif paired", {
   expect_equal(ncol(tab_nosimp), ncol(tab_simp))
   expect_equal(nrow(tab_simp), 6)
   expect_equal(nrow(tab_nosimp), 8)
-  ## --todo, --test eval content of the table ... +++
+
+  expect_true("non" %in% tab_nosimp$Modalites)
+  expect_equal(
+    tab_nosimp[tab_nosimp$Variable %in% "fact2" & tab_nosimp$Modalites %in% "non",]$temps1,
+    "0"
+  )
+  expect_equal(
+    tab_nosimp[tab_nosimp$Variable %in% "fact2" & tab_nosimp$Modalites %in% "non",]$temps2,
+    "20 (100%)"
+  )
+  expect_equal(
+    tab_simp[tab_simp$Variable %in% "fact2" & tab_simp$Modalites %in% "oui",]$temps1,
+    "20 (100%)"
+  )
+  expect_equal(
+    tab_simp[tab_simp$Variable %in% "fact2" & tab_simp$Modalites %in% "oui",]$temps2,
+    "0"
+  )
 })
 
 #### desc in paired data but one var not present at the 2nd time (or for the paired group) ####
@@ -340,6 +357,7 @@ sheet_27na <- readxl::read_excel(
   file.path("tmp", "27-allna.xlsx"), sheet = "Variables_all_na"
 )
 sheet_names <- readxl::excel_sheets(file.path("tmp", "27-allna.xlsx"))
+
 test_that("test all na", {
   expect_true(nrow(sheet_27) == 1)
   expect_true(sheet_27$Variable == "extra")
@@ -403,7 +421,6 @@ test_that("test labels", {
 })
 
 
-
 #### test show_exact_p ####
 
 path29 <- save_excel_paired_results(
@@ -419,6 +436,7 @@ sheet_29 <- readxl::read_excel( path29 )
 sheet_19 <- readxl::read_excel(
   path19 #  "tmp/19-desc_paired_data10.xlsx"
 )
+
 test_that("p excat", {
   expect_true(is.numeric(sheet_29$P_valeur[3]))
   expect_true(is.character(sheet_19$P_valeur[3]))
