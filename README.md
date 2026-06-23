@@ -55,13 +55,15 @@ pour nous soumettre votre requête ("merge request").
 
 in alphabetic order 
 
-  Mathilde Boissel [aut, cre],  
-  Cassandra Chaldaureille [aut, cre],  
-  Sahara Graf [aut],  
-  Saïd Maallem [ctb],  
-  Laurène Norberciak [aut, cre],  
-  Cristian Preda [aut, cre],  
-  Stephane Verdun [aut]  
+  Mathilde Boissel [aut, cre],
+  Cassandra Chaldaureille [aut, cre],
+  Armand Elegbe [ctb],
+  Sahara Graf [aut],
+  Klervi Le Gall [ctb],
+  Saïd Maallem [ctb],
+  Laurène Norberciak [aut, cre],
+  Cristian Preda [aut, cre],
+  Stephane Verdun [aut] 
 
 ## Installation
 
