@@ -9,8 +9,10 @@
 # =
 
 
-# Formater le contenu de cellule selon la métrique
 #' format_cell_content
+#' 
+#' Formater le contenu de cellule selon la métrique
+#' 
 #' @param stats A data.frame 
 #' @param metric A character
 #'  
@@ -38,8 +40,10 @@ format_cell_content <- function(
   }
 }
 
-# Formater la description de population globale
 #' format_global_summary
+#' 
+#' Formater la description de population globale
+#' 
 #' @param dataframe A data.frame
 #' @param variable A character
 #' @param metric A character
@@ -88,11 +92,12 @@ format_global_summary <- function(
   return(result)
 }
 
-# =
-# Fonction pour le cas : 2 niveaux
-# avec gestion variable absente d'un niveau
-# =
+
 #' handle_two_levels
+#' 
+#' Fonction pour le cas : 2 niveaux
+#' avec gestion variable absente d'un niveau
+#' 
 #' @param dt_wide A data.table wide format
 #' @param variable_interest A character
 #' @param varstrat A character
@@ -104,8 +109,10 @@ format_global_summary <- function(
 #' @param force_non_parametric_test A logical
 #' @param global_summary A logical
 #' @param dt A data.table
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
 #'  
-#' @return a two level description
+#' @return A two level description
 #'  
 #' @keywords internal
 handle_two_levels <- function(
@@ -119,16 +126,17 @@ handle_two_levels <- function(
   force_parametric_test, 
   force_non_parametric_test, 
   global_summary, 
-  dt
+  dt,
+  verbose = TRUE
 ) {
   
-  message("[handle_two_levels] 2 levels in ", varstrat)
+  if (verbose) message("[handle_two_levels] 2 levels in ", varstrat)
   
   # === VÉRIFICATION : La variable est-elle présente dans les 2 niveaux ? ===
   if (ncol(dt_wide) != 3) {
     # La variable n'est présente que dans 1 seul niveau
     ongoing_message <- "Variable present only in 1 level of varstrat, no paired test applicable"
-    message("[handle_two_levels] ", ongoing_message)
+    if (verbose) message("[handle_two_levels] ", ongoing_message)
     
     N_individuals <- nrow(dt_wide)
     test_result <- list(p.value = NA)
@@ -211,11 +219,13 @@ handle_two_levels <- function(
         "mean = (.*) median = (.*)", "\\1", Difference_description)
     } else {
       metric_to_show <- "median"
-      message(
-        "[handle_two_levels]",
-        " /!\\ Caution median forced in cell content. ",
-        "It may cause a disconnection between metrics and tests /!\\"
-      )
+      if (verbose) {
+        message(
+          "[handle_two_levels]",
+          " /!\\ Caution median forced in cell content. ",
+          "It may cause a disconnection between metrics and tests /!\\"
+        )
+      }
       Difference_description <- gsub(
         "mean = (.*) median = (.*)", "\\2", Difference_description)
     }
@@ -263,11 +273,13 @@ handle_two_levels <- function(
         "mean = (.*) median = (.*)", "\\2", Difference_description)
     } else {
       metric_to_show <- "mean"
-      message(
-        "[handle_two_levels]",
-        " /!\\ Caution mean forced in cell content. ",
-        "It may cause a disconnection between metrics and tests /!\\"
-      )
+      if (verbose) {
+        message(
+          "[handle_two_levels]",
+          " /!\\ Caution mean forced in cell content. ",
+          "It may cause a disconnection between metrics and tests /!\\"
+        )
+      }
       ongoing_message <- paste0(
         ongoing_message,
         "!Caution mean forced in cell content. ",
@@ -305,10 +317,11 @@ handle_two_levels <- function(
   ))
 }
 
-# =
-# Fonction pour le cas : Plus de 2 niveaux
-# =
+
 #' handle_multiple_levels
+#' 
+#' Fonction pour le cas : Plus de 2 niveaux
+#' 
 #' @param dt_wide A data.table wide format
 #' @param variable_interest A character
 #' @param varstrat A character
@@ -321,6 +334,8 @@ handle_two_levels <- function(
 #' @param global_summary A logical
 #' @param do_test A logical
 #' @param dt A data.table
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
 #'  
 #' @return a description for more than 2 levels
 #'  
@@ -337,9 +352,10 @@ handle_multiple_levels <- function(
   force_non_parametric_test,
   global_summary,
   do_test,
-  dt
+  dt,
+  verbose = TRUE
 ) {
-  message("[handle_multiple_levels] in ", varstrat)
+  if (verbose) message("[handle_multiple_levels] in ", varstrat)
   Nobs <- value <- NULL
   
   # Convertir dt_wide en data.table si ce n'est pas déjà le cas
@@ -440,11 +456,13 @@ handle_multiple_levels <- function(
     metric_to_show <- if (show_metric %in% c("auto", "mean")) {
       "mean"
     } else {
-      message(
-        "[handle_multiple_levels]",
-        " /!\\ Caution median forced in cell content. ",
-        "It may cause a disconnection between metrics and tests /!\\"
-      )
+      if (verbose) {
+        message(
+          "[handle_multiple_levels]",
+          " /!\\ Caution median forced in cell content. ",
+          "It may cause a disconnection between metrics and tests /!\\"
+        )
+      }
       ongoing_message <- paste0(
         ongoing_message,
         "!Caution median forced in cell content. ",
@@ -462,7 +480,7 @@ handle_multiple_levels <- function(
         "Check individuals with id ",
         paste0(unique(res_outliers[[patient_id]]), collapse = ",")
       )
-      message("[handle_multiple_levels] ", msg)
+      if (verbose) message("[handle_multiple_levels] ", msg)
       ongoing_message <- paste0(ongoing_message, msg)
     }
     
@@ -566,11 +584,13 @@ handle_multiple_levels <- function(
     metric_to_show <- if (show_metric %in% c("auto", "median")) {
       "median"
     } else {
-      message(
-        "[handle_multiple_levels]",
-        " /!\\ Caution mean forced in cell content. ",
-        "It may cause a disconnection between metrics and tests /!\\"
-      )
+      if (verbose) {
+        message(
+          "[handle_multiple_levels]",
+          " /!\\ Caution mean forced in cell content. ",
+          "It may cause a disconnection between metrics and tests /!\\"
+        )
+      }
       ongoing_message <- paste0(
         ongoing_message,
         "!Caution mean forced in cell content. ",
@@ -584,11 +604,13 @@ handle_multiple_levels <- function(
   
   # Préparer la population totale si demandée
   if (global_summary) {
-    message(
-      "[handle_multiple_levels] ",
-      "Caution! global_summary on longitudinal data is not really relevant... ",
-      "but ok if you want it"
-    )
+    if (verbose) {
+      message(
+        "[handle_multiple_levels] ",
+        "Caution! global_summary on longitudinal data is not really relevant... ",
+        "but ok if you want it"
+      )
+    }
     Population_totale <- format_global_summary(
       dataframe = dt,
       variable = variable_interest,
@@ -613,8 +635,9 @@ handle_multiple_levels <- function(
 }
 
 
-#' compute continuous table for paired data
-#'
+#' compute_paired_continuous_table_and_test
+#' 
+#' compute continuous table for paired data : 
 #' provide descriptive statistics table for continuous data with a paired level (time or visites)
 #' 
 #' Cases handled :
@@ -660,7 +683,9 @@ handle_multiple_levels <- function(
 #'  as 'median' and if you force_parametric_test as TRUE, show_metric is forced 
 #'  as 'mean', to be consistent. 
 #' @param do_test A logicial, Default FALSE, do not return stat test. Turn TRUE if wanted.
-#' 
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
+#'  
 #' @return a list of 2 elements :
 #'   line_res : the data.frame with one line containing needed results
 #'   test_result : the test object if more detail wanted about the stat test.
@@ -737,14 +762,15 @@ compute_paired_continuous_table_and_test <- function(
   force_non_parametric_test = FALSE,
   force_parametric_test = FALSE,
   show_metric = "auto",
-  do_test = FALSE
+  do_test = FALSE,
+  verbose = TRUE
 ) {
   
   `.SD` <- `.` <- `.N` <- `:=` <- NULL
   `Q1` <- `Q3` <- cell_content <- IDENT_PAT <- value <- n_group <- NULL
   n_missing <- NULL
   
-  message("[compute_paired_continuous_table] ", variable_interest)
+  if (verbose) message("[compute_paired_continuous_table] ", variable_interest)
   
   # ========== Validations ==========
   stopifnot(length(variable_interest) == 1)
@@ -819,7 +845,7 @@ compute_paired_continuous_table_and_test <- function(
     test_result <- list(p.value = NA)
     test_used <- "/"
     ongoing_message <- "Variable present have no data (all NA), no desc, no test applicable"
-    message("[compute_paired_continuous_table_and_test] ", ongoing_message)
+    if (verbose) message("[compute_paired_continuous_table_and_test] ", ongoing_message)
     
     tab <- data.table::data.table(
       Variable = variable_interest,
@@ -904,7 +930,7 @@ compute_paired_continuous_table_and_test <- function(
   
   if (length(unique(all_values_clean)) <= 1) {
     ongoing_message <- "toutes les valeurs de 'x' sont identiques"
-    message("[compute_paired_continuous_table_and_test] ", ongoing_message)
+    if (verbose) message("[compute_paired_continuous_table_and_test] ", ongoing_message)
     
     N_individuals <- length(unique(dt_wide[[patient_id]])) # nrow(dt_wide)
     test_result <- list(p.value = NA)
@@ -942,17 +968,21 @@ compute_paired_continuous_table_and_test <- function(
     
     # Adapter show_metric si forcé
     if (force_non_parametric_test) {
-      message(
-        "[compute_paired_continuous_table_and_test]",
-        "Because force_non_parametric_test is TRUE, show_metric is forced as 'median'."
-      )
+      if (verbose) {
+        message(
+         "[compute_paired_continuous_table_and_test]",
+         " Because force_non_parametric_test is TRUE, show_metric is forced as 'median'."
+        )
+      }
       show_metric <- "median"
     }
     if (force_parametric_test) {
-      message(
-        "[compute_paired_continuous_table_and_test]",
-        "Because force_parametric_test is TRUE, show_metric is forced as 'mean'."
-      )
+      if (verbose) {
+        message(
+          "[compute_paired_continuous_table_and_test]",
+          " Because force_parametric_test is TRUE, show_metric is forced as 'mean'."
+        )
+      }
       show_metric <- "mean"
     }
     
@@ -969,11 +999,12 @@ compute_paired_continuous_table_and_test <- function(
         force_parametric_test = force_parametric_test,
         force_non_parametric_test = force_non_parametric_test,
         global_summary = global_summary,
-        dt = dt
+        dt = dt,
+        verbose = verbose
       )
     } else {
       # ========== CAS 4 : Plus de 2 niveaux ==========
-      ## --here see in v0.1.28
+      ## --done see in v0.1.28
       result <- handle_multiple_levels(
         dt_wide  = dt_wide,
         variable_interest = variable_interest, 
@@ -986,7 +1017,8 @@ compute_paired_continuous_table_and_test <- function(
         force_non_parametric_test = force_non_parametric_test,
         global_summary = global_summary,
         do_test = do_test,
-        dt = dt
+        dt = dt,
+        verbose = verbose
       )
 
     }
@@ -1066,7 +1098,7 @@ compute_paired_continuous_table_and_test <- function(
   }
   
   # Formater p-value
-  ## --here 
+  ## --done 
   if (is.nan(test_result$p.value) | !is.numeric(test_result$p.value)) {
     # check numeric class # fix unit test test-compute_paired_tables.R:171
     P_valeur <- NA
@@ -1102,9 +1134,10 @@ compute_paired_continuous_table_and_test <- function(
 # Fonctions utilitaires pour variables factorielles appariées
 # =
 
-#' Gérer force_generate_1_when_0
-#' 
+
 #' handle_force_generate
+#' 
+#' Gérer force_generate_1_when_0
 #' 
 #' @param dt A data.frame 
 #' @param variable_interest A character
@@ -1146,9 +1179,10 @@ handle_force_generate <- function(
   ))
 }
 
-#' Calculer le tableau de fréquences avec effectifs et pourcentages
-#' 
+
 #' compute_frequency_table
+#' 
+#' Calculer le tableau de fréquences avec effectifs et pourcentages
 #' 
 #' @param dt A data.frame 
 #' @param variable_interest A character
@@ -1229,9 +1263,10 @@ compute_frequency_table <- function(
   return(sumup)
 }
 
-#' Créer le tableau d'effectifs formaté
-#' 
+
 #' format_effectif_table
+#' 
+#' Créer le tableau d'effectifs formaté
 #' 
 #' @param sumup A data.frame 
 #' @param variable_interest A character
@@ -1288,9 +1323,10 @@ format_effectif_table <- function(
   return(effectif_tab)
 }
 
-#' Ajouter la colonne Population_total si demandée
-#' 
+
 #' add_global_summary
+#' 
+#' Ajouter la colonne Population_total si demandée
 #' 
 #' @param effectif_tab A data.frame 
 #' @param dt A data.frame 
@@ -1343,9 +1379,10 @@ add_global_summary <- function(
   return(effectif_tab)
 }
 
-#' Effectuer le test de McNemar
-#' 
+
 #' perform_mcnemar_test
+#' 
+#' Effectuer le test de McNemar
 #' 
 #' @param mcnemar_dt A data.frame 
 #' @param varstrat_levels A character
@@ -1393,9 +1430,10 @@ perform_mcnemar_test <- function(
   ))
 }
 
-#' Effectuer le test d'homogénéité marginale
-#' 
+
 #' perform_marginal_homogeneity_test
+#' 
+#' Effectuer le test d'homogénéité marginale
 #' 
 #' @param dt A data.frame 
 #' @param variable_interest A character
@@ -1491,9 +1529,10 @@ perform_marginal_homogeneity_test <- function(
   ))
 }
 
-#' Choisir et effectuer le test statistique approprié
-#' 
+
 #' perform_paired_factorial_test
+#' 
+#' Choisir et effectuer le test statistique approprié
 #' 
 #' @param dt A data.frame 
 #' @param variable_interest A character
@@ -1555,12 +1594,13 @@ perform_paired_factorial_test <- function(
   return(test_homogeneite_marginal)
 }
 
-#' Simplifier le tableau si demandé (variables binaires)
-#' 
+
 #' simplify_factorial_table
 #' 
+#' Simplifier le tableau si demandé (variables binaires)
+#' 
 #' @param effectif_tab A data.frame 
-
+#' 
 #' @return simplified table
 #'  
 #' @keywords internal
@@ -1588,8 +1628,9 @@ simplify_factorial_table <- function(effectif_tab) {
   return(effectif_tab)
 }
 
-#' compute factorial table for paired data
-#'
+#' compute_paired_factorial_table_and_test
+#' 
+#' compute factorial table for paired data : 
 #' provide descriptive statistics table for factorial data with a paired level 
 #'   (time or visites)
 #'
@@ -1636,6 +1677,8 @@ simplify_factorial_table <- function(effectif_tab) {
 #'  but ok if you want it, you can.
 #' @param do_test A logical, Default FALSE, do not return stat test. 
 #'   Turn TRUE if wanted.
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
 #' 
 #' @return a list of 2 elements :
 #'   line_res : the data.frame with one line containing needed results
@@ -1696,17 +1739,15 @@ compute_paired_factorial_table_and_test <- function(
   force_generate_1_when_0 = TRUE,
   keep_missing_line = TRUE,
   global_summary = FALSE,
-  do_test = FALSE
+  do_test = FALSE, 
+  verbose = TRUE
 ) {
   
   `.SD` <- `.` <- `.N` <- `:=` <- NULL
   cell_content <- IDENT_PAT <- value <- n_group_mod <- Nb_mesures <- Modalites <- NULL
   V1 <- V2 <- V3 <- NULL
   
-  message(
-    "[compute_paired_factorial_table] ", #"Compute tab for ",
-    variable_interest
-  )
+  if (verbose) message("[compute_paired_factorial_table] ", variable_interest)
   
   # ========== Validations ==========
   stopifnot(length(variable_interest) == 1)
@@ -1789,7 +1830,7 @@ compute_paired_factorial_table_and_test <- function(
   
   if (do_test) {
     # ========== Tests statistiques ==========
-    message("[compute_paired_factorial_table_and_test] Go for stat test")
+    if (verbose) message("[compute_paired_factorial_table_and_test] Go for stat test")
     
     test_results <- perform_paired_factorial_test(
       dt = dt, 

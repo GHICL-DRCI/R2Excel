@@ -95,9 +95,11 @@ compute_single_var_level_stats <- function(
     Q3 = round(stats::quantile(x, 0.75, na.rm = TRUE), digits_central)[[1]],
     min = round(ifelse(all(is.na(x)), NA, min(x, na.rm = TRUE)), digits_central),
     max = round(ifelse(all(is.na(x)), NA, max(x, na.rm = TRUE)), digits_central),
-    N = length(x),
-    Valeurs_manquantes = sum(is.na(x)),
-    Nb_mesures = sum(!is.na(x)),
+    SE = round(stats::sd(x, na.rm = TRUE), digits_sd) / sqrt(sum(!is.na(x))), 
+    IQR = round(stats::IQR(x, na.rm = TRUE), digits_central), 
+    N = length(x), # n total
+    Valeurs_manquantes = sum(is.na(x)), # missing
+    Nb_mesures = sum(!is.na(x)), # n mesures available =  n total - missing
     is_Normal = shapiro_conclu
   )
   
@@ -116,9 +118,9 @@ compute_single_var_level_stats <- function(
 
 
 
-#' compute continuous table
-#'
-#' provide descriptive statistics table for continuous data
+#' compute_continuous_table
+#' 
+#' compute continuous table : provide descriptive statistics table for continuous data
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.frame.
 #' @param vars A vector of characters. Names of dataframe's continuous columns to describe.
@@ -126,9 +128,11 @@ compute_single_var_level_stats <- function(
 #'  making groups to compare.
 #' @param stats_choice A vector of characters. Default provide all usual statistics
 #'  to describe continuous variables,
-#'  namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", 
-#'  "Valeurs_manquantes", "Nb_mesures", "is_Normal")'
+#'  namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR",
+#'  "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal")'
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
 #'
 #' @return A final table or a list of tables if varstrat not null.
 #' 
@@ -150,25 +154,26 @@ compute_continuous_table <- function(
     vars = setdiff(colnames(dataframe), varstrat),
     varstrat = NULL,
     stats_choice = c(
-      "mean", "sd", "median", "Q1", "Q3", "min", "max", "N",
-      "Valeurs_manquantes", "Nb_mesures", "is_Normal"
+      "mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR",
+      "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal"
     ),
-    precision = "auto"  # new v0.1.27
+    precision = "auto",  # new v0.1.27
+    verbose = TRUE
 ) {
-  message("[compute_continuous_table]")
+  if (verbose) message("[compute_continuous_table]")
   dataframe <- as.data.frame(dataframe)
   
   ## Validations
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(all(stats_choice %in% c(
-    "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", 
+    "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "SE", "IQR",
     "Valeurs_manquantes", "Nb_mesures", "is_Normal"
   )))
   stopifnot(precision == "auto" || is.numeric(precision))
   
   # Détection des variables numériques
   vars_numeric <- get_numerics(dataframe, vars)
-  if (!all(vars %in% vars_numeric)) {
+  if (verbose && !all(vars %in% vars_numeric)) {
     message(
       paste0(
         "[compute_continuous_table] ",
@@ -243,10 +248,10 @@ compute_continuous_table <- function(
 }
 
 
-
-#' compute correlation table
-#'
-#' provide descriptive statistics table for continuous data and its correlation with a continuous varstrat
+#' compute_correlation_table
+#' 
+#' compute correlation table : provide descriptive statistics table for 
+#' continuous data and its correlation with a continuous varstrat
 #'
 #' @param dataframe A data.frame, tibble or data.table will be converted into data.table.
 #' @param vars A vector of characters. Names of dataframe's continuous columns to describe.
@@ -256,7 +261,9 @@ compute_continuous_table <- function(
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #' @param signif_digits A integer, 
 #'   Default 4. Integer indicating the number of decimal places (signif) for pvalues.
-#'
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
+#'  
 #' @return A final table of stat and correlation.
 #' 
 #' @import data.table
@@ -283,9 +290,10 @@ compute_correlation_table <- function(
     varstrat = varstrat, # needed
     method_corr = "detect_auto",
     precision = 2,
-    signif_digits = 4
+    signif_digits = 4, 
+    verbose = TRUE
 ) {
-  message("[compute_correlation_table]")
+  if (verbose) message("[compute_correlation_table]")
   
   dt <- data.table::setDT(data.table::copy(dataframe))
   
@@ -300,14 +308,14 @@ compute_correlation_table <- function(
   
   # detection of numeric varibles
   vars_numeric <- get_numerics(dt, vars)
-  if (!all(vars %in% vars_numeric)) {
+  if (verbose && !all(vars %in% vars_numeric)) {
     message("[compute_correlation_table] Warning, ",
             "some of selected vars were ignored (not numeric).")
   }
   
   # compute stats corr for each variables
   statistics_tab <- lapply(X = vars_numeric, function(vari) {
-    message("[compute_correlation_table] ", vari)
+    if (verbose) message("[compute_correlation_table] ", vari)
     
     N_missingval <- sum(is.na(dt[[vari]])) # in total
     
@@ -361,7 +369,7 @@ compute_correlation_table <- function(
       ## reg <- stats::lm(formula = as.formula(paste0("`", varstrat, "`", "~", "`", vari, "`")), data = tmp_dt)
       ## --here improvment suggestion : also detect linear link ? summary(reg)[["r.squared"]] > 0.5
     }
-    message("[compute_correlation_table] correlation ", method_corr)
+    if (verbose) message("[compute_correlation_table] correlation ", method_corr)
     has_issues <- try(tools::assertCondition(
       corr_obj <- stats::cor.test(
         x = tmp_dt[[vari]], y = tmp_dt[[varstrat]],
@@ -477,7 +485,6 @@ compute_correlation_table <- function(
 #'  will test if the unique modality is 0 or "non" and
 #'  add the level 1 or "oui" so it can be display in counts. 
 #'  Can be combined with simplify to only show the modality (1).
-#'  
 #' 
 #' @return a table of n and p for each levels
 #'  + Nb measures and N of missing values (Valeurs_manquantes)
@@ -506,7 +513,6 @@ compute_single_factor_stats <- function(
   precision = 1,
   force_generate_1_when_0 = FALSE
 ) {
-  # message("[compute_single_factor_stats]")
   
   # Gestion du force_generate_1_when_0
   var_levels <- levels(dataframe[[var_name]])
@@ -595,13 +601,17 @@ compute_single_factor_stats <- function(
 }
 
 
-# Fonction de simplification (pour variables binaires)
+
 #' simplify_binary_table
+#' 
+#' Fonction de simplification (pour variables binaires)
+#' 
 #' @param vari_tab A data.frame. 
 #'  
 #' @return vari_tab simplifyed
 #'  
-#' @export
+#' @keywords internal
+#' 
 simplify_binary_table <- function(
   vari_tab
 ) {
@@ -621,9 +631,9 @@ simplify_binary_table <- function(
   return(vari_tab)
 }
 
-#' compute factorial table
-#'
-#' provide descriptive statistics table for factorial data
+#' compute_factorial_table
+#' 
+#' compute factorial table : provide descriptive statistics table for factorial data
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.frame.
 #' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
@@ -640,7 +650,9 @@ simplify_binary_table <- function(
 #'  will test if the unique modality is 0 or "non" and
 #'  add the level 1 or "oui" so it can be display in counts. 
 #'  Can be combined with simplify to only show the modality (1).
-#'    
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
+#'  
 #' @return A list of tables with counts and percentage.
 #' 
 #' @export
@@ -678,9 +690,10 @@ compute_factorial_table <- function(
     simplify = TRUE,
     prop_table_margin = 2,
     precision = 1,
-    force_generate_1_when_0 = FALSE
+    force_generate_1_when_0 = FALSE, 
+    verbose = TRUE
 ) {
-  message("[compute_factorial_table]")
+  if (verbose) message("[compute_factorial_table]")
   dataframe <- as.data.frame(dataframe)
   
   ## Validations
@@ -689,11 +702,11 @@ compute_factorial_table <- function(
   stopifnot(is.logical(force_generate_1_when_0))
   # stopifnot(digits >= 0)
   stopifnot(precision == "auto" || is.numeric(precision))
-  if (force_generate_1_when_0) message("[compute_factorial_table] force_generate_1_when_0")
+  if (verbose && force_generate_1_when_0) message("[compute_factorial_table] force_generate_1_when_0")
 
   # Récupération des variables factorielles
   vars_factor <- get_factors(dataframe, vars)
-  if (!all(vars %in% vars_factor)) {
+  if (verbose && !all(vars %in% vars_factor)) {
     message("[compute_factorial_table] Warning, some of selected vars were ignored (not factors).")
   }
   
