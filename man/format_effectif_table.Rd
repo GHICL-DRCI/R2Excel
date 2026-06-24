@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{format_effectif_table}
 \alias{format_effectif_table}
-\title{Créer le tableau d'effectifs formaté}
+\title{format_effectif_table}
 \usage{
 format_effectif_table(
   sumup,
@@ -27,6 +27,6 @@ format_effectif_table(
 formated table of frequencies
 }
 \description{
-format_effectif_table
+Créer le tableau d'effectifs formaté
 }
 \keyword{internal}

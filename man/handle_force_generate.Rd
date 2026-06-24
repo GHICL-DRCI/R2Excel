@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{handle_force_generate}
 \alias{handle_force_generate}
-\title{Gérer force_generate_1_when_0}
+\title{handle_force_generate}
 \usage{
 handle_force_generate(dt, variable_interest, force_generate_1_when_0)
 }
@@ -17,6 +17,6 @@ handle_force_generate(dt, variable_interest, force_generate_1_when_0)
 Liste avec var_levels et var_nlevels mis à jour, et dt modifié
 }
 \description{
-handle_force_generate
+Gérer force_generate_1_when_0
 }
 \keyword{internal}

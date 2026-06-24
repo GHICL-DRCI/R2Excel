@@ -2,7 +2,7 @@
 % Please edit documentation in R/tests_stats.R
 \name{check_fisher}
 \alias{check_fisher}
-\title{check Fisher good application}
+\title{check_fisher}
 \usage{
 check_fisher(tc)
 }
@@ -13,10 +13,12 @@ check_fisher(tc)
 A logical. TRUE means the fisher "rule" is respected, otherwise FALSE.
 }
 \description{
-In the situation where one variable (Var1) has missing data for one of the levels of another variable (Var2),
-this leads to zeros in some cell of the contingency table.
+check Fisher good application
 }
 \details{
+In the situation where one variable (Var1) has missing data for one of the levels of another variable (Var2),
+this leads to zeros in some cell of the contingency table.
+
 Structural zeros: If these zeros are due to a structural impossibility
 (that is, they are expected by the nature of the data, for example,
 if a Var1 category does not exist for a Var2 category),

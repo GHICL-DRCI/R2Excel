@@ -1,4 +1,4 @@
-message("test tests stat - done v0.1.27")
+message("test tests stat - done v0.2.0")
 
 # Deploy test on functions "tests_stats"
 

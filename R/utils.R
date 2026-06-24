@@ -80,10 +80,6 @@ get_characters <- function(
 #' @return A vector of dates : the names of date columns
 #' 
 #' @export
-#' @examples
-#' \dontrun{
-#' 
-#' }
 get_dates <- function(
   dataframe, 
   vars = colnames(dataframe)
@@ -108,7 +104,9 @@ get_dates <- function(
 #' @return A character
 #' @export
 #' @examples
-#' \dontrun{ ector_to_character(vector = c("mean = 2", "median = 3", "max = 4")) }
+#' \dontrun{ 
+#'   vector_to_character(vector = c("mean = 2", "median = 3", "max = 4")) 
+#' }
 vector_to_character <- function(
   vector,
   sep = ",",

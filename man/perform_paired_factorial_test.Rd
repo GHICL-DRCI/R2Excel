@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{perform_paired_factorial_test}
 \alias{perform_paired_factorial_test}
-\title{Choisir et effectuer le test statistique approprié}
+\title{perform_paired_factorial_test}
 \usage{
 perform_paired_factorial_test(
   dt,
@@ -27,6 +27,6 @@ perform_paired_factorial_test(
 choose the appropriate paired test
 }
 \description{
-perform_paired_factorial_test
+Choisir et effectuer le test statistique approprié
 }
 \keyword{internal}

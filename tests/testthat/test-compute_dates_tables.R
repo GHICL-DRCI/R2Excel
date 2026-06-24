@@ -1,4 +1,4 @@
-message("test compute dates tables - done v0.1.27")
+message("test compute dates tables - done v0.2")
 
 dt <- data.frame(
   date1 = as.Date(c("2025-07-30", "2025-07-29", "2025-07-28")), 
@@ -113,3 +113,4 @@ test_that("test date file", {
 
 # clear tmp test folder
 unlink("tmp", recursive = TRUE)
+

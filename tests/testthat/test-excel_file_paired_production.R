@@ -1,4 +1,4 @@
-message("test excel file paired prod - v 0.1.28")
+message("test excel file paired prod - v0.2.0")
 
 dir.create("tmp", showWarnings = FALSE)
 
@@ -99,24 +99,24 @@ path14 <- save_excel_paired_results(
   file = file.path("tmp", "14-desc_paired_cross.xlsx")
 )
 
-tab_cross_quanti <- readxl::read_excel(
+tab_cross_quanti <- setDT(readxl::read_excel(
   path14, sheet = "quanti-visites_2-fact3"
-)
-tab_cross_quali <- readxl::read_excel(
+))
+tab_cross_quali <- setDT(readxl::read_excel(
   path14, sheet = "quali-visites_2-fact3"
-)
+))
 test_that("crossed paired", {
   expect_true(file.exists(path14))
-  
-  expect_equal(ncol(tab_cross_quanti), 11)
-  expect_true(all(unlist(tab_cross_quanti[-1, 5]) %in% "/")) # --insteaded of NA [NA;NA]
-  expect_true(all(unlist(tab_cross_quanti[-1, 11]) %in% "/"))
+  expect_equal(ncol(tab_cross_quanti), 15)
+  expect_true(
+    tab_cross_quanti$`visites_2==temps1__fact3=non`[1] == "/"
+  ) # --insteaded of NA [NA;NA]
   expect_true(any(grepl("var fact spaced", tab_cross_quali$Variable))) 
   ## --todo, --test eval content of the table ... +++
   expect_true(all( # check order of pop totale
-    tab_cross_quanti[1, 2:4] %in% c(
-      "Nb_mesures", "Valeurs_manquantes",
-                "fact3=Population_totale")
+    names(tab_cross_quanti[1, 2:4]) %in% c(
+      "visites_2==temps1__Nb_mesures", "visites_2==temps1__Valeurs_manquantes",
+                "visites_2==temps1__Population_totale")
   ))
 })
 
@@ -269,7 +269,7 @@ test_that("test global", {
 
 #### fix do_test for quali sheet ####
 
-path23 <- save_excel_paired_results(
+path23a <- save_excel_paired_results(
   dataframe = modified_sleep,
   vars = c("extra", "extra_with_missings", "mesure1", "fact1", "fact1_na"),
   varstrat = c("visites_5"),
@@ -279,11 +279,28 @@ path23 <- save_excel_paired_results(
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE,
   do_test = TRUE,
-  file = file.path("tmp", "23-desc_paired_data_tested.xlsx")
+  file = file.path("tmp", "23a-desc_paired_data_tested.xlsx")
 )
-
+path23b <- save_excel_paired_results(
+  dataframe = modified_sleep,
+  vars = c("extra", "extra_with_missings", "mesure1", "fact1", "fact1_na"),
+  varstrat = c("visites_2"),
+  patient_id = "ID2",
+  precision = 2,
+  global_summary = TRUE,
+  force_generate_1_when_0 = FALSE,
+  keep_missing_line = TRUE,
+  do_test = TRUE,
+  file = file.path("tmp", "23b-desc_paired_data_tested.xlsx")
+)
+tab23a <- setDT(readxl::read_xlsx(path23a, sheet = 2))
+tab23b <- setDT(readxl::read_xlsx(path23b, sheet = 2))
 test_that("do_test", {
-  expect_true(file.exists(path23))
+  expect_true(file.exists(path23a))
+  expect_true(file.exists(path23b))
+  expect_true(all(tab23a$Test[c(1,4)] %in% "/"))
+  expect_true(all(tab23a$message[c(1,4)] %in% "Not balanced design, Marginal Homogeneity Test not applicable"))
+  expect_true(all(tab23b$Test[c(1,4)] %in% "McNemar's Chi-squared test"))
 })
 
 
@@ -300,9 +317,13 @@ path24 <- save_excel_paired_results(
   show_p_adj = TRUE,
   file = file.path("tmp", "24-desc_paired_adj.xlsx")
 )
+tab24a <- setDT(readxl::read_xlsx(path24, sheet = 1))
+tab24b <- setDT(readxl::read_xlsx(path24, sheet = 2))
 
 test_that("Test Padj", {
   expect_true(file.exists(path24))
+  expect_true("P_adj_holm" %in% names(tab24a))
+  expect_true("P_adj_holm" %in% names(tab24b))
 })
 
 #### test droplevels ####
@@ -339,6 +360,7 @@ test_that("test drop_levels", {
 
 
 #### Variables_all_na ####
+
 modified_sleep$all_na_var <- NA
 path27 <- save_excel_paired_results(
   dataframe = modified_sleep,
@@ -386,8 +408,8 @@ test_that("test save_excel_paired_results_filtertest", {
 })
 
 
-
 #### dico vars = label ####
+
 path29 <- save_excel_paired_results(
   dataframe = modified_sleep,
   vars = c("extra", "extra_with_missings", "fact1", "fact1_na"),
@@ -432,7 +454,7 @@ path29 <- save_excel_paired_results(
   keep_missing_line = FALSE,
   file = file.path("tmp", "29-exactp.xlsx")
 )
-sheet_29 <- readxl::read_excel( path29 )
+sheet_29 <- readxl::read_excel(path29)
 sheet_19 <- readxl::read_excel(
   path19 #  "tmp/19-desc_paired_data10.xlsx"
 )
@@ -450,7 +472,7 @@ path30 <- save_excel_paired_results(
   dataframe = modified_sleep,
   vars = c("extra", "extra_with_missings", "mesure1"),
   varstrat = c("visites_2"),
-  patient_id = "ID",
+  patient_id = "ID2",
   force_parametric_test = TRUE,
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE, # for fact tab
@@ -460,18 +482,51 @@ path31 <- save_excel_paired_results(
   dataframe = modified_sleep,
   vars = c("extra", "extra_with_missings", "mesure1"),
   varstrat = c("visites_2"),
-  patient_id = "ID",
+  patient_id = "ID2",
   force_non_parametric_test = TRUE,
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE, # for fact tab
   file = file.path("tmp", "31-desc_paired_forcenonparam.xlsx")
 )
-sheet_30 <- readxl::read_excel( path30 )
-sheet_31 <- readxl::read_excel( path31 )
+sheet_30 <- readxl::read_excel(path30)
+sheet_31 <- readxl::read_excel(path31)
 
 test_that("force param", {
   expect_true(all(sheet_30$Test[-1] %in% "Paired t-test"))
   expect_true(all(sheet_31$Test[-1] %in% "Wilcoxon signed-rank test (paired data)"))
+})
+
+
+#### Verbose ####
+
+# msg_capt <- capture_messages(save_excel_paired_results(
+#   dataframe = modified_sleep,
+#   vars = c("extra", "extra_with_missings", "mesure1"),
+#   varstrat = c("visites_2"),
+#   patient_id = "ID",
+#   force_non_parametric_test = TRUE,
+#   force_generate_1_when_0 = FALSE,
+#   keep_missing_line = TRUE, # for fact tab
+#   file = file.path("tmp", "31-desc_paired_forcenonparam.xlsx"),
+#   verbose = TRUE
+# ))
+
+zero_msg_capt <- testthat::capture_messages(
+  save_excel_paired_results(
+      dataframe = modified_sleep,
+      vars = c("extra", "extra_with_missings", "mesure1"),
+      varstrat = c("visites_2"),
+      patient_id = "ID2",
+      force_non_parametric_test = TRUE,
+      force_generate_1_when_0 = FALSE,
+      keep_missing_line = TRUE, # for fact tab
+      file = file.path("tmp", "31-desc_paired_forcenonparam.xlsx"),
+      verbose = FALSE
+  )
+)
+
+test_that("zero msg verbose", {
+  expect_true(length(zero_msg_capt)==0)
 })
 
 #### end ####

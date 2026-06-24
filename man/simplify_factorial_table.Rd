@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{simplify_factorial_table}
 \alias{simplify_factorial_table}
-\title{Simplifier le tableau si demandé (variables binaires)}
+\title{simplify_factorial_table}
 \usage{
 simplify_factorial_table(effectif_tab)
 }
@@ -13,6 +13,6 @@ simplify_factorial_table(effectif_tab)
 simplified table
 }
 \description{
-simplify_factorial_table
+Simplifier le tableau si demandé (variables binaires)
 }
 \keyword{internal}

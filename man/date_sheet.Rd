@@ -4,16 +4,23 @@
 \alias{date_sheet}
 \title{date_sheet}
 \usage{
-date_sheet(dataframe, varstrat, vars_dates, crossed_varstrat)
+date_sheet(dataframe, vars_dates, varstrat, verbose)
 }
 \arguments{
-\item{dataframe}{Data.frame containing the data}
+\item{dataframe}{A data.frame. Columns must be well formatted with factor or 
+numeric class (important). will be converted as data.table inside functions.}
 
-\item{varstrat}{Stratification variable name (can be "", NULL, or a variable name)}
+\item{vars_dates}{A vector of characters. Names of dataframe's columns to describe.
+Only consider date (subset of vars).}
 
-\item{vars_dates}{Character vector of dates variable names}
+\item{varstrat}{A character. Name of the stratification variable,
+making groups to compare.
+Only one varstrat is expected in general.
+About 2 crossed varstrats : you can provide "var1*var2" to get a description 
+of the 2nd varstrat for each level of the 1st varstrat.}
 
-\item{crossed_varstrat}{Logical}
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 list with formatted dates variables description
@@ -25,4 +32,3 @@ Compute dates variables sheet for Excel output
 Internal function that processes dates variables and prepares
 the formatted table for Excel export
 }
-\keyword{internal}

@@ -8,10 +8,9 @@ quali_sheet(
   dataframe,
   vars_quali,
   varstrat,
-  crossed_varstrat,
   precision,
   signif_digits,
-  prop_table_margin,
+  prop_table_margin = 2,
   force_generate_1_when_0,
   force_non_parametric_test,
   force_parametric_test,
@@ -22,44 +21,83 @@ quali_sheet(
   light_contents,
   simplify,
   detail_NB_measures,
-  do_test
+  do_test,
+  verbose
 )
 }
 \arguments{
-\item{dataframe}{Data.frame containing the data}
+\item{dataframe}{A data.frame. Columns must be well formatted with factor or 
+numeric class (important). will be converted as data.table inside functions.}
 
-\item{vars_quali}{Character vector of qualitative variable names}
+\item{vars_quali}{A vector of characters. Names of dataframe's columns to describe.
+Only consider factors (subset of vars).}
 
-\item{varstrat}{Stratification variable name (can be "", NULL, or a variable name)}
+\item{varstrat}{A character. Name of the stratification variable,
+making groups to compare.
+Only one varstrat is expected in general.
+About 2 crossed varstrats : you can provide "var1*var2" to get a description 
+of the 2nd varstrat for each level of the 1st varstrat.}
 
-\item{crossed_varstrat}{Logical}
+\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)
+Integer indicating the number of decimal places (round).}
 
-\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
+\item{signif_digits}{A integer, Integer indicating the number of 
+decimal places (signif) for pvalues.}
 
-\item{signif_digits}{Number of significant digits for p-values (default: 4)}
+\item{prop_table_margin}{A vector giving the margins to split by. 
+Default 2. 1 indicates rows, 2 indicates columns,
+c(1, 2) indicates rows and columns. When x has named dimnames, 
+it can be a character vector selecting dimension names.}
 
-\item{force_non_parametric_test}{Logical, force non-parametric tests}
+\item{force_generate_1_when_0}{A logical, Default TRUE.
+ If TRUE, will test if the unique modality is 0 or "non" and
+ add the level 1 or "oui" so it can be display in counts.
+ Can be combined with simplify to only show the modality (1).
+This may be useful when considering the central limit theorem or small deviations.}
 
-\item{force_parametric_test}{Logical, force parametric tests}
+\item{force_non_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+non parametric test, whatever shapiro test said about normality. 
+(so will use and show medians instead of means)}
 
-\item{show_metric}{Metric to display: "auto", "mean", or "median"}
+\item{force_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+parametric test, whatever shapiro test said about normality. 
+(so will use and show means instead of medians)}
 
-\item{global_summary}{Logical, include global population summary}
+\item{show_metric}{A character, Default "auto". What is the metric to show in
+cell content ?
+"auto" = mean or median, automatic choice according shapiro test,
+"mean" = mean +/- sd forced, whatever shapiro said,
+"median" = media [Q1;Q3] forced, whatever shapiro said.
+Caution, if you force_non_parametric_test as TRUE, show_metric is forced 
+as 'median' and if you force_parametric_test as TRUE, show_metric is forced 
+as 'mean', to be consistent.}
 
-\item{show_OR}{Logical, compute and show Odds Ratios}
+\item{global_summary}{A logical. Default TRUE. Do you want to get global summary.}
 
-\item{show_SMD}{Logical, compute and show Standardized Mean Differences}
+\item{show_OR}{A logical. Default FALSE. Do you want to get OR, IC and p
+(when varstrat is a binary fact).}
 
-\item{light_contents}{Logical, use light formatting (reduce repetitions)}
+\item{show_SMD}{A logical, Default FALSE. If turn TRUE, add SMD column
+(standardized mean difference) between 2 groups.}
 
-\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two 
+\item{light_contents}{A logical, Default TRUE. If FALSE, the information like 
+Nb_mesures, Valeurs manquantes et p will be repeated.}
+
+\item{simplify}{A logical. Boolean indicating if one or two 
 lines should be displayed for binary variables.
 TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
 FALSE = both levels of the variables.}
 
-\item{detail_NB_measures}{Logical, show detailed counts per level}
+\item{detail_NB_measures}{A logical, Default FALSE.
+If turn TRUE, N will be shown with detail one column by group levels's order.}
 
-\item{do_test}{Logical, perform statistical tests (default: TRUE)}
+\item{do_test}{A logical, Default TRUE will apply bivariate statistical tests.
+do_test = FALSE => show_SMD and show_OR trun FALSE}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 list with formatted qualitative variables description
@@ -71,4 +109,3 @@ Compute qualitative variables sheet for Excel output
 Internal function that processes qualitative variables and prepares
 the formatted table for Excel export, with optional statistical tests.
 }
-\keyword{internal}

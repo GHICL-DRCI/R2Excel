@@ -2,16 +2,17 @@
 
 #### Check condition with tests ####
 
-#' check Cochran rule
-#'
-#' Check theoretical sample size in table
+#' check_cochran
+#' 
+#' check Cochran rule : Check theoretical sample size in table
 #'
 #' @param efftheo A table of theoretical counts
 #' @param seuil A numeric between 0 and 100. Default 80\%.
 #'   Percentage of cell supposed get a count greater than effcochran (Eg. 80\% should have count above 5.)
 #' @param effcritique A integer. Default 1. Integer of the minimal count for a given cell
 #' @param effcochran A integer. Default 5. Integer if the minimal count for maximum seuil in \% of cells
-#' @param verbose A logical, Default TRUE. Print the conclusion message.
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
 #'
 #' @return A logical. TRUE means the Cochran rule is respected, otherwise FALSE.
 #' @export
@@ -118,6 +119,8 @@ check_cochran <- function(
 # check_shapiro <- function()
 
 
+#' check_fisher
+#' 
 #' check Fisher good application
 #'
 #' In the situation where one variable (Var1) has missing data for one of the levels of another variable (Var2),
@@ -148,9 +151,9 @@ check_fisher <- function(tc) {
 
 #### Apply statistic tests ####
 
-#' test proportions
-#'
-#' Test contingency tables.
+#' test_proportions
+#' 
+#' test proportions : Test contingency tables.
 #' Deploy the tests Khi 2 and Fisher for proportions with a variable of reference
 #'
 #' @param dataframe A data.frame containing data.
@@ -162,8 +165,10 @@ check_fisher <- function(tc) {
 #'   results = data.frame with test, p-values, explicit decision for each vars
 #'   details = list with details, various objects.
 #'   selection = vector of variables with p-values < 0.2
+#'   
 #' @export
 #' @import stats
+#' 
 #' @examples
 #' \dontrun{
 #' test_proportions(
@@ -262,7 +267,7 @@ test_proportions <- function(
             )),
             collapse = ";"
           )
-          message("[test_proportions] ", msg_captured)
+          # message("[test_proportions] ", msg_captured)
           prop_equal[vari, "message"] <- paste0(msg_captured, ".\nCochran condition is not validated.")
 
           if (any(unique(sapply(X = has_issues, FUN = function(el) {
@@ -294,8 +299,8 @@ test_proportions <- function(
   return(list(results = prop_equal, details = detailtest, selection = selection))
 }
 
-#' test means
-#'
+#' test_means
+#' 
 #' Test equality of means.
 #' Deploy the tests Wilcoxon-Mann-Whitney or kruskal-Wallis for difference of
 #'  means with a variable of groups for non normal data.
@@ -313,12 +318,16 @@ test_proportions <- function(
 #'  (so will use and show means instead of medians)
 #'  This may be useful when considering the central limit theorem or small deviations. 
 #' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
-#'
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
+#'  
 #' @return A list of 3 objects
 #'   results = data.frame with test, P-values, explicit decision for each vars
 #'   details = list with details, various objects.
 #'   selection = vector of variables with p-values < 0.2
+#' 
 #' @export
+#' 
 #' @import stats
 #' @examples
 #' \dontrun{
@@ -334,7 +343,8 @@ test_means <- function(
   varstrat,
   force_non_parametric_test = FALSE,
   force_parametric_test = FALSE, 
-  signif_digits = 4
+  signif_digits = 4,
+  verbose = TRUE
 ) {
   dataframe <- as.data.frame(dataframe)
   ## stops
@@ -347,7 +357,9 @@ test_means <- function(
 
   # check minimum of 4 patients per group
   if (any(table(dataframe[, c(varstrat)]) < 4)) {
-    message("[test_means] L'effectif est < 4 dans au moins l un des groupes ! No test possible")
+    if (verbose) {
+      message("[test_means] L'effectif est < 4 dans au moins l un des groupes ! No test possible")
+    }
     results <- data.frame(
       Variable = vars,
       P_valeur = NA,
@@ -368,7 +380,9 @@ test_means <- function(
 
   # check well more than one level
   if (nlevels(dataframe[, c(varstrat)]) <= 1) {
-    message("[test_means] varstrat have less than 2 levels ! No test possible")
+    if (verbose) {
+      message("[test_means] varstrat have less than 2 levels ! No test possible")
+    }
     results <- data.frame(
       P_valeur = NA,
       Test = "/",
@@ -394,11 +408,11 @@ test_means <- function(
   detailtest <- vector("list", length(vars_numeric))
   names(detailtest) <- vars_numeric
 
-  if (force_non_parametric_test) message("[test_means] force_non_parametric_test turned TRUE")
-  if (force_parametric_test) message("[test_means] force_parametric_test truned TRUE")
+  if (verbose && force_non_parametric_test) message("[test_means] force_non_parametric_test turned TRUE")
+  if (verbose && force_parametric_test) message("[test_means] force_parametric_test truned TRUE")
 
   for (vari in vars_numeric) {
-    message("[test_means] ", vari, " by ", varstrat)
+    if (verbose) message("[test_means] ", vari, " by ", varstrat)
     detailtest[[vari]] <- vector("list", 3)
     names(detailtest[[vari]]) <- c("observations", "statistics", "Test")
 
@@ -409,11 +423,15 @@ test_means <- function(
         sum(apply(!is.na(dataframe[, c(vari, varstrat)]), 1, all))
       )
     )
-    rownames(detailtest[[vari]][["observations"]]) <- c("Number of NA lines : ", "Number of used lines : ")
+    rownames(detailtest[[vari]][["observations"]]) <- c(
+      "Number of NA lines : ", "Number of used lines : "
+    )
     colnames(detailtest[[vari]][["observations"]]) <- ""
 
     # statistics table
-    summarizedstats <- as.data.frame(matrix(NA, nrow = nlevels(dataframe[, varstrat]) + 1, ncol = 6))
+    summarizedstats <- as.data.frame(matrix(
+      NA, nrow = nlevels(dataframe[, varstrat]) + 1, ncol = 6
+    ))
     aggr_results <- stats::aggregate(
       dataframe[, vari], list(dataframe[, varstrat]), summary, simplify = FALSE
     )
@@ -431,7 +449,9 @@ test_means <- function(
     # Check normality in each group
     has_issues <- try(tools::assertCondition(
       group_normality <- vapply(X = 1:nlevels(dataframe[, varstrat]), FUN = function(g) {
-        stats::shapiro.test(dataframe[[vari]][dataframe[[varstrat]] %in% varstrat_levels[g]])$p.value
+        stats::shapiro.test(
+          dataframe[[vari]][dataframe[[varstrat]] %in% varstrat_levels[g]]
+        )$p.value
       }, FUN.VALUE = 1)
     ), silent = TRUE)
     has_issues <- has_issues[
@@ -492,10 +512,13 @@ test_means <- function(
             mean_equal[vari, "message"] <- ""
           }
           mean_equal[vari, "message"] <- paste0(
-            mean_equal[vari, "message"], sum(group_normality < 0.05), " group(s) not normal."
+            mean_equal[vari, "message"], sum(group_normality < 0.05),
+            " group(s) not normal."
           )
           mean_equal[vari, "Test"] <- "Kruskal-Wallis rank sum test"
-          mean_equal[vari, "P_valeur"] <- signif(x = kruskal$p.value, digits = signif_digits)
+          mean_equal[vari, "P_valeur"] <- signif(
+            x = kruskal$p.value, digits = signif_digits
+          )
           # mean_equal[vari, "decision"] <- ifelse(mean_equal[vari, "P_valeur"] < 0.05, "difference", "")
           detailtest[[vari]][["Test"]] <- kruskal
         }
@@ -511,7 +534,7 @@ test_means <- function(
           msg <- paste0(
             "Warning:Normality assessed on few points in a group (n min = ", min(effectif_by_group), ")."
           )
-          message("[test_means] ", vari, " ", msg)
+          if (verbose) message("[test_means] ", vari, " ", msg)
           mean_equal[vari, "message"] <- msg
         } else {
           mean_equal[vari, "message"] <- ""
@@ -530,11 +553,14 @@ test_means <- function(
           # mean_equal[vari, "message"] <- paste0(mean_equal[vari, "message"], "\nAll groups normal.")
           # can be forced
           mean_equal[vari, "message"] <- paste0(
-            mean_equal[vari, "message"], sum(group_normality > 0.05), " group(s) normal."
+            mean_equal[vari, "message"], sum(group_normality > 0.05), 
+            " group(s) normal."
           )
           
           mean_equal[vari, "Test"] <- "Student T-test"
-          mean_equal[vari, "P_valeur"] <- signif(x = student$p.value, digits = signif_digits)
+          mean_equal[vari, "P_valeur"] <- signif(
+            x = student$p.value, digits = signif_digits
+          )
           # mean_equal[vari, "decision"] <- ifelse(mean_equal[vari, "P_valeur"] < 0.05, "difference", "")
           detailtest[[vari]][["Test"]] <- student
         } else {
@@ -550,7 +576,9 @@ test_means <- function(
           )
           
           mean_equal[vari, "Test"] <- "Anova One-Way"
-          mean_equal[vari, "P_valeur"] <- signif(x = anova_obj$p.value, digits = signif_digits)
+          mean_equal[vari, "P_valeur"] <- signif(
+            x = anova_obj$p.value, digits = signif_digits
+          )
           # mean_equal[vari, "decision"] <- ifelse(mean_equal[vari, "P_valeur"] < 0.05, "difference", "")
           detailtest[[vari]][["Test"]] <- anova_obj
         }
@@ -565,7 +593,7 @@ test_means <- function(
         )),
         collapse = ";"
       )
-      message("[test_means] ", msg_captured)
+      if (verbose) message("[test_means] ", msg_captured)
       mean_equal[vari, "message"] <- msg_captured
 
       # mean_equal[vari, "message"] <- "Test not done : not enough data. "
@@ -598,22 +626,27 @@ test_means <- function(
 
 #### Get estimate tested ####
 
-#' estimate difference of means
-#'
+#' estimate_diff_mean
+#' 
 #' Compute difference of means and its IC between groups
 #'
 #' @param dataframe A data.frame containing data.
-#' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
-#' @param varstrat A character. Name of the stratification variable, making groups to compare.
+#' @param vars A vector of characters. 
+#' Names of dataframe's factorial columns to describe.
+#' @param varstrat A character. Name of the stratification variable, 
+#' making groups to compare.
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #' @param force_non_parametric_test A logical. Default FALSE. You can turn it TRUE 
 #'  if you want to force the use of
 #'  non parametric test, whatever shapiro test said about normality.
-#'
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
+#'  
 #' @return A data.frame,
 #'   in rows the vars and in column the stat used, the difference values and the IC95%
 #'  
 #' @export
+#' 
 #' @import dplyr
 #' @importFrom simpleboot two.boot
 #' @importFrom boot boot.ci
@@ -630,8 +663,10 @@ estimate_diff_mean <- function(
   vars,
   varstrat,
   precision = 1,
-  force_non_parametric_test = FALSE
+  force_non_parametric_test = FALSE,
+  verbose = TRUE
 ) {
+  
   `%>%` <- magrittr::`%>%`
 
   stopifnot(precision == "auto" || is.numeric(precision))
@@ -654,7 +689,7 @@ estimate_diff_mean <- function(
 
   varstrat_levels <- levels(dataframe[, varstrat])
 
-  if (force_non_parametric_test) message("[estimate_diff_mean] force_non_parametric_test")
+  if (verbose && force_non_parametric_test) message("[estimate_diff_mean] force_non_parametric_test")
 
   tab <- do.call("rbind", lapply(vars, function(vari) {
     effectif_by_group <- vapply(
@@ -667,7 +702,7 @@ estimate_diff_mean <- function(
     if (any(effectif_by_group < 15)) { # min 15 as param ?
       # just a message to warn, normality is eval on few points...
       msg <- paste0("Warning:Normality assessed on few points in a group (n min = ", min(effectif_by_group), ").")
-      message("[estimate_diff_mean] ", vari, " ", msg)
+      if (verbose) message("[estimate_diff_mean] ", vari, " ", msg)
     }
 
     # nom de la variable, pour mettre dans le tableau

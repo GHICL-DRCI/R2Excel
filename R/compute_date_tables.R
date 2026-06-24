@@ -1,13 +1,15 @@
 
-#' compute date table
-#'
-#' provide descriptive statistics table for dates
+#' compute_date_table
+#' 
+#' compute date table : provide descriptive statistics table for dates
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.frame.
 #' @param vars A vector of characters. Names of dataframe's date columns to describe.
 #'   only consider "Date", "POSIXct" or "POSIXt" format. 
 #' @param varstrat A character. Default NULL. Name of the stratification variable,
 #'  making groups to compare.
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
 #'  
 #' @return A list of tables with nb measures, mean, med, min and max of dates.
 #' 
@@ -34,7 +36,8 @@
 compute_date_table <- function(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
-  varstrat = NULL
+  varstrat = NULL, 
+  verbose = TRUE
 ) {
   # v0.1.24
   # message("[compute_date_table]")
@@ -44,17 +47,17 @@ compute_date_table <- function(
 
   # get factorial variables
   vars_dates <- get_dates(dataframe, vars)
-  if (!all(vars %in% vars_dates)) {
-    message("[compute_date_table] Warning, some of selected vars were ignored (not dates).")
-    message(
-      "[compute_date_table] Only describ date (Date, POSIXct or POSIXt) : ",
+  if (verbose && !all(vars %in% vars_dates)) {
+    message(paste0(
+      "[compute_date_table] Warning, some of selected vars were ignored (not dates). ",
+      "Only describ date (Date, POSIXct or POSIXt) : ",
       paste(vars_dates,collapse = ",")
-    )
+    ))
   }
   
   
   if (is.null(varstrat) || varstrat %in% "") { # univariate analyse
-    message("[compute_date_table] without varstrat")
+    if (verbose) message("[compute_date_table] without varstrat")
     desc_date_final <- data.table::rbindlist(
       lapply(X = vars_dates, FUN = function(date_coli) {
         # date_coli <- "DDN"
@@ -92,7 +95,7 @@ compute_date_table <- function(
     
   } else { 
     # bivariate analyse
-    message("[compute_date_table] with varstrat ", varstrat)
+    if (verbose) message("[compute_date_table] with varstrat ", varstrat)
     # possible only on factorial varstrat
     stopifnot(varstrat %in% names(dataframe))
     stopifnot(is.factor(dataframe[, varstrat]))

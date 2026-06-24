@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_tables.R
 \name{compute_factorial_table}
 \alias{compute_factorial_table}
-\title{compute factorial table}
+\title{compute_factorial_table}
 \usage{
 compute_factorial_table(
   dataframe,
@@ -11,7 +11,8 @@ compute_factorial_table(
   simplify = TRUE,
   prop_table_margin = 2,
   precision = 1,
-  force_generate_1_when_0 = FALSE
+  force_generate_1_when_0 = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -36,12 +37,15 @@ it can be a character vector selecting dimension names.}
 will test if the unique modality is 0 or "non" and
 add the level 1 or "oui" so it can be display in counts. 
 Can be combined with simplify to only show the modality (1).}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A list of tables with counts and percentage.
 }
 \description{
-provide descriptive statistics table for factorial data
+compute factorial table : provide descriptive statistics table for factorial data
 }
 \examples{
 \dontrun{

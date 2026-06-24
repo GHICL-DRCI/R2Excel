@@ -15,6 +15,6 @@ format_cell_content(stats, metric = "mean")
 cell formated
 }
 \description{
-format_cell_content
+Formater le contenu de cellule selon la métrique
 }
 \keyword{internal}

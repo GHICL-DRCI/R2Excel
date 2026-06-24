@@ -9,7 +9,6 @@ quali_sheet_paired(
   vars_quali,
   varstrat,
   patient_id,
-  crossed_varstrat,
   precision,
   signif_digits,
   simplify,
@@ -18,38 +17,71 @@ quali_sheet_paired(
   force_parametric_test,
   force_generate_1_when_0,
   keep_missing_line,
-  show_metric,
   detail_NB_measures,
-  do_test
+  do_test,
+  verbose
 )
 }
 \arguments{
-\item{dataframe}{Data.frame containing the data}
+\item{dataframe}{A data.frame. tibble or data.table will be converted into data.table.
+Columns must be well formated with factor or numeric class (important).}
 
-\item{vars_quali}{Character vector of qualitative variable names}
+\item{vars_quali}{Vector of characters. Subset of vars : vector of qualitative variable names}
 
-\item{varstrat}{Stratification variable name (can be "", NULL, or a variable name)}
+\item{varstrat}{A characters. Not null. Names of the stratification variable, 
+making groups to compare (*time* or *visits* for instance).
+The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" 
+will be set on 3 lines for each individuals, in the column "visits").
+About 2 *crossed varstrats* : you can provide "var1*var2", and so
+get a description of the 2nd varstrat (var2) for each level of
+the 1st varstrat (var1).}
 
-\item{patient_id}{A character. Default "patientid". 
-Name of patient identifier (id) column.}
+\item{patient_id}{A character.
+Name of patient identifier (id) column.
+The repeated measures must be presented in line 
+(for instance, "id1" will be set on 3 line if he has 3 visits).}
 
-\item{crossed_varstrat}{Logical}
+\item{precision}{mode: "auto" (adaptive) or numeric (fixed)
+Integer indicating the number of decimal places (round).}
 
-\item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
+\item{signif_digits}{A integer. Integer indicating the number of 
+decimal places (signif) for p-values.}
 
-\item{signif_digits}{Number of significant digits for p-values (default: 4)}
+\item{simplify}{A logical. Default FALSE. Boolean indicating if one or two lines
+should be displayed for binary variables.
+TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
+FALSE = both levels of the variables.}
 
-\item{global_summary}{Logical, include global population summary}
+\item{global_summary}{A logical. Default FALSE Do you want to get global summary.
+Caution! global_summary on longitudinal data is not really relevant... 
+but ok if you want it, you can.}
 
-\item{force_non_parametric_test}{Logical, force non-parametric tests}
+\item{force_non_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+non parametric test, whatever shapiro test said about normality.}
 
-\item{force_parametric_test}{Logical, force parametric tests}
+\item{force_parametric_test}{A logical. Default FALSE. 
+You can turn it TRUE if you want to force the use of
+parametric test, whatever shapiro test said about normality. 
+(so will use and show means instead of medians)
+This may be useful when considering the central limit theorem or small deviations.}
 
-\item{show_metric}{Metric to display: "auto", "mean", or "median"}
+\item{force_generate_1_when_0}{A logical, Default TRUE. 
+If TRUE, will test if the unique modality is 0 or "non" and
+add the level 1 or "oui" so it can be display in counts. 
+Can be combined with simplify to only show the modality (1).}
 
-\item{detail_NB_measures}{Logical, show detailed counts per level}
+\item{keep_missing_line}{A logical, Default TRUE. 
+Do you want to keep the missing data count (like a level)}
 
-\item{do_test}{Logical, perform statistical tests (default: TRUE)}
+\item{detail_NB_measures}{A logical, Default FALSE.
+If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.}
+
+\item{do_test}{A logical, Default TRUE. 
+To prevent the statistical test from returning a result, set the value to FALSE.}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 list with formatted quantitative variables description
@@ -57,4 +89,3 @@ list with formatted quantitative variables description
 \description{
 Compute quali variables sheet for Excel output
 }
-\keyword{internal}

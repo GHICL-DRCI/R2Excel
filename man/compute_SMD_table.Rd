@@ -2,12 +2,13 @@
 % Please edit documentation in R/compute_SMD_tables.R
 \name{compute_SMD_table}
 \alias{compute_SMD_table}
-\title{compute SMD}
+\title{compute_SMD_table}
 \usage{
 compute_SMD_table(dataframe, vars, varstrat, precision = 2)
 }
 \arguments{
-\item{dataframe}{A data.frame. tibble or data.table}
+\item{dataframe}{A data.frame. Columns must be well formatted with factor or 
+numeric class (important). will be converted as data.table inside functions.}
 
 \item{vars}{A vector of characters. Names of dataframe's columns.}
 
@@ -20,13 +21,14 @@ Integer indicating the number of decimal places (round).}
 A table of SMD values for each vars.
 }
 \description{
-Standardized mean difference
+compute SMD : Standardized mean difference
 }
 \details{
 Interpretation of SMD values :  
 The generally accepted thresholds for interpreting effect size are :  
 |SMD| < 0.1: negligible difference,  
-0.1 ≤ |SMD| < 0.2: "Imbalance was usually defined as "stddiff" greater than 0.1 or 0.2 (which means the small effect size)."  
+0.1 ≤ |SMD| < 0.2: "Imbalance was usually defined as "stddiff" greater than 
+ 0.1 or 0.2 (which means the small effect size)."  
 0.2 ≤ |SMD| < 0.5: between small and moderate difference,    
 0.5 ≤ |SMD| < 0.8: between moderate and large difference,  
 |SMD| ≥ 0.8: large difference.  

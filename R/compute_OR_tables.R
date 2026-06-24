@@ -1,20 +1,31 @@
-#' get OR univariate model
-#'
-#' provide statistics table of OR, IC and p-values for glm binomial model applied on each explanatory_vars
+#' get_OR_univar
+#' 
+#' get OR univariate model : provide statistics table of OR, IC and p-values
+#'  for glm binomial model 
+#'  applied on each explanatory_vars
+#' 
 #' modele : dependent_var ~ explanatory_vars_i
 #'
 #' @param dataframe A data.frame, tibble or data.table.
-#' @param dependent_var A character. Name of the stratification variable, making groups to compare.
+#' @param dependent_var A character. Name of the stratification variable, 
+#'  making groups to compare.
 #' @param explanatory_vars A vector of characters. Names of dataframe's columns to describe.
-#' @param check_n_levels A logical, Default FALSE. Maybe wanted on qualitative explanatory_vars, so those with 0 levels are removed.
+#' @param check_n_levels A logical, Default FALSE. 
+#'  Maybe wanted on qualitative explanatory_vars, so those with 0 levels are removed.
 #'  keep numeric variables too.
-#' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
+#' @param signif_digits A integer, Default 4. Integer indicating the number 
+#'  of decimal places (signif) for pvalues.
+#' @param verbose A logical, Default TRUE. Show message. 
+#'  Do you want to work in silence? Turn it FALSE.
 #'
 #' @return A final table with Variable names, Modalites asso to the given OR (IC, p).
+#' 
+#' @export
+#' 
 #' @importFrom finalfit summary_factorlist
 #' @importFrom finalfit glmuni
 #' @importFrom finalfit fit2df
-#' @export
+#' 
 #' @examples
 #' \dontrun{
 #' dependent_var <- "binary_test"
@@ -38,10 +49,12 @@ get_OR_univar <- function(
   dependent_var = "Y",
   explanatory_vars = c("X1", "X2"),
   check_n_levels = FALSE,
-  signif_digits = 4
+  signif_digits = 4,
+  verbose = TRUE
 ) {
-  message("[get_OR_univar] ", length(explanatory_vars), " variables wanted in OR table")
-
+  if (verbose) {
+    message("[get_OR_univar] ", length(explanatory_vars), " variables wanted in OR table")
+  }
   explanatory <- NULL
   
   stopifnot(dependent_var %in% names(dataframe))
@@ -63,7 +76,10 @@ get_OR_univar <- function(
     dataframe <- data.table::setDT(data.table::copy(dataframe))[
       , .SD, .SDcols = c(dependent_var, explanatory_vars)
     ]
-    message("[get_OR_univar] ", length(explanatory_vars), " variables remaines (numeric or with levels>0)")
+    if (verbose) {
+      message("[get_OR_univar] ", length(explanatory_vars),
+              " variables remaines (numeric or with levels>0)")
+    }
   }
 
   # glmuni function need cleaned names (no spaces for instance)
@@ -124,7 +140,9 @@ get_OR_univar <- function(
     return(keep_vari)
   }))
 
-  message("[get_OR_univar] ", "Keep ", sum(var_index_keep), " variables to compute OR")
+  if (verbose) {
+    message("[get_OR_univar] Keep ", sum(var_index_keep), " variables to compute OR")
+  }
   explanatory_vars_keep <- explanatory_vars[var_index_keep]
   explanatory_vars_keep_renamed <- explanatory_vars_renamed[var_index_keep]
   dico <- explanatory_vars_keep
@@ -202,7 +220,7 @@ get_OR_univar <- function(
     res_glm_uni <- res_glm_uni[, .SD, .SDcols = c("Variable", "Modalites", "OR", "OR_P_valeur")]
   } else {
     # no more variable to analyse...
-    message("[get_OR_univar] After exclusion, no more OR computable")
+    if (verbose) message("[get_OR_univar] After exclusion, no more OR computable")
     res_glm_uni <- NULL
   }
 

@@ -17,8 +17,3 @@ A vector of dates : the names of date columns
 \description{
 provide the names of date columns
 }
-\examples{
-\dontrun{
-
-}
-}

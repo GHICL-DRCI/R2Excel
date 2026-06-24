@@ -1,17 +1,19 @@
 Package: R2Excel
 Type: Package
-Title: R2Excel : Production Of Statistical Tables in *R*, Save Into (*2*) *Excel* File
-Version: 0.1.28
+Title: R2Excel : Production Of Statistical Tables in R, Save Into (2) Excel File
+Version: 0.2.0
 Author: 
   Mathilde Boissel [aut, cre],
   Cassandra Chaldaureille [aut, cre],
+  Armand Elegbe [ctb],
   Sahara Graf [aut],
+  Klervi Le Gall [ctb],
   Saïd Maallem [ctb],
   Laurène Norberciak [aut, cre],
   Cristian Preda [aut, cre],
   Stephane Verdun [aut]
 Maintainer: Mathilde Boissel <boissel.mathilde@gmail.com>, Cassandra Chaldaureille <chaldaureille.cassandra@ghicl.net>
-Description: The goal of *R2Excel* is to produce Statistical Tables in *R*, Save Into (*2*) *Excel* File. 
+Description: The goal of R2Excel is to produce Statistical Tables in R, Save Into (2) Excel File. 
   With this package, we don't propose any revolutionary statistical models or tests, 
     but we do recommend that you use this tool for the first stages of analysis in a clinical study. 
   Once you have your databases, you will naturally want to produce descriptive tables, 
@@ -25,8 +27,7 @@ Description: The goal of *R2Excel* is to produce Statistical Tables in *R*, Save
 License: CeCILL-2
 Encoding: UTF-8
 LazyData: true
-Depends: 
-    R (>= 2.10)
+Depends: R (>= 2.10)
 Config/build/manual: false
 Imports: 
     stats,
@@ -42,6 +43,7 @@ Imports:
     readxl,
     writexl,
     finalfit,
+    zoo,
     data.table
 Suggests: 
     knitr,

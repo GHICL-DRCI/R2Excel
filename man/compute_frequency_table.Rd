@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{compute_frequency_table}
 \alias{compute_frequency_table}
-\title{Calculer le tableau de fréquences avec effectifs et pourcentages}
+\title{compute_frequency_table}
 \usage{
 compute_frequency_table(
   dt,
@@ -27,6 +27,6 @@ compute_frequency_table(
 table of frequencies
 }
 \description{
-compute_frequency_table
+Calculer le tableau de fréquences avec effectifs et pourcentages
 }
 \keyword{internal}

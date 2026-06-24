@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{compute_paired_factorial_table_and_test}
 \alias{compute_paired_factorial_table_and_test}
-\title{compute factorial table for paired data}
+\title{compute_paired_factorial_table_and_test}
 \usage{
 compute_paired_factorial_table_and_test(
   dataframe,
@@ -15,7 +15,8 @@ compute_paired_factorial_table_and_test(
   force_generate_1_when_0 = TRUE,
   keep_missing_line = TRUE,
   global_summary = FALSE,
-  do_test = FALSE
+  do_test = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -56,6 +57,9 @@ but ok if you want it, you can.}
 
 \item{do_test}{A logical, Default FALSE, do not return stat test. 
 Turn TRUE if wanted.}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 a list of 2 elements :
@@ -63,6 +67,7 @@ a list of 2 elements :
   test_result : the test object if more detail wanted about the stat test.
 }
 \description{
+compute factorial table for paired data : 
 provide descriptive statistics table for factorial data with a paired level 
   (time or visites)
 }

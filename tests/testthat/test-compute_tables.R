@@ -1,4 +1,4 @@
-message("test compute tables - done v0.1.27") # classique
+message("test compute tables - done v0.2.0") # classique
 
 #### continuous tables ####
 
@@ -22,14 +22,15 @@ test_that("test multi conti list", {
 
 test_that("test dim in conti tab", {
   expect_equal(nrow(res_conti_tabs[[1]]), 3)
-  expect_equal(ncol(res_conti_tabs[[1]]), 11)
+  expect_equal(ncol(res_conti_tabs[[1]]), 13)
   expect_identical(
     rownames(res_conti_tabs[[1]]),
     c("Population", paste0(varstrat_wanted, unique(modified_state$election)))
   )
   expect_identical(
     colnames(res_conti_tabs[[1]]),
-    c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "Valeurs_manquantes",
+    c("mean", "sd", "median", "Q1", "Q3", "min", "max",
+      "SE", "IQR","N", "Valeurs_manquantes",
       "Nb_mesures", "is_Normal") # default
   )
 })
@@ -67,6 +68,11 @@ test_that("test values in conti tab", {
     tolerance = 0
   )
   expect_equal(
+    res_conti_tabs[[2]]["electionred", "mean"],
+    round(mean(modified_state[[vars_wanted[2]]][modified_state$election %in% "red"], na.rm = TRUE), 2),
+    tolerance = 0
+  )
+  expect_equal(
     res_conti_tabs[[1]]["electionred", "sd"],
     round(sd(modified_state[[vars_wanted[1]]][modified_state$election %in% "red"]), 2),
     tolerance = 0
@@ -77,8 +83,18 @@ test_that("test values in conti tab", {
     tolerance = 0
   )
   expect_equal(
+    res_conti_tabs[[2]]["electionred", "Valeurs_manquantes"],
+    sum(is.na(modified_state[[vars_wanted[2]]][modified_state$election %in% "red"])),
+    tolerance = 0
+  )
+  expect_equal(
     res_conti_tabs[[1]]["electionblue", "median"],
     round(median(modified_state[[vars_wanted[1]]][modified_state$election %in% "blue"]), 2),
+    tolerance = 0
+  )
+  expect_equal(
+    res_conti_tabs[[2]]["electionblue", "median"],
+    round(median(modified_state[[vars_wanted[2]]][modified_state$election %in% "blue"]), 2),
     tolerance = 0
   )
   expect_equal(
@@ -91,7 +107,21 @@ test_that("test values in conti tab", {
     round(max(modified_state[[vars_wanted[1]]][modified_state$election %in% "blue"]), 2),
     tolerance = 0
   )
-
+  expect_equal(
+    res_conti_tabs[[1]][1, "SE"],
+    sd(modified_state[[vars_wanted[1]]])/sqrt(length(modified_state[[vars_wanted[1]]])),
+    tolerance = 0.1
+  )
+  expect_equal(
+    res_conti_tabs[[2]][1, "SE"],
+    sd(modified_state[[vars_wanted[2]]], na.rm = TRUE)/sqrt(sum(!is.na(modified_state[[vars_wanted[2]]]))),
+    tolerance = 0.1
+  )
+  expect_equal(
+    res_conti_tabs[[3]][1, "IQR"],
+    stats::IQR(modified_state[[vars_wanted[3]]]),
+    tolerance = 0.1
+  )
 })
 
 test_that("test NAs in conti tab", {
@@ -188,15 +218,15 @@ res_shapi <- compute_continuous_table(
   vars = c("Population", "twovalues"),
   varstrat = "election"
 )
-# mentione as "warning" :
-# message d'avis
+# mentione as "warning" : # message d'avis
 modified_state$twovalues <- NULL
+
 test_that("test shapi no error", {
   expect_equal(length(res_shapi), 2)
   expect_equal(nrow(res_shapi[[1]]), 3)
   expect_equal(nrow(res_shapi[[2]]), 3)
-  expect_equal(ncol(res_shapi[[1]]), 11) 
-  expect_equal(ncol(res_shapi[[2]]), 11) 
+  expect_equal(ncol(res_shapi[[1]]), 13) 
+  expect_equal(ncol(res_shapi[[2]]), 13) 
   expect_true(all(res_shapi[[1]]$is_Normal %in% 0))
   expect_true(all(is.na(res_shapi[[2]]$is_Normal)))
 })
@@ -539,3 +569,4 @@ test_that("compute_group_summary handles all NA = NULL", {
   
   expect_true(is.null(result))
 })
+

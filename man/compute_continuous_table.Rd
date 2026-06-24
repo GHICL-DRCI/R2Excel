@@ -2,15 +2,16 @@
 % Please edit documentation in R/compute_tables.R
 \name{compute_continuous_table}
 \alias{compute_continuous_table}
-\title{compute continuous table}
+\title{compute_continuous_table}
 \usage{
 compute_continuous_table(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat = NULL,
-  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N",
+  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR", "N",
     "Valeurs_manquantes", "Nb_mesures", "is_Normal"),
-  precision = "auto"
+  precision = "auto",
+  verbose = TRUE
 )
 }
 \arguments{
@@ -23,16 +24,19 @@ making groups to compare.}
 
 \item{stats_choice}{A vector of characters. Default provide all usual statistics
 to describe continuous variables,
-namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "N", 
-"Valeurs_manquantes", "Nb_mesures", "is_Normal")'}
+namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR",
+"N", "Valeurs_manquantes", "Nb_mesures", "is_Normal")'}
 
 \item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A final table or a list of tables if varstrat not null.
 }
 \description{
-provide descriptive statistics table for continuous data
+compute continuous table : provide descriptive statistics table for continuous data
 }
 \examples{
 \dontrun{

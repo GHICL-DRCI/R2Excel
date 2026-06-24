@@ -20,5 +20,7 @@ A character
 transformation of a vector into a text
 }
 \examples{
-\dontrun{ ector_to_character(vector = c("mean = 2", "median = 3", "max = 4")) }
+\dontrun{ 
+  vector_to_character(vector = c("mean = 2", "median = 3", "max = 4")) 
+}
 }

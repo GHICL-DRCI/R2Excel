@@ -1,11 +1,12 @@
-#' compute SMD  
-#'
-#' Standardized mean difference  
+#' compute_SMD_table
+#' 
+#' compute SMD : Standardized mean difference  
 #' 
 #' Interpretation of SMD values :  
 #' The generally accepted thresholds for interpreting effect size are :  
 #' |SMD| < 0.1: negligible difference,  
-#' 0.1 ≤ |SMD| < 0.2: "Imbalance was usually defined as "stddiff" greater than 0.1 or 0.2 (which means the small effect size)."  
+#' 0.1 ≤ |SMD| < 0.2: "Imbalance was usually defined as "stddiff" greater than 
+#'  0.1 or 0.2 (which means the small effect size)."  
 #' 0.2 ≤ |SMD| < 0.5: between small and moderate difference,    
 #' 0.5 ≤ |SMD| < 0.8: between moderate and large difference,  
 #' |SMD| ≥ 0.8: large difference.  
@@ -36,7 +37,9 @@
 #' (https://www.sciencedirect.com/science/article/pii/S1836955315000806?via%3Dihub)
 #' 
 #' 
-#' @param dataframe A data.frame. tibble or data.table
+#' @param dataframe A data.frame. Columns must be well formatted with factor or 
+#'   numeric class (important). will be converted as data.table inside functions.
+#' 
 #' @param vars A vector of characters. Names of dataframe's columns.
 #' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
@@ -64,7 +67,7 @@ compute_SMD_table <- function(
   varstrat,
   precision = 2
 ) {
-  message("[compute_SMD_table]")
+  # message("[compute_SMD_table]")
   ## stops
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(varstrat %in% names(dataframe))

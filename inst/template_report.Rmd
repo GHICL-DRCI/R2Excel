@@ -1,0 +1,496 @@
+---
+title: "Rapport d’analyse statistique"
+subtitle: "Titre Court : Titre Long"
+author: "Mathilde Boissel"
+date: "`r Sys.Date()`"
+output:
+  word_document:
+  toc: yes
+toc_depth: 3
+always_allow_html: true
+editor_options:
+  chunk_output_type: console
+---
+  
+```{r setup, include=FALSE}
+root_directory <- "C:/Users/boissel_mathilde/Documents" 
+setwd(root_directory)
+
+knitr::opts_chunk$set(
+  results = "asis",
+  #root_directory = root_directory,
+  size = "small",
+  include = TRUE,
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  dpi = 150,
+  tidy = FALSE,
+  crop = TRUE,
+  autodep = TRUE,
+  fig.align = "center",
+  fig.pos = "!H",
+  cache = FALSE,
+  cache.path = paste0(root_directory, "/cache/"),
+  fig.path = paste0(root_directory, "/cache/")
+  # fig.width = unit(12, "cm"),
+  # fig.height = unit(15, "cm")
+)
+
+
+#### lib #### 
+
+library(gt)
+library(dplyr)
+library(data.table)
+library(R2Excel)
+# packageVersion("R2Excel") # v ... # to check
+library(readxl)
+# viz
+library(ggplot2)
+library(viridis)
+library(patchwork)
+
+# ...
+
+#### path ####
+
+# project_directory <- file.path(
+#   "Volume:", "EtudeClinique","XXX",
+#   "Biostatistiques", "Analyse"
+# )
+# output_directory <- file.path(
+#   project_directory, "Output"
+# )
+
+#### Load objects and format ####
+# setwd(output_directory)
+
+# annexe_directory <- file.path(
+#   project_directory, "Report", "report_annexes"
+# )
+# dir.create(annexe_directory, showWarnings = FALSE)
+
+
+#### fct ####
+
+# source(file.path(project_directory, "Script", "get_detail_LMM.R"))
+# source(file.path(project_directory, "Script", "get_detail_GLMM.R"))
+
+#### data ####
+
+# dt <- readRDS(file.path(
+#   project_directory,
+#   "Data", 
+#   "formated",
+#   "XXX.rds"
+# ))
+# 
+# dt2 <- readRDS(
+#   file.path(output_directory, "01-XXX.rds")
+# )
+
+```
+
+<br> 
+  
+|                           |                       |
+|---------------------------|-----------------------|
+| Investigateur(s)          | xxx                   |
+| Centre(s)/service(s)      | xxx                   |
+| Nombre total de patients  | xxx                   |
+| Date de réalisation de l’analyse          | XX/XX/2025  |
+| Biostatisticien en charge de l’analyse    | Mathilde BOISSEL|
+| Contact                   | boissel.mathilde@ghicl.net      |
+
+  
+<br> 
+  
+\newpage
+
+# Table des matières
+
+----
+  
+**TOC --here to update in word menu** 
+
+<!-- TOC to update in word -->
+
+<br> 
+
+\newpage 
+
+# Design de l’étude
+  
+----
+
+**blabla --here**
+
+
+# Objectifs et critères de jugement 
+
+----
+
+## a)	Objectifs
+
+_Objectif principal_ : 
+
+**blabla --here**
+
+_Objectifs secondaires_ : 
+
+1) **blabla --here**
+
+2) **blabla --here**
+
+
+<br>
+
+## b)	Critères de jugement
+
+_Critère de jugement principal_ : 
+
+**blabla --here**
+
+_Critères de jugement secondaires_ : 
+
+1) **blabla --here**
+
+2) **blabla --here**
+
+<br>
+
+# Population d’analyse
+
+----
+
+**blabla --here**
+
+# Modalités d’administration du traitement de l’étude (si applicable)
+
+----
+
+**blabla --here**
+
+# Traitements autorisés / interdits (si applicable)
+
+----
+
+**blabla --here**
+
+# Plan d’analyse statistique (en français)
+
+----
+
+**blabla --here**
+
+# Flowchart
+
+----			
+
+**blabla --here**
+
+<!-- Fig 1 : Rythme des visites -->
+
+<!-- ![](..\outputs\02-gg_visites_date.png) -->
+
+
+```{r fig}
+# cat("Fig 1 : xxx.")
+# fig1 <- readRDS(file.path(output_directory, "03-fig1.rds"))
+# print(fig1)
+# cat("\n\n")
+# cat("<br>")
+
+## make the copy of figs...
+# example: 
+# copydone <- invisible(
+#   file.copy(
+#     from = list.files(
+#       path = output_directory, pattern = "^03-fig_(.*)png$", full.names = TRUE
+#     ),
+#     to = annexe_directory, 
+#     overwrite = TRUE
+#   )
+# )
+```
+
+
+# Modifications de la base de données
+
+----			
+
+Les modifications suivantes ont été effectuées sur la base de données : 
+
+|  ID patient  | Variable |  Ancienne valeur  | Nouvelle valeur |
+|--------------|----------|-------------------|----------|
+|              |          |                   |          |
+|              |          |                   |          |
+
+
+Les variables suivantes ont été créées : 
+-	Var1 : somme des sous-scores du score X par exemple
+
+
+# Déviations
+
+----			
+
+Inclus à tort, compliance au protocole, recours aux traitements interdits, etc
+
+
+# Analyse descriptive
+
+----			
+
+## a)	Description de la population
+
+Tab 1 : Caractéristiques de la population – variables qualitatives
+
+```{r tab1}
+my_title <- "Table 1 : ..."
+tab <- readxl::read_excel(file.path(output_directory, "02-desc_pop.xlsx"), sheet = 1) 
+gt::gt(tab) %>% 
+  tab_header(title = my_title) %>%
+  opt_row_striping()
+```
+
+Tab 2 : Caractéristiques de la population – variable quantitative
+
+```{r tab2}
+my_title <- "Table 2 : ..."
+tab <- readxl::read_excel(file.path(output_directory, "02-desc_pop.xlsx"), sheet = 2) 
+gt::gt(tab) %>% 
+  tab_header(title = my_title) %>%
+  opt_row_striping()
+```
+
+Commentaires : 
+
++ **blabla --here**
+
++ **CI, CNI --here**
+
+## b)	Description des critères de jugement
+
+**blabla --here**
+
+```{r tab3}
+tab3 <- suppressMessages(suppressWarnings(
+  setDT(readxl::read_excel(
+      path = file.path(
+        output_directory, "02-desc_by_group.xlsx"
+      ),
+      col_names = TRUE
+    ))
+))
+tab3$Valeurs_manquantes  <- NULL
+```
+
+
+```{r tab3_show}
+my_title <- "Table 3 : Description by group"
+tab_ex <- tab3
+
+gt_table <- gt(tab_ex) %>%
+  tab_header(title = my_title) %>% 
+  text_transform(
+    locations = cells_body(columns = c("Label", "Variable", "Modalites", "Nb_mesures")),
+    fn = function(x) {
+      ifelse(is.na(x) | x %in% "NA", "", x)
+    }
+  ) %>% 
+  tab_style(
+    style = list(
+      cell_fill(color = "cadetblue3"),
+      cell_text(weight = "bold")
+      ),
+    locations = cells_body(
+      columns = Variable 
+    )
+  ) %>% 
+  opt_row_striping()
+gt_table
+```
+
+
+## c)	Description des visites
+
+**blabla --here**
+
+```{r tab4}
+tab4 <- suppressMessages(suppressWarnings(
+  setDT(readxl::read_excel(
+      path = file.path(output_directory, "02-count_by_ALLERGENE.xlsx"),
+      col_names = TRUE
+    ))
+))
+setcolorder(
+  x = tab4, # put category and label in first cols
+  neworder = unique(c("ALLERGENE_cat", "ALLERGENE_label", names(tab4)))
+)
+tab4 <- data.table::dcast(
+  tab4,
+  ALLERGENE_cat + ALLERGENE_label + ALLERGENE ~ VISITE, 
+  value.var = "nb_patients"
+)
+```
+
+```{r tab4_show}
+tab_ex <- tab4
+my_title <- paste0(
+  "Table 3 : Comptage inclusion / Allergène / Visite"
+)
+
+# gt style ##
+gt_table <- gt(tab_ex, groupname_col = "ALLERGENE_cat") %>%
+  tab_header(
+    title = my_title
+  ) %>% 
+  text_transform(
+    locations = cells_body(columns = starts_with("V")),
+    fn = function(x) {
+      ifelse(is.na(x) | x %in% "NA", "", x)
+    }
+  ) %>% 
+  tab_spanner(
+    label = "nb_patients / Visites",
+    columns = starts_with("V")
+  ) %>% 
+  opt_row_striping()
+
+gt_table
+```
+
+
+## d)	Description des traitements
+
+**blabla --here**
+
+# Analyse du critère principal
+
+----			
+
+**blabla --here**
+
+**exemple**
+
+```{r tab11a}
+# exemple
+tab11a <- suppressMessages(suppressWarnings(
+  setDT(readxl::read_excel(
+    path = file.path(
+      output_directory, "03-res_Cox_ageincl_by_allergene.xlsx"
+    ),
+    col_names = TRUE, sheet = "event_Desen"
+  ))
+))
+
+## check : 
+# paste0(unique(tab11a$warnings), collapse = ", ")
+
+tab11a <- tab11a[is.na(warnings), ][, warnings := NULL]
+tab11a$wald.test <- NULL
+tab11a$p.val_Schoenfeld <- NULL
+tab11a$p.val_Spline <- NULL
+
+```
+
+```{r tab11a_show}
+
+my_title <- "Table 11A : Lien évènement Désensibilisation ~ AGE à l'inclusion / allergène"
+
+tab_ex <- tab11a
+gt_table <- gt(tab_ex[order(Allergenes), ]) %>%
+  tab_header(title = my_title) %>% 
+  fmt_number(
+    columns = where(is.numeric),
+    n_sigfig = 3,
+    use_seps = FALSE
+  ) %>%
+  fmt_number(
+    columns = c("n_patients", "n_obs", "n_event"), drop_trailing_zeros = TRUE
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "cadetblue3"),
+      cell_text(weight = "bold")
+      ),
+    locations = cells_body(
+      columns = Variables 
+    )
+  ) %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      columns = p.value,
+      rows = p.value < 0.05
+    )
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "firebrick"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      columns = n_event,
+      rows = n_event <= 10
+    )
+  ) %>%
+  cols_label_with(
+    fn = function(x) gsub("_", " ", x, fixed = TRUE)
+  ) %>% 
+  opt_row_striping()
+gt_table
+
+cat("<br>")
+cat("\n\n")
+```
+
+
+
+# Analyse des critères secondaires
+
+----			
+
+**blabla --here**
+
+
+# Analyse des événements indésirables
+
+----			
+
+**blabla --here**
+
+\newpage
+
+# Ressources
+
+----			
+
+Citer les packages R utilisés pour réaliser l’analyse
+
+**blabla --here**
+
+<br>
+
+•	R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+•	Rstudio : Posit team (2024). RStudio: Integrated Development Environment for R. Posit Software, PBC, Boston, MA. URL http://www.posit.co/.
+
+•	Dowle M, Srinivasan A (2023). data.table: Extension of data.frame. R package version 1.14.8, https://CRAN.R-project.org/package=data.table.
+
+•	Wickham H, Bryan J (2023). readxl: Read Excel Files. R package version 1.4.2, https://CRAN.R-project.org/package=readxl.
+
+•	Wickham H, François R, Henry L, Müller K, Vaughan D (2023). dplyr: A Grammar of Data Manipulation_. R package version 1.1.2, https://CRAN.R-project.org/package=dplyr 
+
+•	H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+• (sources à venir)
+
+<!-- --here  -->
+
+
+•	« R2Excel » https://github.com/GHICL-DRCI/R2Excel.
