@@ -16,7 +16,8 @@ handle_multiple_levels(
   force_non_parametric_test,
   global_summary,
   do_test,
-  dt
+  dt,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -43,11 +44,14 @@ handle_multiple_levels(
 \item{do_test}{A logical}
 
 \item{dt}{A data.table}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 a description for more than 2 levels
 }
 \description{
-handle_multiple_levels
+Fonction pour le cas : Plus de 2 niveaux
 }
 \keyword{internal}

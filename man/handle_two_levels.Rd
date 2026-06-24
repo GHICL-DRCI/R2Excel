@@ -15,7 +15,8 @@ handle_two_levels(
   force_parametric_test,
   force_non_parametric_test,
   global_summary,
-  dt
+  dt,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -40,11 +41,15 @@ handle_two_levels(
 \item{global_summary}{A logical}
 
 \item{dt}{A data.table}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
-a two level description
+A two level description
 }
 \description{
-handle_two_levels
+Fonction pour le cas : 2 niveaux
+avec gestion variable absente d'un niveau
 }
 \keyword{internal}

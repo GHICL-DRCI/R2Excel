@@ -2,33 +2,44 @@
 % Please edit documentation in R/compute_OR_tables.R
 \name{get_OR_univar}
 \alias{get_OR_univar}
-\title{get OR univariate model}
+\title{get_OR_univar}
 \usage{
 get_OR_univar(
   dataframe,
   dependent_var = "Y",
   explanatory_vars = c("X1", "X2"),
   check_n_levels = FALSE,
-  signif_digits = 4
+  signif_digits = 4,
+  verbose = TRUE
 )
 }
 \arguments{
 \item{dataframe}{A data.frame, tibble or data.table.}
 
-\item{dependent_var}{A character. Name of the stratification variable, making groups to compare.}
+\item{dependent_var}{A character. Name of the stratification variable, 
+making groups to compare.}
 
 \item{explanatory_vars}{A vector of characters. Names of dataframe's columns to describe.}
 
-\item{check_n_levels}{A logical, Default FALSE. Maybe wanted on qualitative explanatory_vars, so those with 0 levels are removed.
+\item{check_n_levels}{A logical, Default FALSE. 
+Maybe wanted on qualitative explanatory_vars, so those with 0 levels are removed.
 keep numeric variables too.}
 
-\item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+\item{signif_digits}{A integer, Default 4. Integer indicating the number 
+of decimal places (signif) for pvalues.}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A final table with Variable names, Modalites asso to the given OR (IC, p).
 }
 \description{
-provide statistics table of OR, IC and p-values for glm binomial model applied on each explanatory_vars
+get OR univariate model : provide statistics table of OR, IC and p-values
+ for glm binomial model 
+ applied on each explanatory_vars
+}
+\details{
 modele : dependent_var ~ explanatory_vars_i
 }
 \examples{

@@ -2,28 +2,34 @@
 % Please edit documentation in R/tests_stats.R
 \name{estimate_diff_mean}
 \alias{estimate_diff_mean}
-\title{estimate difference of means}
+\title{estimate_diff_mean}
 \usage{
 estimate_diff_mean(
   dataframe,
   vars,
   varstrat,
   precision = 1,
-  force_non_parametric_test = FALSE
+  force_non_parametric_test = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
 \item{dataframe}{A data.frame containing data.}
 
-\item{vars}{A vector of characters. Names of dataframe's factorial columns to describe.}
+\item{vars}{A vector of characters. 
+Names of dataframe's factorial columns to describe.}
 
-\item{varstrat}{A character. Name of the stratification variable, making groups to compare.}
+\item{varstrat}{A character. Name of the stratification variable, 
+making groups to compare.}
 
 \item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
 
 \item{force_non_parametric_test}{A logical. Default FALSE. You can turn it TRUE 
 if you want to force the use of
 non parametric test, whatever shapiro test said about normality.}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A data.frame,

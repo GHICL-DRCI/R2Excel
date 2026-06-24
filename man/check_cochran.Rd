@@ -2,7 +2,7 @@
 % Please edit documentation in R/tests_stats.R
 \name{check_cochran}
 \alias{check_cochran}
-\title{check Cochran rule}
+\title{check_cochran}
 \usage{
 check_cochran(
   efftheo,
@@ -22,13 +22,14 @@ Percentage of cell supposed get a count greater than effcochran (Eg. 80\% should
 
 \item{effcochran}{A integer. Default 5. Integer if the minimal count for maximum seuil in \% of cells}
 
-\item{verbose}{A logical, Default TRUE. Print the conclusion message.}
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A logical. TRUE means the Cochran rule is respected, otherwise FALSE.
 }
 \description{
-Check theoretical sample size in table
+check Cochran rule : Check theoretical sample size in table
 }
 \examples{
 \dontrun{

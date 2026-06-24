@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{add_global_summary}
 \alias{add_global_summary}
-\title{Ajouter la colonne Population_total si demandée}
+\title{add_global_summary}
 \usage{
 add_global_summary(effectif_tab, dt, variable_interest, digits = 1)
 }
@@ -19,6 +19,6 @@ add_global_summary(effectif_tab, dt, variable_interest, digits = 1)
 formated table of frequencies
 }
 \description{
-add_global_summary
+Ajouter la colonne Population_total si demandée
 }
 \keyword{internal}

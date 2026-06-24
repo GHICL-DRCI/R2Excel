@@ -13,5 +13,6 @@ simplify_binary_table(vari_tab)
 vari_tab simplifyed
 }
 \description{
-simplify_binary_table
+Fonction de simplification (pour variables binaires)
 }
+\keyword{internal}

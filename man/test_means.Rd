@@ -2,7 +2,7 @@
 % Please edit documentation in R/tests_stats.R
 \name{test_means}
 \alias{test_means}
-\title{test means}
+\title{test_means}
 \usage{
 test_means(
   dataframe,
@@ -10,7 +10,8 @@ test_means(
   varstrat,
   force_non_parametric_test = FALSE,
   force_parametric_test = FALSE,
-  signif_digits = 4
+  signif_digits = 4,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -31,6 +32,9 @@ parametric test, whatever shapiro test said about normality.
 This may be useful when considering the central limit theorem or small deviations.}
 
 \item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A list of 3 objects

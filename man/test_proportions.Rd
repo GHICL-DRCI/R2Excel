@@ -2,7 +2,7 @@
 % Please edit documentation in R/tests_stats.R
 \name{test_proportions}
 \alias{test_proportions}
-\title{test proportions}
+\title{test_proportions}
 \usage{
 test_proportions(
   dataframe,
@@ -27,7 +27,7 @@ A list of 3 objects
   selection = vector of variables with p-values < 0.2
 }
 \description{
-Test contingency tables.
+test proportions : Test contingency tables.
 Deploy the tests Khi 2 and Fisher for proportions with a variable of reference
 }
 \examples{

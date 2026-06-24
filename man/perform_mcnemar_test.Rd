@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{perform_mcnemar_test}
 \alias{perform_mcnemar_test}
-\title{Effectuer le test de McNemar}
+\title{perform_mcnemar_test}
 \usage{
 perform_mcnemar_test(mcnemar_dt, varstrat_levels, variable_interest)
 }
@@ -17,6 +17,6 @@ perform_mcnemar_test(mcnemar_dt, varstrat_levels, variable_interest)
 Eval McNemar test
 }
 \description{
-perform_mcnemar_test
+Effectuer le test de McNemar
 }
 \keyword{internal}

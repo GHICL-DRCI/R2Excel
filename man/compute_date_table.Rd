@@ -2,12 +2,13 @@
 % Please edit documentation in R/compute_date_tables.R
 \name{compute_date_table}
 \alias{compute_date_table}
-\title{compute date table}
+\title{compute_date_table}
 \usage{
 compute_date_table(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
-  varstrat = NULL
+  varstrat = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -18,12 +19,15 @@ only consider "Date", "POSIXct" or "POSIXt" format.}
 
 \item{varstrat}{A character. Default NULL. Name of the stratification variable,
 making groups to compare.}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A list of tables with nb measures, mean, med, min and max of dates.
 }
 \description{
-provide descriptive statistics table for dates
+compute date table : provide descriptive statistics table for dates
 }
 \examples{
 \dontrun{
@@ -43,4 +47,5 @@ compute_date_table(
   varstrat = "fact"
 )
 }
+
 }

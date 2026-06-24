@@ -2,7 +2,7 @@
 % Please edit documentation in R/excel_file_paired_production.R
 \name{save_excel_paired_results}
 \alias{save_excel_paired_results}
-\title{Tables for paired or longitudinal data, saved in Excel file}
+\title{save_excel_paired_results}
 \usage{
 save_excel_paired_results(
   dataframe,
@@ -20,11 +20,13 @@ save_excel_paired_results(
   force_generate_1_when_0 = TRUE,
   show_metric = "auto",
   light_contents = TRUE,
+  crossedvarstrat_long_wide = "wide",
   detail_NB_measures = FALSE,
   do_test = TRUE,
   show_exact_p = FALSE,
   show_p_adj = FALSE,
   drop_levels = FALSE,
+  verbose = TRUE,
   dico_labels = NULL
 )
 }
@@ -38,30 +40,35 @@ Columns must be well formated with factor or numeric class (important).}
 Only consider numerics, factors and dates.}
 
 \item{varstrat}{A characters. Not null. Names of the stratification variable, 
-making groups to compare (*time* or *visites* for instance).
+making groups to compare (*time* or *visits* for instance).
 The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" 
-will be set on 3 lines for each individuals).
+will be set on 3 lines for each individuals, in the column "visits").
 About 2 *crossed varstrats* : you can provide "var1*var2", and so
-get a description of the 2nd varstrat (var2) for each level of the 1st varstrat (var1).}
+get a description of the 2nd varstrat (var2) for each level of
+the 1st varstrat (var1). However, in the "paired" function, the stat test 
+will not be performed in the case of a crossed varstrat 
+(do_test will be set to FALSE) to avoid the wrong test being used if
+ the variable order is not respected ( "visit*group" or "grpup*visit").}
 
 \item{patient_id}{A character. Default "patientid". 
 Name of patient identifier (id) column.
 The repeated measures must be presented in line 
-(for instance, "id1" will be set on 3 line if he has 3 visits)}
+(for instance, "id1" will be set on 3 line if he has 3 visits).}
 
 \item{precision}{mode: "auto" (adaptive) or numeric (fixed)
-Integer indicating the number of decimal places (round).}
+Integer indicating the number of decimal places (round).
+Default = 2.}
 
 \item{signif_digits}{A integer, Default 4. Integer indicating the number of 
-decimal places (signif) for pvalues.}
+decimal places (signif) for p-values.}
 
 \item{simplify}{A logical. Default FALSE. Boolean indicating if one or two lines
 should be displayed for binary variables.
 TRUE = only the 2nd level of the variables (if 0/1 variable : only 1), 
 FALSE = both levels of the variables.}
 
-\item{keep_missing_line}{A logical, Default TRUE. Do you want to keep the missing
-data count (like a level)}
+\item{keep_missing_line}{A logical, Default TRUE. 
+Do you want to keep the missing data count (like a level)}
 
 \item{global_summary}{A logical. Default FALSE Do you want to get global summary.
 Caution! global_summary on longitudinal data is not really relevant... 
@@ -77,7 +84,7 @@ parametric test, whatever shapiro test said about normality.
 (so will use and show means instead of medians)
 This may be useful when considering the central limit theorem or small deviations.}
 
-\item{force_generate_1_when_0}{A logical, Default FALSE. 
+\item{force_generate_1_when_0}{A logical, Default TRUE. 
 If TRUE, will test if the unique modality is 0 or "non" and
 add the level 1 or "oui" so it can be display in counts. 
 Can be combined with simplify to only show the modality (1).}
@@ -91,22 +98,32 @@ Caution, if you force_non_parametric_test as TRUE, show_metric is forced
 as 'median' and if you force_parametric_test as TRUE, show_metric is forced 
 as 'mean', to be consistent.}
 
-\item{light_contents}{A logical, Default TRUE. If FALSE,
-the information like "Nb_mesure", "Valeurs manquantes" et "p" will be repeated.}
+\item{light_contents}{A logical, Default TRUE. 
+If FALSE, the information like "Nb_mesure", "Valeurs manquantes" et "p" 
+will be repeated.}
+
+\item{crossedvarstrat_long_wide}{A character, "wide" by default, or "long" if,
+in case of crossed varstrat, you want each level of the first variable in a column. 
+"long" option can be usefull if many levels (more readable).}
 
 \item{detail_NB_measures}{A logical, Default FALSE.
 If turn TRUE, N will be shown with detail (N1 + N2 + ...) for each group.}
 
-\item{do_test}{A logical, Default TRUE. Do not return stat test if FALSE.}
+\item{do_test}{A logical, Default TRUE. 
+To prevent the statistical test from returning a result, set the value to FALSE.}
 
 \item{show_exact_p}{A logical, Default FALSE. 
 So if p<0.0001, the character "<0.0001" is returned.
 If turn TRUE, p-values will be returned will all numbers as numeric.}
 
-\item{show_p_adj}{A logical, Default FALSE. If turn TRUE, add P_adj_holm column
-based on p.adjust.}
+\item{show_p_adj}{A logical, Default FALSE. 
+If turn TRUE, add P_adj_holm column based on p.adjust.}
 
-\item{drop_levels}{A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)}
+\item{drop_levels}{A logical, Default FALSE. 
+If turn TRUE, apply droplevels(dataframe)}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 
 \item{dico_labels}{A data.frame, Default NULL. If data.frame provided,
 the first column must be the vars' name and 
@@ -116,6 +133,9 @@ the 2nd column must be the labels. Other information will be ignored.}
 A character. Path and name of the excel results file.
 }
 \description{
+Tables for paired or longitudinal data, saved in Excel file
+}
+\details{
 Create Excel file of descriptive analysis
 Provide descriptive Excel file for factorial (qualitative) 
   and continuous (quantitative) data

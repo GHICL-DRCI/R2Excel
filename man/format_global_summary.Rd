@@ -30,6 +30,6 @@ format_global_summary(
 global summary formated
 }
 \description{
-format_global_summary
+Formater la description de population globale
 }
 \keyword{internal}

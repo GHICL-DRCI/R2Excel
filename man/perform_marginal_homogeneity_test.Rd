@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_paired_tables.R
 \name{perform_marginal_homogeneity_test}
 \alias{perform_marginal_homogeneity_test}
-\title{Effectuer le test d'homogénéité marginale}
+\title{perform_marginal_homogeneity_test}
 \usage{
 perform_marginal_homogeneity_test(dt, variable_interest, varstrat, patient_id)
 }
@@ -19,6 +19,6 @@ perform_marginal_homogeneity_test(dt, variable_interest, varstrat, patient_id)
 Eval marginal homogeneity test
 }
 \description{
-perform_marginal_homogeneity_test
+Effectuer le test d'homogénéité marginale
 }
 \keyword{internal}

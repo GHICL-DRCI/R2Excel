@@ -2,7 +2,7 @@
 % Please edit documentation in R/excel_file_production.R
 \name{save_excel_results}
 \alias{save_excel_results}
-\title{Create Excel file with description of qualitative and quantitative variables}
+\title{save_excel_results}
 \usage{
 save_excel_results(
   dataframe,
@@ -22,10 +22,12 @@ save_excel_results(
   show_SMD = FALSE,
   detail_NB_measures = FALSE,
   light_contents = TRUE,
+  crossedvarstrat_long_wide = "wide",
   do_test = TRUE,
   show_exact_p = FALSE,
   show_p_adj = FALSE,
   drop_levels = FALSE,
+  verbose = TRUE,
   dico_labels = NULL
 )
 }
@@ -63,10 +65,9 @@ c(1, 2) indicates rows and columns. When x has named dimnames,
 it can be a character vector selecting dimension names.}
 
 \item{force_generate_1_when_0}{A logical, Default TRUE.
- If TRUE, will test if the unique modality is 0 or "non" and
- add the level 1 or "oui" so it can be display in counts.
- Can be combined with simplify to only show the modality (1).
-This may be useful when considering the central limit theorem or small deviations.}
+If TRUE, will test if the unique modality is 0 or "non" and
+add the level 1 or "oui" so it can be display in counts.
+Can be combined with simplify to only show the modality (1).}
 
 \item{force_non_parametric_test}{A logical. Default FALSE. 
 You can turn it TRUE if you want to force the use of
@@ -76,7 +77,8 @@ non parametric test, whatever shapiro test said about normality.
 \item{force_parametric_test}{A logical. Default FALSE. 
 You can turn it TRUE if you want to force the use of
 parametric test, whatever shapiro test said about normality. 
-(so will use and show means instead of medians)}
+(so will use and show means instead of medians)
+This may be useful when considering the central limit theorem or small deviations.}
 
 \item{show_metric}{A character, Default "auto". What is the metric to show in
 cell content ?
@@ -101,6 +103,10 @@ If turn TRUE, N will be shown with detail one column by group levels's order.}
 \item{light_contents}{A logical, Default TRUE. If FALSE, the information like 
 Nb_mesures, Valeurs manquantes et p will be repeated.}
 
+\item{crossedvarstrat_long_wide}{A character, "wide" by default, or "long" if,
+in case of crossed varstrat, you want each level of the first variable in a column. 
+"long" option can be usefull if many levels (more readable).}
+
 \item{do_test}{A logical, Default TRUE will apply bivariate statistical tests.
 do_test = FALSE => show_SMD and show_OR trun FALSE}
 
@@ -112,6 +118,9 @@ If turn TRUE, p-values will be returned will all numbers as numeric.}
 based on p.adjust.}
 
 \item{drop_levels}{A logical, Default FALSE. If turn TRUE, apply droplevels(dataframe)}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 
 \item{dico_labels}{A data.frame, Default NULL. If data.frame provided, the first
 column must be the vars' name and the 2nd column must be the labels.
@@ -133,6 +142,9 @@ Test : Test related to the P-value
 Message : Message captured for the statistician's attention
 }
 \description{
+Create Excel file with description of qualitative and quantitative variables
+}
+\details{
 Create Excel file of descriptive analysis
 Provide descriptive Excel file for factorial (qualitative) 
   and continuous (quantitative) data

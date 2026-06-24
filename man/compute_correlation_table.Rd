@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_tables.R
 \name{compute_correlation_table}
 \alias{compute_correlation_table}
-\title{compute correlation table}
+\title{compute_correlation_table}
 \usage{
 compute_correlation_table(
   dataframe,
@@ -10,7 +10,8 @@ compute_correlation_table(
   varstrat = varstrat,
   method_corr = "detect_auto",
   precision = 2,
-  signif_digits = 4
+  signif_digits = 4,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -27,12 +28,16 @@ Otherwise, method to compute correlation is wanted "pearson", "spearman", "kenda
 
 \item{signif_digits}{A integer, 
 Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+
+\item{verbose}{A logical, Default TRUE. Show message. 
+Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A final table of stat and correlation.
 }
 \description{
-provide descriptive statistics table for continuous data and its correlation with a continuous varstrat
+compute correlation table : provide descriptive statistics table for 
+continuous data and its correlation with a continuous varstrat
 }
 \examples{
 \dontrun{

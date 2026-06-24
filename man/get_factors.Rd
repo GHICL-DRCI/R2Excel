@@ -19,5 +19,9 @@ provide the names of factorial columns
 }
 \examples{
 \dontrun{
+get_factors(
+ dataframe = modified_state,
+ vars = c("state.division", "state.region", "Income", "Illiteracy")
+)
 }
 }
