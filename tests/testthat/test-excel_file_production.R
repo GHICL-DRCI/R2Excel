@@ -1,5 +1,4 @@
-message("test excel file prod - done v0.1.27")
-
+message("test excel file prod - done v0.2.0")
 
 dir.create("tmp", showWarnings = FALSE)
 
@@ -340,7 +339,7 @@ path02 <- save_excel_results(
   ),
   varstrat = "election*binary_test",
   precision = 2,
-  detail_NB_measures = TRUE
+  detail_NB_measures = TRUE, verbose = FALSE
 )
 #  add test if no quali vers  :
 path03 <- save_excel_results(
@@ -352,12 +351,83 @@ path03 <- save_excel_results(
   ),
   varstrat = "election*binary_test",
   precision = 2,
-  detail_NB_measures = TRUE
+  detail_NB_measures = TRUE, verbose = FALSE
 )
-
+# test long format 
+path02_long <- save_excel_results(
+  dataframe = modified_state,
+  file = "tmp/Descriptive_bivariate_analysis_2long.xlsx",
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area",
+    "state.division", "state.region",
+    "special_condition", "special_measures" # trap
+  ),
+  varstrat = "election*binary_test",
+  precision = 2,
+  detail_NB_measures = TRUE, 
+  crossedvarstrat_long_wide = "long", verbose = FALSE
+)
+path03_long <- save_excel_results(
+  dataframe = modified_state,
+  file = "tmp/Descriptive_bivariate_analysis_3long.xlsx",
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area"
+  ),
+  varstrat = "election*binary_test",
+  precision = 2,
+  detail_NB_measures = TRUE,
+  crossedvarstrat_long_wide = "long", verbose = FALSE
+)
+tab2a <- setDT(readxl::read_excel(path02, sheet=1))
+tab2b <- setDT(readxl::read_excel(path02, sheet=2))
+tab2along <- setDT(readxl::read_excel(path02_long, sheet=1))
+tab2blong <- setDT(readxl::read_excel(path02_long, sheet=2))
 test_that("cross vars", {
   expect_true(file.exists(path02))
   expect_true(file.exists(path03)) # no more error v0.1.18
+  expect_true(file.exists(path02_long))
+  expect_true(file.exists(path03_long)) 
+  # content
+  expect_true(all(tab2a$Variable %in% tab2along$Variable))
+  expect_true(all(
+    unique(gsub("(.*)__(.*)", "\\1", names(tab2a)[-1])) == gsub(
+      " ","",unique(tab2along$varstrat1), fixed = TRUE)
+  ))
+  expect_true(all(
+    tab2a$`election==red__binary_test=1` ==
+    tab2along$`binary_test=1`[tab2along$varstrat1 %in% "election == red"]
+  ))
+  expect_true(all(
+    tab2a$`election==red__binary_test=0` ==
+      tab2along$`binary_test=0`[tab2along$varstrat1 %in% "election == red"]
+  ))
+  expect_true(all(
+    tab2b$`election==red__binary_test=0` ==
+      tab2blong$`binary_test=0`[tab2blong$varstrat1 %in% "election == red"]
+  ))
+  expect_true(all(
+    tab2b$`election==red__binary_test=1_N` ==
+      tab2blong$`binary_test=1_N`[tab2blong$varstrat1 %in% "election == red"], 
+    na.rm = T
+  ))
+  # check trap : special_measures 
+  # var not present in 1 level of varstrat1
+  expect_true(
+    tab2a$`election==red__Nb_mesures`[tab2a$Variable %in% "special_measures"] == 0
+  )
+  expect_true(
+    tab2a$`election==blue__Nb_mesures`[tab2a$Variable %in% "special_measures"] == "24 (14+10)"
+  )
+  expect_true(
+    tab2along$Nb_mesures[tab2along$varstrat1 %in% "election == red" &
+                           tab2along$Variable %in% "special_measures"] == 0
+  )
+  expect_true(
+    tab2along$Nb_mesures[tab2along$varstrat1 %in% "election == blue" &
+                           tab2along$Variable %in% "special_measures"] == "24 (14+10)"
+  )
 })
 
 
@@ -421,7 +491,8 @@ test_that("test p adj", {
 
 #### drop_levels ####
 
-tmp06 <- modified_state[modified_state$binary_test %in% 1, ]
+tmp06 <- data.table::copy(modified_state)
+tmp06 <- tmp06[tmp06$binary_test %in% 1, ]
 # keep only 1 values over the 2 levels
 path06_TRUE <- save_excel_results(
   dataframe = tmp06,
@@ -544,10 +615,10 @@ sheet09quanti <- readxl::read_excel(
   file.path("tmp", "09-smd.xlsx"),
   sheet = "quantitative - binary_test"
 )
-sheet09quali <- readxl::read_excel(
+sheet09quali <- setDT(readxl::read_excel(
   file.path("tmp", "09-smd.xlsx"),
   sheet = "qualitative - binary_test"
-)
+))
 # also possible in cross situation
 path09cross <- save_excel_results(
   dataframe = modified_state,
@@ -560,10 +631,10 @@ path09cross <- save_excel_results(
   precision = 2,
   show_SMD = TRUE
 )
-sheet09quanticross <- readxl::read_excel(
+sheet09quanticross <- setDT(readxl::read_excel(
   path09cross,
   sheet = 1 # quali one
-)
+))
 sheet09qualicross <- readxl::read_excel(
   path09cross,
   sheet = 2# quanti one
@@ -573,9 +644,10 @@ test_that("test smd", {
   expect_true("SMD" %in% names(sheet09quali))
   expect_true(sheet09quanti$SMD[1] == -0.09) # test 1 value
   expect_true(sheet09quali$SMD[1] == 0.49) # test 1 value
-
-  expect_true("SMD" %in% sheet09quanticross[1, ])
-  expect_true(sheet09quanticross[2, "election==red...7"] == -0.43) # test 1 value
+  
+  expect_true(any(grepl("SMD", names(sheet09quanticross))))
+  expect_true(any(grepl("SMD", names(sheet09qualicross))))
+  expect_true(sheet09quanticross[1, "election==red__SMD"] == -0.43) # test 1 value
 })
 
 #### quali varstrat ####
@@ -818,6 +890,7 @@ tab_quanti_iris_nonpexact  <- readxl::read_excel(
   path = file.path("tmp", "12-test_nonpexact.xlsx"),
   sheet = 1
 )
+
 test_that("p excat", {
   expect_true(is.character(tab_quanti_iris_nonpexact$P_valeur))
   expect_equal(unique(tab_quanti_iris_nonpexact$P_valeur), "<0.0001")
@@ -905,6 +978,34 @@ test_that("metric", {
   expect_true(all(grepl("+/-", tab_quanti_iris_mean$`Species=versicolor`)))
   expect_true(all(grepl(";", tab_quanti_iris_med$Population_totale)))
   expect_true(all(grepl(";", tab_quanti_iris_med$`Species=setosa`)))
+})
+
+#### Verbose ####
+
+# msg_capt <- capture_messages(save_excel_results(
+#   dataframe = modified_state,
+#   file = file.path("tmp", "03-test_final_novarstrat.xlsx"),
+#   vars = c(
+#     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+#     "HS Grad", "Frost", "Area", "state.division", "state.region", 
+#     "binary_test"
+#   ),
+#   varstrat = NULL, 
+#   verbose = TRUE
+# ))
+zero_msg_capt <- testthat::capture_messages(save_excel_results(
+  dataframe = modified_state,
+  file = file.path("tmp", "03-test_final_novarstrat.xlsx"),
+  vars = c(
+    "Population", "Income", "Illiteracy", "Life Exp", "Murder",
+    "HS Grad", "Frost", "Area", "state.division", "state.region", 
+    "binary_test"
+  ),
+  varstrat = NULL, 
+  verbose = FALSE
+))
+test_that("zero msg verbose", {
+  expect_true(length(zero_msg_capt)==0)
 })
 
 

@@ -1,4 +1,4 @@
-message("test compute OR tables - done v0.1.27")
+message("test compute OR tables - done v0.2")
 
 tab_or1 <- get_OR_univar(
   dataframe = modified_state,
@@ -74,3 +74,4 @@ test_that("OR check levels option", {
 ## ok 10 digits p values
 
 ## --here test rules about sample size, IC inf, etc
+

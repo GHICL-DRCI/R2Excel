@@ -1,4 +1,4 @@
-message("test compute paired tables - done v0.1.28")
+message("test compute paired tables - done v0.2.0")
 
 #### continuous paired tables ####
 
@@ -465,13 +465,16 @@ test_that("handle_two_levels executes paired t-test for normal data", {
     force_parametric_test = FALSE,
     force_non_parametric_test = FALSE,
     global_summary = TRUE,
-    dt = dt
+    dt = dt,
+    verbose = TRUE
   )
   
   expect_true(is.list(result))
-  expect_true(all(c("test_result", "test_used", "ongoing_message", "normal_data", 
-                    "N_individuals", "metric_to_show", "Population_totale", 
-                    "Difference_description") %in% names(result)))
+  expect_true(all(c(
+    "test_result", "test_used", "ongoing_message", "normal_data", 
+    "N_individuals", "metric_to_show", "Population_totale", 
+    "Difference_description") %in% names(result))
+  )
   expect_equal(result$test_used, "Paired t-test")
   expect_equal(result$N_individuals, 20)
   expect_true(result$metric_to_show %in% c("mean", "median"))
@@ -504,7 +507,8 @@ test_that("handle_two_levels executes Wilcoxon for non-normal data", {
     force_parametric_test = FALSE,
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
-    dt = dt
+    dt = dt, 
+    verbose = TRUE
   )
   
   expect_equal(result$test_used, "Wilcoxon signed-rank test (paired data)")
@@ -537,7 +541,8 @@ test_that("handle_two_levels respects force_parametric_test", {
     force_parametric_test = TRUE,
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
-    dt = dt
+    dt = dt,
+    verbose = TRUE
   )
   
   expect_equal(result$test_used, "Paired t-test")
@@ -570,7 +575,8 @@ test_that("handle_two_levels respects force_non_parametric_test", {
     force_parametric_test = FALSE,
     force_non_parametric_test = TRUE,
     global_summary = FALSE,
-    dt = dt
+    dt = dt, 
+    verbose = TRUE
   )
   
   expect_equal(result$test_used, "Wilcoxon signed-rank test (paired data)")
@@ -601,7 +607,8 @@ test_that("handle_two_levels formats Difference_description correctly", {
     force_parametric_test = FALSE,
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
-    dt = dt
+    dt = dt, 
+    verbose = TRUE
   )
   
   # La différence devrait être de 5 (temps2 - temps1)
@@ -664,7 +671,8 @@ test_that("handle_multiple_levels detects complete vs incomplete design", {
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
     do_test = TRUE,
-    dt = dt_complete
+    dt = dt_complete, 
+    verbose = TRUE
   )
   
   # Test avec design incomplet (devrait utiliser Skillings-Mack si non paramétrique)
@@ -680,7 +688,8 @@ test_that("handle_multiple_levels detects complete vs incomplete design", {
     force_non_parametric_test = TRUE,
     global_summary = FALSE,
     do_test = TRUE,
-    dt = dt_incomplete
+    dt = dt_incomplete, 
+    verbose = TRUE
   )
   
   expect_true(result_complete$test_used %in% c(
@@ -723,7 +732,8 @@ test_that("handle_multiple_levels respects test_more_2_levels parameter", {
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
     do_test = FALSE,
-    dt = dt
+    dt = dt, 
+    verbose = TRUE
   )
   
   # Avec do_test = TRUE
@@ -739,7 +749,8 @@ test_that("handle_multiple_levels respects test_more_2_levels parameter", {
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
     do_test = TRUE,
-    dt = dt
+    dt = dt, 
+    verbose = TRUE
   )
   
   expect_equal(result_no_test$test_used, "/")
@@ -780,7 +791,8 @@ test_that("handle_multiple_levels returns NULL for Difference_description", {
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
     do_test = TRUE,
-    dt = dt
+    dt = dt, 
+    verbose = TRUE
   )
   
   # Pour plus de 2 niveaux, Difference_description devrait être NULL
@@ -818,7 +830,8 @@ test_that("handle_multiple_levels adapts metric based on normality", {
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
     do_test = TRUE,
-    dt = dt_normal
+    dt = dt_normal, 
+    verbose = TRUE
   )
   
   # Pour données normales avec auto, devrait choisir mean
@@ -837,7 +850,8 @@ macnemar1 <- compute_paired_factorial_table_and_test(
   precision = 1,
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE, 
-  do_test = TRUE
+  do_test = TRUE, 
+  verbose = TRUE
 )
 # macnemar1
 test_that("test McNemar1", {
@@ -869,7 +883,8 @@ macnemar2_na <- compute_paired_factorial_table_and_test(
   patient_id = "ID2",
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE,
-  do_test = TRUE
+  do_test = TRUE, 
+  verbose = TRUE
 )
 # macnemar2_na
 test_that("test McNemar2", {
@@ -1011,7 +1026,9 @@ test_that("handle_force_generate works with 0 level", {
     patient_id = paste0("P", 1:10)
   )
   
-  result <- handle_force_generate(dt, "var1", force_generate_1_when_0 = TRUE)
+  result <- handle_force_generate(
+    dt, "var1", force_generate_1_when_0 = TRUE
+  )
   
   expect_true(is.list(result))
   expect_true(all(c("dt", "var_levels", "var_nlevels") %in% names(result)))
@@ -1026,7 +1043,9 @@ test_that("handle_force_generate works with 'non' level", {
     patient_id = paste0("P", 1:10)
   )
   
-  result <- handle_force_generate(dt, "var1", force_generate_1_when_0 = TRUE)
+  result <- handle_force_generate(
+    dt = dt, "var1", force_generate_1_when_0 = TRUE
+  )
   
   expect_equal(result$var_nlevels, 2)
   expect_true("Oui" %in% result$var_levels)
@@ -1539,7 +1558,8 @@ test_that("handle_two_levels detects variable present in only one level", {
     force_parametric_test = FALSE,
     force_non_parametric_test = FALSE,
     global_summary = FALSE,
-    dt = dt
+    dt = dt, 
+    verbose = TRUE
   )
   
   expect_equal(result$test_used, "/")
