@@ -1,4 +1,54 @@
+# Version 0.2.1
 
+30/06/2026
+
+## Note
+
+-    Mathilde Boissel is handing over responsibility for development to 
+  Klervi Le Gall, Cassandra Chaldaureille and Laurène Norberciak, 
+  who have been assigned the three guided development points bellow.
+
+  See details in internal (quality) file `MOD_Dev_R_Package_20260630_MBL.docx`.
+
+## Improvement
+
+- Add extra comments / fix typo
+
+- #13 assigned to Klervi Le Gall  :
+
+The variables named ‘Q1’ or ‘Q3’
+(for instance standing for question1 and question3, in the provided dataset) 
+presented a problem univariate statistics (paired or not?) : 
+There was a conflict when displaying their first or third quantile, also named “Q1” or ‘Q3’.
+  + Rename those statistics as "quantile1st" and "quantile3th" in univariate function.
+  + Pass on those new stat names in linked functions. 
+  + Update documentation.
+  + Update unit tests.
+  + Do the Checks.
+  + Upload your change in github repo (branch v0.2.1)
+
+- #14 assigned to Cassandra Chaldaureille : 
+
+In univariate statistics (`compute_continuous_table`),
+SE and IQR were added in previous version, 
+but not returned by default in excel files.
+  + Add SE and IQR metrics selected by default in `save_excel` functions.
+  + Pass on those new stat names in linked functions, if needed. 
+  + Update documentation.
+  + Update unit tests.
+  + Do the Checks.
+  + Upload your change in github repo (branch v0.2.1)
+
+- #15 assigned to Laurène Norberciak: 
+
+  + A new option was added in v0.2.0, the long format of table when cross varstrat is provided. 
+  Add unit example of the option "long" in param "crosstableformat", based on Sunstar project.
+  + Update documentation.
+  + Update unit tests.
+  + Update unit tests.
+  + Do the Checks.
+  + Upload your change in github repo (branch v0.2.1)
+  
 # Version 0.2.0
 
 05/05/2026 + 19/06/2026 + 22-23/06/2026
