@@ -9,7 +9,8 @@
 #' @param dataframe A data.frame, tibble or data.table.
 #' @param dependent_var A character. Name of the stratification variable, 
 #'  making groups to compare.
-#' @param explanatory_vars A vector of characters. Names of dataframe's columns to describe.
+#' @param explanatory_vars A vector of characters.
+#'  Names of dataframe's columns to describe.
 #' @param check_n_levels A logical, Default FALSE. 
 #'  Maybe wanted on qualitative explanatory_vars, so those with 0 levels are removed.
 #'  keep numeric variables too.
@@ -53,7 +54,8 @@ get_OR_univar <- function(
   verbose = TRUE
 ) {
   if (verbose) {
-    message("[get_OR_univar] ", length(explanatory_vars), " variables wanted in OR table")
+    message("[get_OR_univar] ",
+            length(explanatory_vars), " variables wanted in OR table")
   }
   explanatory <- NULL
   
@@ -103,7 +105,7 @@ get_OR_univar <- function(
 
   var_index_keep <- unlist(lapply(X = explanatory_vars_renamed, FUN = function(vari) {
     if (grepl("Mean", res_summary$levels[1])) {
-      # quanti case
+      # quanti cases
       tmp <- res_summary[grepl(pattern = vari, x = res_summary$fit_id), , drop = FALSE]
     } else {
       # quali cases
@@ -112,7 +114,7 @@ get_OR_univar <- function(
     }
 
     if (grepl("Mean", tmp$levels[1])) {
-      # detect pefect segmentation
+      # detect perfect segmentation
       pefect_segment <- any(apply(X = tmp[1, ], MARGIN = 2, FUN = grepl, "NaN (NA)", fixed = TRUE))
 
       # keep var if more than 3 values
@@ -121,7 +123,7 @@ get_OR_univar <- function(
       # keep_vari <- have_enought && !pefect_segment
       keep_vari <- !pefect_segment
     } else {
-      # detect pefect segmentation
+      # detect perfect segmentation
       pefect_segment <- any(
         apply(
           X = tmp, MARGIN = 2, FUN = function(coli) all(grepl("0 (NaN)", coli, fixed = TRUE))
@@ -151,7 +153,7 @@ get_OR_univar <- function(
   ## remove (from final table) OR for modalities with zero in its TC
   var_mod_OR_hide <- unlist(lapply(X = explanatory_vars_renamed, FUN = function(vari) {
     if (grepl("Mean", res_summary$levels[1])) {
-      # quanti case
+      # quanti cases
       # tmp <- res_summary[grepl(pattern = vari, x = res_summary$fit_id), , drop = FALSE]
       return(NULL)
     } else {
@@ -187,8 +189,12 @@ get_OR_univar <- function(
             dependent = dependent_var_renamed,
             explanatory = vari
           ),
-          digits = c(2, 2, 10) # possible to turn as parameter 1 and 2 ? Attention, need to tel pvalue (3) set at 10.
-          # Number of digits to round to (1) estimate, (2) confidence interval limits, (3) p-value.
+          digits = c(2, 2, 10) # possible to turn as parameter 1 and 2 ? 
+          # Attention, need to tel pvalue (3) set at 10.
+          # Number of digits to round to 
+          # (1) estimate,
+          # (2) confidence interval limits, 
+          # (3) p-value.
         )
         res$var_renamed <- vari ##  get back names from those levels
         return(data.table::setDT(res))

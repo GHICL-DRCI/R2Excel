@@ -1,6 +1,5 @@
 # Core function of the pkg, compute descriptive tables
 
-
 #### quantitative vars ####
 
 #' compute_single_var_level_stats
@@ -16,8 +15,9 @@
 #' @param varstrat Stratification variable name (NULL if none)
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #'
-#' @return Data.frame with one row containing: mean, sd, median, Q1, Q3,
-#'   min, max, N, Valeurs_manquantes, Nb_mesures, is_Normal
+#' @return Data.frame with one row containing:
+#'  mean, sd, median, Q1, Q3,
+#'  min, max, N, Valeurs_manquantes, Nb_mesures, is_Normal
 #'
 #' @keywords internal
 #' @examples
@@ -52,18 +52,18 @@ compute_single_var_level_stats <- function(
     precision = "auto"
 ) {
   # message("[compute_single_var_level_stats]")
-  # Pour une variable : Données décrites avec différentes précisions
+  # For a single variable: Data described with varying levels of detail
   
   stopifnot(precision == "auto" || is.numeric(precision))
   
-  # Extraction des données selon le niveau
+  # Data extraction by level
   if (is.null(level)) {
     x <- dataframe[[var_name]]
   } else {
     x <- dataframe[dataframe[[varstrat]] == level, var_name]
   }
   
-  # Déterminer les digits à utiliser
+  # Determine which digits to use
   if (precision %in% "auto") {
     base_decimals <- detect_decimal_places(x)
     digits_central <- compute_precision_digits(x, "central", base_decimals)
@@ -73,20 +73,20 @@ compute_single_var_level_stats <- function(
     digits_sd <- precision
   }
   
-  # Calcul du test de Shapiro
+  # Compute Shapiro test
   tmp_shapi <- stats::na.omit(x)
   if (length(unique(tmp_shapi)) == 1 || length(tmp_shapi) < 3) {
     shapiro_conclu <- NA
   } else {
     normality_result <- check_normality(tmp_shapi, return_messages = TRUE)
     shapiro_conclu <- if (nchar(normality_result$message) > 0) {
-      NA  # Erreur lors du test
+      NA  # Error during test
     } else {
       normality_result$is_normal
     }
   }
   
-  # Calcul de toutes les statistiques avec précision adaptée
+  # Calculation of all statistics with appropriate accuracy
   stats_vec <- c(
     mean = round(mean(x, na.rm = TRUE), digits_central),
     sd = round(stats::sd(x, na.rm = TRUE), digits_sd),
@@ -103,14 +103,14 @@ compute_single_var_level_stats <- function(
     is_Normal = shapiro_conclu
   )
   
-  # Nom de ligne
+  # line's name
   if (is.null(level)) {
     row_name <- if (is.null(varstrat) || varstrat %in% "") var_name else ""
   } else {
     row_name <- paste0(varstrat, level)
   }
   
-  # Retourner un data.frame d'une ligne
+  # Return a one-row data.frame
   df_result <- as.data.frame(t(stats_vec), stringsAsFactors = FALSE)
   rownames(df_result) <- row_name
   return(df_result)
@@ -171,7 +171,7 @@ compute_continuous_table <- function(
   )))
   stopifnot(precision == "auto" || is.numeric(precision))
   
-  # Détection des variables numériques
+  # Detection of numeric variables
   vars_numeric <- get_numerics(dataframe, vars)
   if (verbose && !all(vars %in% vars_numeric)) {
     message(
@@ -183,7 +183,7 @@ compute_continuous_table <- function(
   }
   
   # =
-  # CAS 1 : Analyse univariée (sans varstrat)
+  # CASE 1 : Univariate analysis (without varstrat)
   # =
   if (is.null(varstrat) || varstrat %in% "") {
     statistics_list <- lapply(
@@ -196,23 +196,23 @@ compute_continuous_table <- function(
     )
     sumup <- do.call(rbind, statistics_list)
     
-    # Sélection des statistiques demandées
+    # Selection of requested statistics
     final_table <- sumup[, stats_choice, drop = FALSE]
     
     return(final_table)
   }
   
   # =
-  # CAS 2 : Analyse bivariée (avec varstrat)
+  # CASE 2 : Bivariate analysis (using varstrat)
   # =
   stopifnot(varstrat %in% names(dataframe))
   
-  # Récupération des niveaux de varstrat
+  # Retrieving varstrat levels
   varstrat_levels <- levels(dataframe[[varstrat]])
   
-  # Analyse descriptive bivariée via lapply
+  # Bivariate descriptive analysis using `apply`
   statistics <- lapply(vars_numeric, function(var_name) {
-    # Stats pour la population globale (première ligne)
+    # Statistics for the overall population (first row)
     global_stats <- compute_single_var_level_stats(
       var_name = var_name,
       dataframe = dataframe,
@@ -221,7 +221,7 @@ compute_continuous_table <- function(
       precision = precision
     )
     
-    # Stats pour chaque niveau de stratification
+    # Statistics for each stratification level
     level_stats_list <- lapply(varstrat_levels, function(level) {
       compute_single_var_level_stats(
         var_name = var_name,
@@ -232,14 +232,14 @@ compute_continuous_table <- function(
       )
     })
     
-    # Combiner global + tous les niveaux
+    # Combine Overall + all levels
     all_stats <- do.call(rbind, c(list(global_stats), level_stats_list))
     
     return(all_stats)
   })
   names(statistics) <- vars_numeric
   
-  # Sélection des statistiques demandées
+  # Selection of requested statistics
   final_table <- lapply(statistics, function(df) {
     df[, stats_choice, drop = FALSE]
   })
@@ -253,11 +253,15 @@ compute_continuous_table <- function(
 #' compute correlation table : provide descriptive statistics table for 
 #' continuous data and its correlation with a continuous varstrat
 #'
-#' @param dataframe A data.frame, tibble or data.table will be converted into data.table.
-#' @param vars A vector of characters. Names of dataframe's continuous columns to describe.
-#' @param varstrat A character. Always needed. Name of the continuous var to compute the correlation with.
-#' @param method_corr A character. Default "detect_auto" meaning the linear link will be detected if the R2 > 0.5.
-#'   Otherwise, method to compute correlation is wanted "pearson", "spearman", "kendall".
+#' @param dataframe A data.frame, 
+#'  tibble or data.table will be converted into data.table.
+#' @param vars A vector of characters.
+#'  Names of dataframe's continuous columns to describe.
+#' @param varstrat A character. Always needed. 
+#'  Name of the continuous var to compute the correlation with.
+#' @param method_corr A character. 
+#'  Default "detect_auto" meaning the linear link will be detected if the R2 > 0.5.
+#'  Otherwise, method to compute correlation is wanted "pearson", "spearman", "kendall".
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #' @param signif_digits A integer, 
 #'   Default 4. Integer indicating the number of decimal places (signif) for pvalues.
@@ -360,7 +364,8 @@ compute_correlation_table <- function(
     }
     
     if (method_corr %in% "detect_auto") {
-      if (isTRUE(shapiro_conclu) & isTRUE(varstrat_is_normal)) { # if vari normal & varstrat_is_normal
+      if (isTRUE(shapiro_conclu) & isTRUE(varstrat_is_normal)) {
+        # if vari normal & varstrat_is_normal
         method_corr <- "pearson"
       } else {
         method_corr <- "spearman"
@@ -398,7 +403,7 @@ compute_correlation_table <- function(
     }
     # corr_obj$estimate
     
-    # Déterminer les digits à utiliser
+    # Determine which digits to use
     if (precision %in% "auto") {
       base_decimals <- detect_decimal_places(tmp_dt[[vari]])
       digits <- base_decimals + 1 
@@ -469,13 +474,15 @@ compute_correlation_table <- function(
 #'
 #' Unit function for a factorial variable
 #'
-#' @param dataframe A data.frame. tibble or data.table will be converted into data.frame.
-#' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
-#' @param varstrat A character. Default NULL. Name of the stratification variable,
-#'  making groups to compare.
-#' @param varstrat_levels  --here 
-#' @param simplify A logical. Default TRUE. Reduce the yes/no  (or 1/0) modalities 
-#' to display only the yes (1).
+#' @param dataframe A data.frame.
+#'  tibble or data.table will be converted into data.frame.
+#' @param vars A vector of characters. 
+#'  Names of dataframe's factorial columns to describe.
+#' @param varstrat A character. Default NULL.
+#'  Name of the stratification variable, making groups to compare.
+#' @param varstrat_levels A character. groups (label) to compare.
+#' @param simplify A logical. Default TRUE.
+#'  Reduce the yes/no  (or 1/0) modalities to display only the yes (1).
 #' @param prop_table_margin A vector giving the margins to split by. Default 2. 
 #'  1 indicates rows, 2 indicates columns,
 #'  c(1, 2) indicates rows and columns. When x has named dimnames, 
@@ -531,13 +538,13 @@ compute_single_factor_stats <- function(
     var_nlevels <- nlevels(dataframe[[var_name]])
   }
   
-  # Déterminer les colonnes nécessaires
+  # Identify the required columns
   if (is.null(varstrat) || varstrat %in% "") {
     # Cas univarié = no varstrat
     col_names <- c("n", "p")
     ncols <- 2
   } else {
-    # Cas bivarié = varstrat
+    # Case bivariate, with varstrat
     col_names <- c(
       "n", "p", 
       paste(c("n", "p"), rep(varstrat_levels, each = 2), sep = "")
@@ -545,16 +552,16 @@ compute_single_factor_stats <- function(
     ncols <- 2 * length(varstrat_levels) + 2
   }
   
-  # Init du dataframe de résultats
+  # Init the resulting dataframe
   result <- as.data.frame(matrix(NA, ncol = ncols, nrow = var_nlevels + 2))
   rownames(result) <- c(var_levels, "Valeurs_manquantes", "Nb_mesures")
   colnames(result) <- col_names
   
   # =
-  # Statistiques globales (colonnes "n" et "p")
+  # global Statistiques (columns "n" and "p")
   # =
   
-  # Déterminer les digits à utiliser
+  # Determine which digits to use
   if (precision %in% "auto") {
     digits <- 1 
   } else {
@@ -573,10 +580,10 @@ compute_single_factor_stats <- function(
   result["Nb_mesures", "p"] <- "/"
   
   # =
-  # Statistiques par niveau de varstrat (si applicable)
+  # Statistics by varstrat level (where applicable)
   # =
   if (!(is.null(varstrat) || varstrat %in% "")) {
-    # Effectifs et proportions par niveau de varstrat
+    # Numbers and proportions by varstrat level
     cross_tab <- table(dataframe[[var_name]], dataframe[[varstrat]])
     result[var_levels, paste0("n", varstrat_levels)] <- cross_tab
     
@@ -586,12 +593,12 @@ compute_single_factor_stats <- function(
       "(", round(100 * pt_varstrat, digits), "%)"
     )
     
-    # NA par niveau de varstrat
+    # NA by varstrat's levels
     na_by_strat <- table(dataframe[is.na(dataframe[[var_name]]), varstrat])
     result["Valeurs_manquantes", paste0("n", varstrat_levels)] <- na_by_strat
     result["Valeurs_manquantes", paste0("p", varstrat_levels)] <- "/"
     
-    # Nb mesures par niveau de varstrat
+    # Nb mesures by varstrat's levels
     nonna_by_strat <- table(dataframe[!is.na(dataframe[[var_name]]), varstrat])
     result["Nb_mesures", paste0("n", varstrat_levels)] <- nonna_by_strat
     result["Nb_mesures", paste0("p", varstrat_levels)] <- "/"
@@ -622,7 +629,7 @@ simplify_binary_table <- function(
       if (any(grepl("1", rownames(vari_tab)))) {
         vari_tab <- vari_tab[c("1", "Valeurs_manquantes", "Nb_mesures"), ]
       } else {
-        # ignore.case pour "oui"
+        # ignore.case for "oui"
         row_select <- grep("OUI", rownames(vari_tab), ignore.case = TRUE, value = TRUE)
         vari_tab <- vari_tab[c(row_select, "Valeurs_manquantes", "Nb_mesures"), ]
       }
@@ -704,14 +711,14 @@ compute_factorial_table <- function(
   stopifnot(precision == "auto" || is.numeric(precision))
   if (verbose && force_generate_1_when_0) message("[compute_factorial_table] force_generate_1_when_0")
 
-  # Récupération des variables factorielles
+  # Retrieving factorial variables
   vars_factor <- get_factors(dataframe, vars)
   if (verbose && !all(vars %in% vars_factor)) {
     message("[compute_factorial_table] Warning, some of selected vars were ignored (not factors).")
   }
   
   # =
-  # CAS 1 : Analyse univariée (sans varstrat)
+  # CASE 1 : Univariate analysis (without varstrat)
   # =
   if (is.null(varstrat) || varstrat %in% "") {
     effectifs <- lapply(vars_factor, function(var_name) {
@@ -727,7 +734,7 @@ compute_factorial_table <- function(
     })
     names(effectifs) <- vars_factor
     
-    # Simplification si demandée
+    # Simplification if wanted
     if (simplify) {
       final_table <- lapply(effectifs, simplify_binary_table)
     } else {
@@ -738,7 +745,7 @@ compute_factorial_table <- function(
   }
   
   # =
-  # CAS 2 : Analyse bivariée (avec varstrat)
+  # CASE 2 : Bivariate analysis (using varstrat)
   # =
   stopifnot(varstrat %in% names(dataframe))
   stopifnot(is.factor(dataframe[[varstrat]]))
@@ -758,7 +765,7 @@ compute_factorial_table <- function(
   })
   names(effectifs) <- vars_factor
   
-  # Simplification si demandée
+  # Simplification if wanted
   if (simplify) {
     final_table <- lapply(effectifs, simplify_binary_table)
   } else {

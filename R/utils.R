@@ -1,8 +1,8 @@
-# Some usefull functions
+# Some useful functions
 
-#' get factors
-#'
-#' provide the names of factorial columns
+#' get_factors
+#' 
+#' get factors : provide the names of factorial columns
 #'
 #' @param dataframe A data.frame.
 #' @param vars A vector of characters. Names of dataframe to test.
@@ -23,9 +23,9 @@ get_factors <- function(
   return(vars[sapply(as.data.frame(dataframe)[, vars, drop = FALSE], is.factor)])
 }
 
-#' get numerics
-#'
-#' provide the names of numeric columns
+#' get_numerics
+#' 
+#' get numerics : provide the names of numeric columns
 #'
 #' @param dataframe A data.frame.
 #' @param vars A vector of characters. Names of dataframe to test.
@@ -46,9 +46,9 @@ get_numerics <- function(
   return(vars[sapply(as.data.frame(dataframe)[, vars, drop = FALSE], is.numeric)])
 }
 
-#' get characters
-#'
-#' provide the names of character columns
+#' get_characters
+#' 
+#' get characters : provide the names of character columns
 #'
 #' @param dataframe A data.frame.
 #' @param vars A vector of characters. Names of dataframe to test.
@@ -70,9 +70,9 @@ get_characters <- function(
   return(vars[sapply(as.data.frame(dataframe)[, vars, drop = FALSE], is.character)])
 }
 
-#' get dates
-#'
-#' provide the names of date columns
+#' get_dates
+#' 
+#' get dates : provide the names of date columns
 #'
 #' @param dataframe A data.frame.
 #' @param vars A vector of characters. Names of dataframe to test.
@@ -84,22 +84,25 @@ get_dates <- function(
   dataframe, 
   vars = colnames(dataframe)
 ) {
-  # v0.1.24
-  vars[
-    unlist(lapply(X = vars, FUN = function(d_coli) {
-      di <- dataframe[[d_coli]]
-      any(class(di) %in% c("POSIXct", "POSIXt", "Date"))
-    }))
-  ]
+  return(
+    vars[
+      unlist(lapply(X = vars, FUN = function(d_coli) {
+        di <- dataframe[[d_coli]]
+        any(class(di) %in% c("POSIXct", "POSIXt", "Date"))
+      }))
+    ]
+  )
 }
 
-#' vector to character
+#' vector_to_character
 #'
-#' transformation of a vector into a text
+#' transformation of a vector into a text (character)
 #'
 #' @param vector A vector wanted to be transformed.
-#' @param sep A character string to separate the terms. Not NA_character_. Default ",".
-#' @param NULL_value A character null. Default character(0). Return when not applicabe.
+#' @param sep A character string to separate the terms. Not NA_character_.
+#'  Default ",".
+#' @param NULL_value A character null. Default character(0).
+#'  Return when not applicable.
 #'
 #' @return A character
 #' @export
@@ -112,15 +115,13 @@ vector_to_character <- function(
   sep = ",",
   NULL_value = character(0)
 ) {
-  # if NULL
-  if (is.null(vector)) {
+  if (is.null(vector)) {  # if NULL
     return(NULL_value)
   }
-
+  # else ...
   # remove NA
   vector <- na.omit(vector)
-  # if lenght 0
-  if (length(vector) == 0) {
+  if (length(vector) == 0) { # if lenght 0
     return(NULL_value)
   }
   # or if length 1
@@ -160,35 +161,36 @@ vector_to_character <- function(
 #' }
 detect_decimal_places <- function(x) {
   # message("[detect_decimal_places]")
-  # Retirer les NA
+  # Remove NA
   x_clean <- x[!is.na(x)]
   
-  # Si vecteur vide, retourner 0
+  # if empty vector, return 0
   if (length(x_clean) == 0) {
     return(0)
   }
   
-  # Convertir en chaînes pour analyser les décimales
+  # Convert to strings to analyse the decimal places
   x_char <- format(x_clean, scientific = FALSE, trim = TRUE)
   
-  # Fonction pour compter les décimales d'une valeur
+  # Function to count the number of decimal places in a value
   count_decimals <- function(val_char) {
-    # Séparer par le point décimal
+    # Separate with a decimal point
     parts <- strsplit(val_char, "\\.")[[1]]
     
-    # Si pas de point, 0 décimale
+    # If there is no decimal point, use 0
     if (length(parts) == 1) {
       return(0)
     }
     
-    # Sinon, compter les chiffres après le point en retirant les zéros finaux
+    # Alternatively, 
+    # count the digits after the decimal point, omitting any trailing zeros
     decimal_part <- parts[2]
-    # Retirer les zéros à droite
+    # Remove trailing zeros
     decimal_part_trimmed <- sub("0+$", "", decimal_part)
     return(nchar(decimal_part_trimmed))
   }
   
-  # Compter pour chaque valeur et prendre le maximum
+  # Count each value and take the maximum
   decimal_counts <- sapply(x_char, count_decimals, USE.NAMES = FALSE)
   max_decimals <- max(decimal_counts, na.rm = TRUE)
   
@@ -200,7 +202,7 @@ detect_decimal_places <- function(x) {
 #'
 #' Function to calculate digits according to precision
 #' 
-#' Because we have established a rule within our quality approach to harmonise 
+#' Because we have established a rule within our quality approach to standardize 
 #' the accuracy of the figures provided in our reports. 
 #' The rule states that: 
 #' The mean and median will be rounded to one decimal place higher than the 
@@ -210,8 +212,8 @@ detect_decimal_places <- function(x) {
 #'
 #' @param x a vector
 #' @param stat_type a character
-#' @param base_decimals a interger
-#' @param max_decimals a interger
+#' @param base_decimals a integer
+#' @param max_decimals a integer
 #' 
 #' @return a numeric
 #' 
@@ -234,15 +236,14 @@ compute_precision_digits <- function(
   base_decimals,
   max_decimals = 3
 ) {
-  # message("[compute_precision_digits]")
-  
+
   stat_type <- match.arg(stat_type)
   
   if (stat_type == "central") {
-    # Moyenne, médiane, Q1, Q3, min, max : +1 décimale
+    # mean, median, Q1, Q3, min, max : +1 dec
     digits <- base_decimals + 1
   } else if (stat_type == "sd") {
-    # Écart-type : +2 décimales, max 3
+    # sd : +2 dec, max 3
     digits <- min(base_decimals + 2, max_decimals)
   }
   
@@ -251,16 +252,23 @@ compute_precision_digits <- function(
 
 
 
-#' Tester la normalité avec gestion d'erreurs
-#'
-#' @param x Vecteur numérique à tester
-#' @param return_messages Logical, retourner les messages d'erreur ?
+#' check_normality
 #' 
-#' @return Logical (normalité) ou liste avec is_normal et message
+#' Testing for normality with error handling
+#'
+#' @param x Numeric vector to test
+#' @param return_messages Logical, Should error messages be returned?
+#' 
+#' @return Logical (normality) or
+#'  list with is_normal the logical and its message
 #' 
 #' @export
-check_normality <- function(x, return_messages = FALSE) {
-  has_issues <- try(tools::assertCondition(
+check_normality <- function(
+    x,
+    return_messages = FALSE
+) {
+  
+  has_issues <- try(tools::assertCondition( # capture warning and error
     shap_result <- stats::shapiro.test(x)
   ), silent = TRUE)
   
@@ -270,11 +278,16 @@ check_normality <- function(x, return_messages = FALSE) {
     })
   ]
   
+  # test if there is no issues 
   if (length(has_issues) == 0) {
+    # data are normal if shapiro test p val > 0.05
     is_normal <- shap_result$p.value > 0.05
-    message_captured <- ""
+    message_captured <- "" # no message
   } else {
+    # As a safety measure, if a warning or error occurs,
+    # we do not retrieve the test result; 
     is_normal <- FALSE
+    # instead, we return the message
     message_captured <- paste(
       unique(sapply(has_issues, function(el) {
         paste0("[", class(el)[2], "] ", el$message)

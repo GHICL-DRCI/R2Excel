@@ -1,6 +1,6 @@
 #' modified_state data
 #'
-#' Based on datasets::states* datasets, with somes modification, especially
+#' Based on datasets::states* datasets, with some modifications, especially
 #' the add of a binary test variable, add ... (see bellow)
 #'
 #' @format ## `modified_state`
@@ -21,7 +21,7 @@
 
 #' modified_sleep data
 #'
-#' Based on stats::sleep dataset, with somes modification, especially
+#' Based on stats::sleep dataset, with some modifications, especially
 #' the add of a visites variable.
 #'
 #' @format ## `modified_sleep`

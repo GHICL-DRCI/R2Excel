@@ -8,9 +8,12 @@
 #'
 #' @param efftheo A table of theoretical counts
 #' @param seuil A numeric between 0 and 100. Default 80\%.
-#'   Percentage of cell supposed get a count greater than effcochran (Eg. 80\% should have count above 5.)
-#' @param effcritique A integer. Default 1. Integer of the minimal count for a given cell
-#' @param effcochran A integer. Default 5. Integer if the minimal count for maximum seuil in \% of cells
+#'   Percentage of cell supposed get a count greater than effcochran 
+#'   (Eg. 80\% should have count above 5.)
+#' @param effcritique A integer. Default 1. Integer of the minimal count for a 
+#'   given cell
+#' @param effcochran A integer. Default 5. Integer if the minimal count for 
+#'   maximum seuil in \% of cells
 #' @param verbose A logical, Default TRUE. Show message. 
 #'  Do you want to work in silence? Turn it FALSE.
 #'
@@ -20,7 +23,9 @@
 #' \dontrun{
 #' effobs <- table(modified_state[, c("state.region", "election")])
 #' # tableau des effectifs theoriques
-#' efftheo <- as.table(round(rowSums(effobs) %*% t(colSums(effobs)) / sum(effobs), 2))
+#' efftheo <- as.table(round(
+#'   rowSums(effobs) %*% t(colSums(effobs)) / sum(effobs), 2
+#'  ))
 #' names(dimnames(efftheo)) <- names(dimnames(effobs))
 #' rownames(efftheo) <- rownames(effobs)
 #' colnames(efftheo) <- colnames(effobs)
@@ -41,8 +46,10 @@ check_cochran <- function(
   stopifnot(effcochran >= 5) # why not freeze effcochran <- 5 ? --question
 
   # pourcentage of cells with counts > 5 (effcochran) and < 1 (effcritique)
-  pct_sup5 <- round(sum(efftheo > effcochran) / (length(efftheo)) * 100, digits = 2)
-  pct_inf1 <- round(sum(efftheo < effcritique) / (length(efftheo)) * 100, digits = 2)
+  pct_sup5 <- round(
+    sum(efftheo > effcochran) / (length(efftheo)) * 100, digits = 2)
+  pct_inf1 <- round(
+    sum(efftheo < effcritique) / (length(efftheo)) * 100, digits = 2)
 
   # If all cell have counts > 5 (effcochran)
   if (pct_sup5 == 100) {
@@ -115,30 +122,31 @@ check_cochran <- function(
   return(cochran_result)
 }
 
-## --here to do
-# check_shapiro <- function()
-
 
 #' check_fisher
 #' 
 #' check Fisher good application
 #'
-#' In the situation where one variable (Var1) has missing data for one of the levels of another variable (Var2),
+#' In the situation where one variable (Var1) has missing data for one of 
+#' the levels of another variable (Var2),
 #' this leads to zeros in some cell of the contingency table.
 #'
 #' Structural zeros: If these zeros are due to a structural impossibility
 #' (that is, they are expected by the nature of the data, for example,
 #' if a Var1 category does not exist for a Var2 category),
-#' the exact Fisher test may not be appropriate because it assumes that all combinations are possible.
+#' the exact Fisher test may not be appropriate because it assumes that 
+#' all combinations are possible.
 #'
 #' Zeros observed: If these zeros are not structural but simply observed
 #' (that is, they result from sampling and not from a theoretical constraint),
 #' Fisher’s exact test can be used.
 #' However, the results should be interpreted with caution.
-#' The test is still mathematically correct, but zeros may indicate a problem with the data
+#' The test is still mathematically correct, but zeros may indicate a
+#' problem with the data
 #' (for example, a lack of information or sampling bias).
 #'
-#' In the 2 cases (structural zeros or observed zeros) we will prefer not to display the fisher statistic here and
+#' In the 2 cases (structural zeros or observed zeros) we will prefer not 
+#' to display the fisher statistic here and
 #' indicates that the correct application of the fisher test is not "valid".
 #'
 #' @param tc A table of contingency count.
@@ -157,9 +165,12 @@ check_fisher <- function(tc) {
 #' Deploy the tests Khi 2 and Fisher for proportions with a variable of reference
 #'
 #' @param dataframe A data.frame containing data.
-#' @param vars A vector of characters. Names of dataframe's factorial columns to describe.
-#' @param varstrat A character. Name of the stratification variable, making groups to compare.
-#' @param signif_digits A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.
+#' @param vars A vector of characters. Names of dataframe's factorial 
+#' columns to describe.
+#' @param varstrat A character. Name of the stratification variable, 
+#' making groups to compare.
+#' @param signif_digits A integer, Default 4. Integer indicating the number
+#' of decimal places (signif) for pvalues.
 #'
 #' @return A list of 3 objects
 #'   results = data.frame with test, p-values, explicit decision for each vars
@@ -242,7 +253,7 @@ test_proportions <- function(
     if (!cochran_condition) {
       fisher_condition <- check_fisher(tc = effobs)
       if (fisher_condition) {
-        prop_equal[vari, "Test"] <- "Fisher's Exact Test for Count Data" # Fisher's Exact Test for Count Data
+        prop_equal[vari, "Test"] <- "Fisher's Exact Test for Count Data" 
 
         has_issues <- try(tools::assertCondition(
           fisher <- stats::fisher.test(effobs, workspace = 1000000)
@@ -257,7 +268,7 @@ test_proportions <- function(
           # prop_equal[vari, "decision"] <- ifelse(prop_equal[vari, "P_valeur"] < 0.05, "dependance", "")
           detailtest[[vari]][["Test"]] <- fisher
           prop_equal[vari, "message"] <- "Cochran condition is not validated."
-        } else { # capture error
+        } else { # if errors, capture error
           msg_captured <- paste(
             unique(sapply(
               X = has_issues,
@@ -268,16 +279,22 @@ test_proportions <- function(
             collapse = ";"
           )
           # message("[test_proportions] ", msg_captured)
-          prop_equal[vari, "message"] <- paste0(msg_captured, ".\nCochran condition is not validated.")
+          prop_equal[vari, "message"] <- paste0(
+            msg_captured, ".\nCochran condition is not validated."
+          )
 
           if (any(unique(sapply(X = has_issues, FUN = function(el) {
             class(el)[2]
           })) != "warning")) {
+            
             # it means we have some errors or other type ?
             # nothing should be done with fisher obj
+            
           } else {
-            ## if only warning keep statistic from fisher obj ? --here
-            prop_equal[vari, "P_valeur"] <- signif(x = fisher$p.value, digits = signif_digits)
+            ## if only warning keep statistic from fisher obj ? 
+            prop_equal[vari, "P_valeur"] <- signif(
+              x = fisher$p.value, digits = signif_digits
+            )
             # prop_equal[vari, "decision"] <- ifelse(prop_equal[vari, "P_valeur"] < 0.05, "dependance", "")
             detailtest[[vari]][["Test"]] <- fisher
           }
@@ -376,7 +393,7 @@ test_means <- function(
     )
     return(res)
   }
-  ## Evolution : tester l'effectif pour chaque variable aussi.
+  ## Evolution : Test the sample size for each variable as well.
 
   # check well more than one level
   if (nlevels(dataframe[, c(varstrat)]) <= 1) {
@@ -404,7 +421,7 @@ test_means <- function(
   rownames(mean_equal) <- vars_numeric
   colnames(mean_equal) <- c("P_valeur", "Test", "message")
 
-  # liste of detailed test results
+  # list of detailed test results
   detailtest <- vector("list", length(vars_numeric))
   names(detailtest) <- vars_numeric
 
@@ -443,8 +460,6 @@ test_means <- function(
     rownames(summarizedstats) <- c(varstrat_levels, "Total")
     colnames(summarizedstats) <- c("Min", "Q1", "Median", "Mean", "Q3", "Max")
     detailtest[[vari]][["statistics"]] <- summarizedstats
-
-    # --dev test (any(table(dataframe[ vari , c(varstrat)]) < 4)) for each variables ... (later)
 
     # Check normality in each group
     has_issues <- try(tools::assertCondition(
@@ -500,7 +515,8 @@ test_means <- function(
               captured_wilcox_message
             )
           }
-          mean_equal[vari, "Test"] <- "Wilcoxon rank sum exact test (Mann-Whitney)" # Wilcoxon-Mann-Whitney
+          # Wilcoxon-Mann-Whitney
+          mean_equal[vari, "Test"] <- "Wilcoxon rank sum exact test (Mann-Whitney)" 
           mean_equal[vari, "P_valeur"] <- signif(x = wilcox$p.value, digits = signif_digits)
           # mean_equal[vari, "decision"] <- ifelse(mean_equal[vari, "P_valeur"] < 0.05, "difference", "")
           detailtest[[vari]][["Test"]] <- wilcox
@@ -583,7 +599,8 @@ test_means <- function(
           detailtest[[vari]][["Test"]] <- anova_obj
         }
       }
-    } else { # capture error occurred during shapiro
+    } else {
+      # capture error occurred during shapiro
       msg_captured <- paste(
         unique(sapply(
           X = has_issues,
@@ -615,7 +632,7 @@ test_means <- function(
   #   warning(msg_warning)
   # }
 
-  # variables dont la p-valeur < 0.2
+  # variables with p-value < 0.2
   selection <- rownames(mean_equal)[which(mean_equal[, "P_valeur"] <= 0.2)]
 
   return(list(
@@ -643,7 +660,8 @@ test_means <- function(
 #'  Do you want to work in silence? Turn it FALSE.
 #'  
 #' @return A data.frame,
-#'   in rows the vars and in column the stat used, the difference values and the IC95%
+#'   in rows the vars and in column the stat used,
+#'   the difference values and the IC95%
 #'  
 #' @export
 #' 
@@ -668,13 +686,13 @@ estimate_diff_mean <- function(
 ) {
   
   `%>%` <- magrittr::`%>%`
-
+  # stops
   stopifnot(precision == "auto" || is.numeric(precision))
-  
-  # On vérifie qu'on a bien que 2 modalités dans varstrat, et que c'est un facteur
+  # We check that there are indeed only two modes in varstrat, and that it is a factor
   stopifnot(varstrat %in% names(dataframe))
   stopifnot(vars %in% names(dataframe))
   dataframe <- as.data.frame(dataframe)
+  
   if (!is.factor(dataframe[, varstrat])) {
     stop("La variable de groupe n'est pas un facteur")
   }
@@ -701,17 +719,20 @@ estimate_diff_mean <- function(
     )
     if (any(effectif_by_group < 15)) { # min 15 as param ?
       # just a message to warn, normality is eval on few points...
-      msg <- paste0("Warning:Normality assessed on few points in a group (n min = ", min(effectif_by_group), ").")
+      msg <- paste0(
+        "Warning:Normality assessed on few points in a group (n min = ", 
+        min(effectif_by_group), ")."
+      )
       if (verbose) message("[estimate_diff_mean] ", vari, " ", msg)
     }
 
-    # nom de la variable, pour mettre dans le tableau
+    # variable name, to be added to the tab
     nom <- ifelse(
       is.null(attr(dataframe[, vari], "label")),
       vari,
       attr(dataframe[, vari], "label")
     )
-    # nom <- vari ??? directement? --here
+    # nom <- vari ??? directly and use dico_label --here (use futur improvment)
     
     # detection du nombre de décimal pour la diff # v0.1.27
     if (precision %in% "auto") {
@@ -738,8 +759,9 @@ estimate_diff_mean <- function(
         check.names = FALSE, row.names = NULL
       )
     } else {
-      # Sinon, difference des medianes
-      # rééchantillonnage
+      # Otherwise, the difference between the medians
+      # boot = rééchantillonnage
+      # --here in arg, add set.seed? / for the moment, let the user do it in its script 
       medb <- simpleboot::two.boot(
         sample1 = stats::na.omit(
           dataframe[dataframe[, varstrat] == levels(dataframe[, varstrat])[2], vari]),
@@ -760,7 +782,8 @@ estimate_diff_mean <- function(
         variable = nom, Stat = "Mediane",
         Difference = round(medb$t0, digits = digits),
         `IC95%` = paste0(
-          "[", paste(round(ic$percent[, 4:5], digits = digits), collapse = " ; "),
+          "[", 
+          paste(round(ic$percent[, 4:5], digits = digits), collapse = " ; "),
           "]"
         ),
         check.names = FALSE, row.names = NULL

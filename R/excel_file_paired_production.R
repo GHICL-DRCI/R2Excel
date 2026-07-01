@@ -5,7 +5,7 @@
 #'
 #' Create Excel file of descriptive analysis
 #' Provide descriptive Excel file for factorial (qualitative) 
-#'   and continuous (quantitative) data
+#' and continuous (quantitative) data
 #' Add statistical paired or longitudinal test according the time variable of stratification
 #' 
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
@@ -179,7 +179,7 @@ save_excel_paired_results <- function(
   stopifnot(is.logical(force_non_parametric_test))
   stopifnot(is.logical(force_parametric_test))
   stopifnot(sum(c(force_parametric_test, force_non_parametric_test)) <= 1) # v0.1.27
-  # obviously, you can't force both 
+  # obviously, you can't force both force_parametric_test and force_non_parametric_test
   stopifnot(is.logical(force_generate_1_when_0))
   stopifnot(is.logical(keep_missing_line))
   stopifnot(show_metric %in% c("mean", "median", "auto"))
@@ -203,7 +203,7 @@ save_excel_paired_results <- function(
     names(dico_labels)[1:2] <- c("Variable", "Label")
   }
 
-  ## detect crossed varstrat :
+  #### crossed_varstrat: Detect crossed varstrat ####
   varstrat_splited <- strsplit(x = varstrat, split = "*", fixed = TRUE)
   if (length(unlist(varstrat_splited)) == 2) {
     varstrat <- unlist(varstrat_splited)
@@ -226,6 +226,7 @@ save_excel_paired_results <- function(
     dataframe <- droplevels(dataframe)
   }
 
+  ## Update params
   if((force_parametric_test | force_non_parametric_test) & !do_test) {
     if (verbose) message("[save_excel_paired_results] Warning : you force test so do_test is turned TRUE")
     do_test <- TRUE
@@ -247,11 +248,14 @@ save_excel_paired_results <- function(
     show_metric <- "median"
   }
   
+  
   vars <- setdiff(vars, varstrat)
 
-  ## bug : data.table::setDT(dataframe) # v0.1.23
+  ## bug fixed, use data.table::setDT() # v0.1.23
   dt <- data.table::setDT(data.table::copy(dataframe))[
     , .SD, .SDcols = c(patient_id, vars, varstrat)]
+  
+  #### tab_na_sheet_list: Clear useless columns ####
   ## remove vars (columns) with all NA # v0.1.22
   dt <- dt[, .SD, .SDcols = colSums(is.na(dt)) < nrow(dt)]
   newcols <- names(dt)
@@ -271,7 +275,9 @@ save_excel_paired_results <- function(
     tab_na_sheet_list <- NULL
   }
 
-  ## detect vars class
+  
+  #### Check vars' class ####
+  
   vars_quanti <- get_numerics(dt, vars = vars)
   if (verbose && any(c("Q1", "Q3", "mean", "sd", "median", "min", "max") %in% vars_quanti)) {
     ## trouble... # reported by Klervi in v0.2.0
@@ -512,6 +518,7 @@ save_excel_paired_results <- function(
 
 
   #### show p adjusted ####
+  
   if (show_p_adj && !crossed_varstrat) {
     # v0.1.27 plus de test en cas de cross varstrat
     if (verbose) message("[save_excel_paired_results] show_p_adj")
@@ -580,8 +587,11 @@ save_excel_paired_results <- function(
   
   }
 
+  #### reFormat tab sheet ####
+  ## add label from dico_labels for instance... 
+  
   if (crossed_varstrat) {
-    ## finish to formated crossed vars tabs
+    ## finish to formatted crossed vars tabs
 
     ## --done v0.1.18
     name_quanti <- names(tab_quanti_sheet_list)
@@ -738,7 +748,8 @@ save_excel_paired_results <- function(
   }
 
   
-  #### Variables Dates ####  v0.1.24
+  #### Variables Dates #### 
+  # v0.1.24
   if (length(vars_dates) == 0) {
     if (verbose) message("[save_excel_paired_results] There is no date variables")
     tab_date_sheet_list <- NULL
@@ -782,8 +793,8 @@ save_excel_paired_results <- function(
     
   }
   
-  #### Write Excel ####
-  if (verbose) message("[save_excel_paired_results] Ends : write_xlsx")
+  #### End: Write Excel ####
+  if (verbose) message("[save_excel_paired_results] Ends: write_xlsx")
   writexl::write_xlsx(
     x = c(
       tab_quanti_sheet_list,
@@ -804,7 +815,8 @@ save_excel_paired_results <- function(
 #' Tables for paired-tested-data, saved in Excel file
 #'
 #' Provide descriptive statistics table with a paired level, 
-#' **after filtering missing data** for each variables, then re-save the output in Excel
+#' **after filtering missing data** for each variables, 
+#' then re-save the output in Excel
 #' (calling `save_excel_paired_results`)
 #'
 #' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
@@ -952,7 +964,8 @@ save_excel_paired_results_filtertest <- function(
       detect_missing_id <- tmp_i[[patient_id]][which(is.na(tmp_i[[var_i]]))]
       # remove them
       tmp_i <- tmp_i[!(tmp_i[[patient_id]] %in% detect_missing_id), ]
-      # or get id with 1 line ... (other kind of missing values, meaning individu only have 1 visit)
+      # or get id with 1 line ...
+      # (other kind of missing values, meaning individual only have 1 visit)
       detect_missing_id <- local({
         tt <- as.data.frame(table(tmp_i[[patient_id]]))
         tt$Var1[tt$Freq == 1]
@@ -1146,9 +1159,11 @@ save_excel_paired_results_filtertest <- function(
 #' 
 #' Compute quantitative variables sheet for Excel output.
 #'
-#' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
+#' @param dataframe A data.frame.
+#'  tibble or data.table will be converted into data.table.
 #'  Columns must be well formated with factor or numeric class (important).
-#' @param vars_quanti Vector of characters. Subset of vars : vector of quantitative variable names
+#' @param vars_quanti Vector of characters. Subset of vars :
+#' vector of quantitative variable names
 #' @param varstrat A characters. Not null. Names of the stratification variable, 
 #'  making groups to compare (*time* or *visits* for instance).
 #'  The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" 
@@ -1259,9 +1274,11 @@ quanti_sheet_paired <- function(
 #' 
 #' Compute quali variables sheet for Excel output
 #'
-#' @param dataframe A data.frame. tibble or data.table will be converted into data.table.
+#' @param dataframe A data.frame.
+#'  tibble or data.table will be converted into data.table.
 #'  Columns must be well formated with factor or numeric class (important).
-#' @param vars_quali Vector of characters. Subset of vars : vector of qualitative variable names
+#' @param vars_quali Vector of characters. Subset of vars :
+#'  vector of qualitative variable names
 #' @param varstrat A characters. Not null. Names of the stratification variable, 
 #'  making groups to compare (*time* or *visits* for instance).
 #'  The repeated measures must be presented *in line* (for instance, "V1", "V2", "V3" 
