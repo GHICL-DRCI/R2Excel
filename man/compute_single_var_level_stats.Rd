@@ -24,8 +24,9 @@ compute_single_var_level_stats(
 \item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}
 }
 \value{
-Data.frame with one row containing: mean, sd, median, Q1, Q3,
-  min, max, N, Valeurs_manquantes, Nb_mesures, is_Normal
+Data.frame with one row containing:
+ mean, sd, median, Q1, Q3,
+ min, max, N, Valeurs_manquantes, Nb_mesures, is_Normal
 }
 \description{
 Compute descriptive statistics for a single continuous variable (unit function)

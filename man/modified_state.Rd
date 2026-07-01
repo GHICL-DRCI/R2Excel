@@ -25,7 +25,7 @@ A data frame with 50 rows and ... columns:
 modified_state
 }
 \description{
-Based on datasets::states* datasets, with somes modification, especially
+Based on datasets::states* datasets, with some modifications, especially
 the add of a binary test variable, add ... (see bellow)
 }
 \keyword{datasets}

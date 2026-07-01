@@ -118,12 +118,5 @@ compute_paired_factorial_table_and_test(
   force_generate_1_when_0 = FALSE,
   keep_missing_line = TRUE
 )
-# dataframe = modified_sleep;
-# variable_interest = "fact3";
-# varstrat = "visites_2";
-# precision = 1;
-# patient_id = "ID2";
-# force_generate_1_when_0 = FALSE;
-# keep_missing_line = TRUE;
 }
 }

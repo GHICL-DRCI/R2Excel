@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_numerics}
 \alias{get_numerics}
-\title{get numerics}
+\title{get_numerics}
 \usage{
 get_numerics(dataframe, vars = colnames(dataframe))
 }
@@ -15,7 +15,7 @@ get_numerics(dataframe, vars = colnames(dataframe))
 A vector of characters : the names of numeric columns
 }
 \description{
-provide the names of numeric columns
+get numerics : provide the names of numeric columns
 }
 \examples{
 \dontrun{

@@ -49,7 +49,7 @@ Do you want to work in silence? Turn it FALSE.}
 A two level description
 }
 \description{
-Fonction pour le cas : 2 niveaux
-avec gestion variable absente d'un niveau
+Function for the case: 2 levels
+with variable management missing at one level
 }
 \keyword{internal}

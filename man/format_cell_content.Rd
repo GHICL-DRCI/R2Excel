@@ -12,9 +12,9 @@ format_cell_content(stats, metric = "mean")
 \item{metric}{A character}
 }
 \value{
-cell formated
+cell formatted
 }
 \description{
-Formater le contenu de cellule selon la métrique
+Format cell content according to the metric
 }
 \keyword{internal}

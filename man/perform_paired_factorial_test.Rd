@@ -24,9 +24,9 @@ perform_paired_factorial_test(
 \item{varstrat_levels}{A character}
 }
 \value{
-choose the appropriate paired test
+Choose the appropriate paired test
 }
 \description{
-Choisir et effectuer le test statistique approprié
+Selecting and carrying out the appropriate statistical test
 }
 \keyword{internal}

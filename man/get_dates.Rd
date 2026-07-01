@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_dates}
 \alias{get_dates}
-\title{get dates}
+\title{get_dates}
 \usage{
 get_dates(dataframe, vars = colnames(dataframe))
 }
@@ -15,5 +15,5 @@ get_dates(dataframe, vars = colnames(dataframe))
 A vector of dates : the names of date columns
 }
 \description{
-provide the names of date columns
+get dates : provide the names of date columns
 }

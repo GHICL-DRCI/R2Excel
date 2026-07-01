@@ -33,7 +33,8 @@ Do you want to work in silence? Turn it FALSE.}
 }
 \value{
 A data.frame,
-  in rows the vars and in column the stat used, the difference values and the IC95%
+  in rows the vars and in column the stat used,
+  the difference values and the IC95%
 }
 \description{
 Compute difference of means and its IC between groups

@@ -27,9 +27,9 @@ format_global_summary(
 \item{digits_sd}{A integer}
 }
 \value{
-global summary formated
+global summary formatted
 }
 \description{
-Formater la description de population globale
+Format the description of the overall population
 }
 \keyword{internal}

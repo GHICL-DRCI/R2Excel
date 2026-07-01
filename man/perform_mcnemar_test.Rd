@@ -14,9 +14,9 @@ perform_mcnemar_test(mcnemar_dt, varstrat_levels, variable_interest)
 \item{variable_interest}{A character}
 }
 \value{
-Eval McNemar test
+Evaluation of McNemar test
 }
 \description{
-Effectuer le test de McNemar
+Do the McNemar test
 }
 \keyword{internal}

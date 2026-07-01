@@ -13,6 +13,6 @@ simplify_factorial_table(effectif_tab)
 simplified table
 }
 \description{
-Simplifier le tableau si demandé (variables binaires)
+Simplify the table if required (binary variables)
 }
 \keyword{internal}

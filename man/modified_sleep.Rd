@@ -19,7 +19,7 @@ A data frame with 40 rows and 6 columns:
 modified_sleep
 }
 \description{
-Based on stats::sleep dataset, with somes modification, especially
+Based on stats::sleep dataset, with some modifications, especially
 the add of a visites variable.
 }
 \keyword{datasets}

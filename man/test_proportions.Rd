@@ -14,11 +14,14 @@ test_proportions(
 \arguments{
 \item{dataframe}{A data.frame containing data.}
 
-\item{vars}{A vector of characters. Names of dataframe's factorial columns to describe.}
+\item{vars}{A vector of characters. Names of dataframe's factorial 
+columns to describe.}
 
-\item{varstrat}{A character. Name of the stratification variable, making groups to compare.}
+\item{varstrat}{A character. Name of the stratification variable, 
+making groups to compare.}
 
-\item{signif_digits}{A integer, Default 4. Integer indicating the number of decimal places (signif) for pvalues.}
+\item{signif_digits}{A integer, Default 4. Integer indicating the number
+of decimal places (signif) for pvalues.}
 }
 \value{
 A list of 3 objects

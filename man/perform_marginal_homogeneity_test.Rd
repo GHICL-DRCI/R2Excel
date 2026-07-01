@@ -16,9 +16,9 @@ perform_marginal_homogeneity_test(dt, variable_interest, varstrat, patient_id)
 \item{patient_id}{A character}
 }
 \value{
-Eval marginal homogeneity test
+Evaluation of marginal homogeneity test
 }
 \description{
-Effectuer le test d'homogénéité marginale
+Perform the marginal homogeneity test
 }
 \keyword{internal}

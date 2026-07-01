@@ -19,7 +19,8 @@ get_OR_univar(
 \item{dependent_var}{A character. Name of the stratification variable, 
 making groups to compare.}
 
-\item{explanatory_vars}{A vector of characters. Names of dataframe's columns to describe.}
+\item{explanatory_vars}{A vector of characters.
+Names of dataframe's columns to describe.}
 
 \item{check_n_levels}{A logical, Default FALSE. 
 Maybe wanted on qualitative explanatory_vars, so those with 0 levels are removed.

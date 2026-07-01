@@ -132,8 +132,10 @@ The name or path + name of the saved Excel file.
 Content : 
 
 "Variable"	: a given variable of interest, provided in the dataset, to describe.
-"Nb_mesures" : N (sample size) shown is the total number of observations for the given variable, not related to the varstrat (group). 
-  The '_N' shown for each levels give the sample size for each levels (with maybe missing data, so N is impacted).
+"Nb_mesures" : N (sample size) shown is the total number of observations 
+for the given variable, not related to the varstrat (group). 
+The '_N' shown for each levels give the sample size for each levels 
+(with maybe missing data, so N is impacted).
 "Valeurs_manquantes" : Number of missing values for the given variable.
 Population_totale	: Statistics for the whole dataset.
 varstrat=level_i : Statistics for the level i of the varstrat (group)

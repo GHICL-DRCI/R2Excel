@@ -16,9 +16,9 @@ compute_precision_digits(
 
 \item{stat_type}{a character}
 
-\item{base_decimals}{a interger}
+\item{base_decimals}{a integer}
 
-\item{max_decimals}{a interger}
+\item{max_decimals}{a integer}
 }
 \value{
 a numeric
@@ -27,7 +27,7 @@ a numeric
 Function to calculate digits according to precision
 }
 \details{
-Because we have established a rule within our quality approach to harmonise 
+Because we have established a rule within our quality approach to standardize 
 the accuracy of the figures provided in our reports. 
 The rule states that: 
 The mean and median will be rounded to one decimal place higher than the 
