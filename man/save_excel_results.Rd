@@ -139,6 +139,8 @@ The '_N' shown for each levels give the sample size for each levels
 "Valeurs_manquantes" : Number of missing values for the given variable.
 Population_totale	: Statistics for the whole dataset.
 varstrat=level_i : Statistics for the level i of the varstrat (group)
+IQR : Q3 - Q1
+SE : standard error 
 P_valeur : P-value.
 Test : Test related to the P-value
 Message : Message captured for the statistician's attention
