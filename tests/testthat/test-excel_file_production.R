@@ -75,12 +75,16 @@ test_that("final_novarstrat_file", {
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ))))
-  expect_equal(ncol(tab_quanti_3), 7)
+  expect_equal(ncol(tab_quanti_3), 9)
+  expect_equal(colnames(tab_quanti_3)[6], "IQR")
+  expect_equal(colnames(tab_quanti_3)[8], "SE")
   expect_equal(
     tab_quanti_3$`Moy +/- Sd`[tab_quanti_3$Variable %in% "Area"],
     paste(round(mean(modified_state$Area, na.rm = TRUE), 3), "+/-",
           round(sd(modified_state$Area, na.rm = TRUE), 3))
   )
+  expect_identical(round(analyse_desc_quanti_3$IQR, 3), round(tab_quanti_3$IQR, 3))
+  expect_identical(round(analyse_desc_quanti_3$SE, 3), round(tab_quanti_3$SE, 3))
   expect_equal(length(na.omit(unique(tab_quali_3$Variable))), 
                length(get_factors(modified_state, vars = c(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
@@ -536,8 +540,10 @@ sheet_yes_varstrat <- readxl::read_excel(
 
 test_that("test drop_levels", {
   expect_true(nrow(sheet_yes) + 1 == nrow(sheet_no))
-  expect_true(ncol(sheet_yes_varstrat)==7)
+  expect_true(ncol(sheet_yes_varstrat)==9)
   expect_true(expect_true(nrow(sheet_yes_varstrat)==2))
+  expect_equal(colnames(sheet_yes_varstrat)[6], "IQR")
+  expect_equal(colnames(sheet_yes_varstrat)[8], "SE")
 })
 
 #### Variables_all_na ####
