@@ -91,6 +91,8 @@
 #' "Valeurs_manquantes" : Number of missing values for the given variable.
 #' Population_totale	: Statistics for the whole dataset.
 #' varstrat=level_i : Statistics for the level i of the varstrat (group)
+#' IQR : Q3 - Q1
+#' SE : standard error 
 #' P_valeur : P-value.
 #' Test : Test related to the P-value
 #' Message : Message captured for the statistician's attention
@@ -321,12 +323,12 @@ save_excel_results <- function(
   
   # Separation of variables quali / quanti / dates
   vars_quanti <- get_numerics(dt, vars = vars)
-  if (verbose && any(c("Q1", "Q3", "mean", "sd", "median", "min", "max") %in% vars_quanti)) {
+  if (verbose && any(c("Q1", "Q3", "mean", "sd", "median", "min", "max", "IQR") %in% vars_quanti)) {
     ## trouble... # reported by Klervi in v0.2.0
     message(
       "[save_excel_results] Warning : ", 
       "your dataset have some columns named like statistics ", 
-      "(mean, sd, median, min, max, Q1 or Q3), ", 
+      "(mean, sd, median, min, max, Q1, Q3 or IQR), ", 
       "so we suggest to rename them in an other way...", 
       " to avoid troubles !"
     )
@@ -975,8 +977,8 @@ quanti_sheet <- function(
     ###### Describe ######
     mm <- ifelse(
       is.null(varstrat_i) || varstrat_i %in% "",
-      paste0("[quanti_sheet] without varstat"),
-      paste0("[quanti_sheet] with varstat : ", varstrat_i)
+      paste0("[quanti_sheet] without varstrat"),
+      paste0("[quanti_sheet] with varstrat : ", varstrat_i)
     )
     if (verbose) message(mm)
     
@@ -1001,8 +1003,8 @@ quanti_sheet <- function(
         vars = vars_quanti,
         varstrat = varstrat_i,
         stats_choice = c(
-          "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", 
-          "Valeurs_manquantes", "Nb_mesures", "is_Normal"
+          "mean", "sd", "median", "Q1", "Q3", "IQR", "min", "max", "N", 
+          "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
         ),
         # all stats are excepted in excel workbook function
         precision = precision, 
@@ -1032,7 +1034,7 @@ quanti_sheet <- function(
         ##### no varstrat = no test #####
         tab_quanti_sheet <- tab_quanti_sheet[, .SD, .SDcols = c(
           "Variable", "Nb_mesures", "Valeurs_manquantes",
-          "Moy +/- Sd", "Med [Q1;Q3]", "Min - Max", "is_Normal"
+          "Moy +/- Sd", "Med [Q1;Q3]", "IQR", "Min - Max", "SE", "is_Normal"
         )]
       } else { 
         
@@ -1421,8 +1423,8 @@ quali_sheet <- function(
           vars = varstrat_i,
           varstrat = quali_i_var,
           stats_choice = c(
-            "mean", "sd", "median", "Q1", "Q3", "min", "max", "N",
-            "Valeurs_manquantes", "Nb_mesures", "is_Normal"
+            "mean", "sd", "median", "Q1", "Q3", "IQR", "min", "max", "N",
+            "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
           ),
           # all stats are excepted in excel workbook function
           precision = precision, 
