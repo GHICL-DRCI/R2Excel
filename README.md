@@ -55,15 +55,15 @@ pour nous soumettre votre requête ("merge request").
 
 in alphabetic order 
 
-  Mathilde Boissel [aut, cre],
-  Cassandra Chaldaureille [aut, cre],
-  Armand Elegbe [ctb],
-  Sahara Graf [aut],
-  Klervi Le Gall [ctb],
-  Saïd Maallem [ctb],
-  Laurène Norberciak [aut, cre],
-  Cristian Preda [aut, cre],
-  Stephane Verdun [aut] 
+  Mathilde Boissel [aut, cre],  
+  Cassandra Chaldaureille [aut, cre],  
+  Armand Elegbe [ctb],  
+  Sahara Graf [aut],  
+  Klervi Le Gall [ctb],  
+  Saïd Maallem [ctb],  
+  Laurène Norberciak [aut, cre],  
+  Cristian Preda [aut, cre],  
+  Stephane Verdun [aut]  
 
 ## Installation
 
@@ -95,3 +95,16 @@ See some examples in `inst/StarterPack.Rmd` (`inst/StarterPack.html`)
 ## Publication 
 
 See poster in `inst/poster_epiclin_R2EXCEL.pptx` (`inst/P58_R2Excel_MBoissel.pdf`)
+
+## Function dependency graph
+
+The following graph shows the dependencies between functions in the package, colored by source script (i.e. the hierarchy of which functions call which other ones, done with {mvbutils}) :
+
+![Function dependency graph](inst/figures/R2Excel_foodweb.png)
+
+<p align="center">
+  <img src="inst/figures/R2Excel_foodweb.png" width="900"/>
+  <br/>
+  <em>Function dependencies — colored by source script</em>
+</p>
+
