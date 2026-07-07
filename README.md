@@ -100,7 +100,7 @@ See poster in `inst/poster_epiclin_R2EXCEL.pptx` (`inst/P58_R2Excel_MBoissel.pdf
 
 The following graph shows the dependencies between functions in the package, colored by source script (i.e. the hierarchy of which functions call which other ones, done with {mvbutils}) :
 
-![Function dependency graph](inst/figures/R2Excel_foodweb.png)
+<!-- ![Function dependency graph](inst/figures/R2Excel_foodweb.png) -->
 
 <p align="center">
   <img src="inst/figures/R2Excel_foodweb.png" width="900"/>
