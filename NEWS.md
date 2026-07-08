@@ -1,6 +1,6 @@
 # Version 0.2.1
 
-30/06/2026
+30/06/2026 - 10/07/2026
 
 ## Note
 
@@ -8,11 +8,13 @@
   Klervi Le Gall, Cassandra Chaldaureille and Laurène Norberciak, 
   who have been assigned the three guided development points bellow.
 
-  See details in internal (quality) file `MOD_Dev_R_Package_20260630_MBL.docx`.
+  See details in internal (quality) file `MOD_Dev_R_Package_[latest_date]_MBL.docx`.
 
 ## Improvement
 
 - Add extra comments / fix typo
+
+- Add script to generate foodweb diagram for R2Excel and figure in Readme.
 
 - #13 assigned to Klervi Le Gall  :
 
@@ -42,12 +44,9 @@ but not returned by default in excel files.
 - #15 assigned to Laurène Norberciak: 
 
   + A new option was added in v0.2.0, the long format of table when cross varstrat is provided. 
-  Add unit example of the option "long" in param "crosstableformat", based on Sunstar project.
-  + Update documentation.
-  + Update unit tests.
-  + Update unit tests.
-  + Do the Checks.
-  + Upload your change in github repo (branch v0.2.1)
+  Test the option "long" in param "crosstableformat", based on Sunstar project.
+  Suggests changes (to be made later?)
+
   
 # Version 0.2.0
 
