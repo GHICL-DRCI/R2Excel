@@ -250,7 +250,7 @@ test_that("final_varstrat_file", {
   tmp_quanti_5 <- analyse_desc_quanti_5$Income["electionred",]
   expect_equal(
     paste0(tmp_quanti_5$mean, " +/- ", tmp_quanti_5$sd),
-    # paste0(tmp_quanti_5$median, " [", tmp_quanti_5$Q1, " ; ", tmp_quanti_5$Q3, "]"), # if not normal --tocheck
+    # paste0(tmp_quanti_5$median, " [", tmp_quanti_5$quantile1st, " ; ", tmp_quanti_5$quantile3rd, "]"), # if not normal --tocheck
     tab_quanti_strat_5[tab_quanti_strat_5$Variable %in% "Income",
                        "election=red"][[1]]
   )
@@ -1014,7 +1014,66 @@ test_that("zero msg verbose", {
   expect_true(length(zero_msg_capt)==0)
 })
 
+#### Test var names = Q1/Q3 ####
+modified_state_mod <- modified_state
+names(modified_state_mod)[names(modified_state_mod) == "Population"] <- "Q1"
+names(modified_state_mod)[names(modified_state_mod) == "Income"]     <- "Q3"
 
+path33 <- save_excel_results( #33 cause added after some tests on the file_paired_production doc
+  dataframe = modified_state_mod,
+  vars = c("Q1", "Q3"),
+  varstrat = "election",
+  precision = 2,
+  signif_digits = 2,
+  global_summary = FALSE,
+  force_non_parametric_test = TRUE,
+  file = file.path("tmp", "33-desc_trap_q1q3_state.xlsx")
+)
+
+tab33 <- readxl::read_excel(
+  path33,
+  sheet = "quantitative - election"
+)
+
+varstrat_levels_q <- levels(modified_state_mod$election)
+col_level1 <- paste0("election=", varstrat_levels_q[1])
+
+test_that("test trap Q1 Q3 excel modified_state", {
+  
+  expect_true(file.exists(path33))
+  expect_equal(nrow(tab33), 2)
+  expect_true(all(c("Q1", "Q3") %in% tab33$Variable))
+  expect_true(col_level1 %in% names(tab33))
+  
+  # expected desc values for Q1 for 1st election level
+  x1 <- modified_state_mod$Q1[
+    modified_state_mod$election %in% varstrat_levels_q[1]
+  ]
+  expected_cell_Q1 <- paste0(
+    round(median(x1, na.rm = TRUE), 2), " [",
+    round(unname(quantile(x1, 0.25, na.rm = TRUE)), 2), ";",
+    round(unname(quantile(x1, 0.75, na.rm = TRUE)), 2), "]"
+  )
+  expect_equal(
+    tab33[[col_level1]][tab33$Variable %in% "Q1"],
+    expected_cell_Q1
+  )
+  
+  # valeur attendue pour Q3 (ex Income), au meme niveau
+  x3 <- modified_state_mod$Q3[
+    modified_state_mod$election %in% varstrat_levels_q[1]
+  ]
+  expected_cell_Q3 <- paste0(
+    round(median(x3, na.rm = TRUE), 2), " [",
+    round(unname(quantile(x3, 0.25, na.rm = TRUE)), 2), ";",
+    round(unname(quantile(x3, 0.75, na.rm = TRUE)), 2), "]"
+  )
+  expect_equal(
+    tab33[[col_level1]][tab33$Variable %in% "Q3"],
+    expected_cell_Q3
+  )
+  
+})
 #### end ####
 # clear tmp test folder
 unlink("tmp", recursive = TRUE)

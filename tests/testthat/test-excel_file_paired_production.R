@@ -528,7 +528,59 @@ zero_msg_capt <- testthat::capture_messages(
 test_that("zero msg verbose", {
   expect_true(length(zero_msg_capt)==0)
 })
+#### Test var names = Q1/Q3 ####
 
+modified_sleep_mod <- modified_sleep
+names(modified_sleep_mod)[names(modified_sleep_mod) == "mesure1"] <- "Q1"
+names(modified_sleep_mod)[names(modified_sleep_mod) == "mesure2"] <- "Q3"
+
+path32 <- save_excel_paired_results(
+  dataframe = modified_sleep_mod,
+  vars = c("Q1", "Q3"),
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  precision = 2,
+  signif_digits = 2,
+  global_summary = FALSE,
+  force_non_parametric_test = TRUE,
+  file = file.path("tmp", "32-desc_paired_trap_q1q3.xlsx")
+)
+tab32 <- readxl::read_excel(path32)
+varstrat_levels_q <- levels(modified_sleep_mod$visites_2)
+
+test_that("test trap Q1 Q3 paired excel", {
+  
+  expect_true(file.exists(path32))
+  expect_equal(nrow(tab32), 2)
+  expect_true(all(c("Q1", "Q3") %in% tab32$Variable))
+  # expected values for Q1 desc
+  x1 <- modified_sleep_mod$Q1[
+    modified_sleep_mod$visites_2 %in% varstrat_levels_q[1]
+  ]
+  expected_cell_Q1 <- paste0(
+    round(median(x1, na.rm = TRUE), 2), " [",
+    round(unname(quantile(x1, 0.25, na.rm = TRUE)), 2), ";",
+    round(unname(quantile(x1, 0.75, na.rm = TRUE)), 2), "]"
+  )
+  expect_equal(
+    tab32[[varstrat_levels_q[1]]][tab32$Variable %in% "Q1"],
+    expected_cell_Q1
+  )
+  
+  # expected values for Q3 desc
+  x3 <- modified_sleep_mod$Q3[
+    modified_sleep_mod$visites_2 %in% varstrat_levels_q[1]
+  ]
+  expected_cell_Q3 <- paste0(
+    round(median(x3, na.rm = TRUE), 2), " [",
+    round(unname(quantile(x3, 0.25, na.rm = TRUE)), 2), ";",
+    round(unname(quantile(x3, 0.75, na.rm = TRUE)), 2), "]"
+  )
+  expect_equal(
+    tab32[[varstrat_levels_q[1]]][tab32$Variable %in% "Q3"],
+    expected_cell_Q3
+  )
+})
 #### end ####
 # clear tmp test folder
 unlink("tmp", recursive = TRUE)

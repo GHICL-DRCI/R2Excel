@@ -314,6 +314,64 @@ test_that("test SkillingsMack", {
   expect_equal(test_SkillingsMack_done$line_res$visiteD3, "0.05 [-0.03;0.26]")
   expect_equal(test_SkillingsMack_done$line_res$visiteD4, "-0.04 [-0.24;-0.02]")
 })
+#### Test var names = Q1/Q3 ####
+modified_sleep_mod <- modified_sleep
+names(modified_sleep_mod)[names(modified_sleep_mod) == "mesure1"] <- "Q1"
+names(modified_sleep_mod)[names(modified_sleep_mod) == "mesure2"] <- "Q3"
+
+res_paired_Q1 <- compute_paired_continuous_table_and_test(
+  dataframe = modified_sleep_mod,
+  variable_interest = "Q1",
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  precision = 2,
+  signif_digits = 2,
+  global_summary = FALSE,
+  show_metric = "median"
+)
+
+res_paired_Q3 <- compute_paired_continuous_table_and_test(
+  dataframe = modified_sleep_mod,
+  variable_interest = "Q3",
+  varstrat = "visites_2",
+  patient_id = "ID2",
+  precision = 2,
+  signif_digits = 2,
+  global_summary = FALSE,
+  show_metric = "median"
+)
+
+varstrat_levels_q <- levels(modified_sleep_mod$visites_2)
+
+test_that("test trap paired variable named Q1 or Q3", {
+  
+  # expected desc for Q1,for visites_2 1st level
+  x1 <- modified_sleep_mod$Q1[
+    modified_sleep_mod$visites_2 %in% varstrat_levels_q[1]
+  ]
+  expected_cell_Q1 <- paste0(
+    round(median(x1, na.rm = TRUE), 2), " [",
+    round(unname(quantile(x1, 0.25, na.rm = TRUE)), 2), ";",
+    round(unname(quantile(x1, 0.75, na.rm = TRUE)), 2), "]"
+  )
+  expect_equal(
+    res_paired_Q1$line_res[[varstrat_levels_q[1]]],
+    expected_cell_Q1
+  )
+  # expected desc for Q3, same level
+  x3 <- modified_sleep_mod$Q3[
+    modified_sleep_mod$visites_2 %in% varstrat_levels_q[1]
+  ]
+  expected_cell_Q3 <- paste0(
+    round(median(x3, na.rm = TRUE), 2), " [",
+    round(unname(quantile(x3, 0.25, na.rm = TRUE)), 2), ";",
+    round(unname(quantile(x3, 0.75, na.rm = TRUE)), 2), "]"
+  )
+  expect_equal(
+    res_paired_Q3$line_res[[varstrat_levels_q[1]]],
+    expected_cell_Q3
+  )
+})
 
 #### add new unit test on utils functions v 0.1.27 ####
 
@@ -322,7 +380,7 @@ test_that("test SkillingsMack", {
 # =
 
 test_that("format_cell_content formats mean correctly", {
-  stats <- list(mean = 25.5, sd = 3.2, median = 24.8, Q1 = 22.5, Q3 = 27.3)
+  stats <- list(mean = 25.5, sd = 3.2, median = 24.8, quantile1st = 22.5, quantile3rd = 27.3)
   
   result <- format_cell_content(stats, metric = "mean")
   
@@ -330,7 +388,7 @@ test_that("format_cell_content formats mean correctly", {
 })
 
 test_that("format_cell_content formats median correctly", {
-  stats <- list(mean = 25.5, sd = 3.2, median = 24.8, Q1 = 22.5, Q3 = 27.3)
+  stats <- list(mean = 25.5, sd = 3.2, median = 24.8, quantile1st = 22.5, quantile3rd = 27.3)
   
   result <- format_cell_content(stats, metric = "median")
   
@@ -338,7 +396,7 @@ test_that("format_cell_content formats median correctly", {
 })
 
 test_that("format_cell_content handles NA values for mean", {
-  stats <- list(mean = NA, sd = 3.2, median = 24.8, Q1 = 22.5, Q3 = 27.3)
+  stats <- list(mean = NA, sd = 3.2, median = 24.8, quantile1st = 22.5, quantile3rd = 27.3)
   
   result <- format_cell_content(stats, metric = "mean")
   
@@ -346,7 +404,7 @@ test_that("format_cell_content handles NA values for mean", {
 })
 
 test_that("format_cell_content handles NaN values for mean", {
-  stats <- list(mean = NaN, sd = 3.2, median = 24.8, Q1 = 22.5, Q3 = 27.3)
+  stats <- list(mean = NaN, sd = 3.2, median = 24.8, quantile1st = 22.5, quantile3rd = 27.3)
   
   result <- format_cell_content(stats, metric = "mean")
   
@@ -354,7 +412,7 @@ test_that("format_cell_content handles NaN values for mean", {
 })
 
 test_that("format_cell_content handles NA values for median", {
-  stats <- list(mean = 25.5, sd = 3.2, median = NA, Q1 = 22.5, Q3 = 27.3)
+  stats <- list(mean = 25.5, sd = 3.2, median = NA, quantile1st = 22.5, quantile3rd = 27.3)
   
   result <- format_cell_content(stats, metric = "median")
   
