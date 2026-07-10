@@ -279,12 +279,12 @@ save_excel_paired_results <- function(
   #### Check vars' class ####
   
   vars_quanti <- get_numerics(dt, vars = vars)
-  if (verbose && any(c("Q1", "Q3", "mean", "sd", "median", "min", "max") %in% vars_quanti)) {
+  if (verbose && any(c( "mean", "sd", "median", "min", "max") %in% vars_quanti)) {
     ## trouble... # reported by Klervi in v0.2.0
     message(
       "[save_excel_paired_results] Warning : ", 
       "your dataset have some columns named like statistics ", 
-      "(mean, sd, median, min, max, Q1 or Q3), ", 
+      "(mean, sd, median, min or max), ", 
       "so we suggest to rename them in an other way...", 
       " to avoid troubles !"
     )
@@ -1228,7 +1228,7 @@ quanti_sheet_paired <- function(
   # stopifnot ? --here
   
   if (verbose) message("[quati_sheet_paired] ", varstrat)
-  Variable <- Modalites <- Q1 <- Q3 <- Mean_sd <- Med_q1_q3 <- strat <- p <- NULL
+  Variable <- Modalites <- quantile1st <- quantile3rd <- Mean_sd <- Med_q1_q3 <- strat <- p <- NULL
   
   ##### Classique : for each variable of group varstrat #####
   

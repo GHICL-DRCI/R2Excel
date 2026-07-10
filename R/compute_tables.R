@@ -16,7 +16,7 @@
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #'
 #' @return Data.frame with one row containing:
-#'  mean, sd, median, Q1, Q3,
+#'  mean, sd, median, quantile1st (Q1), quantile3rd(Q3),
 #'  min, max, SE, IQR, N, Valeurs_manquantes, Nb_mesures, is_Normal
 #'
 #' @keywords internal
@@ -91,8 +91,8 @@ compute_single_var_level_stats <- function(
     mean = round(mean(x, na.rm = TRUE), digits_central),
     sd = round(stats::sd(x, na.rm = TRUE), digits_sd),
     median = round(stats::median(x, na.rm = TRUE), digits_central),
-    Q1 = round(stats::quantile(x, 0.25, na.rm = TRUE), digits_central)[[1]],
-    Q3 = round(stats::quantile(x, 0.75, na.rm = TRUE), digits_central)[[1]],
+    quantile1st = round(stats::quantile(x, 0.25, na.rm = TRUE), digits_central)[[1]],
+    quantile3rd = round(stats::quantile(x, 0.75, na.rm = TRUE), digits_central)[[1]],
     min = round(ifelse(all(is.na(x)), NA, min(x, na.rm = TRUE)), digits_central),
     max = round(ifelse(all(is.na(x)), NA, max(x, na.rm = TRUE)), digits_central),
     SE = round(stats::sd(x, na.rm = TRUE), digits_sd) / sqrt(sum(!is.na(x))), 
@@ -128,7 +128,7 @@ compute_single_var_level_stats <- function(
 #'  making groups to compare.
 #' @param stats_choice A vector of characters. Default provide all usual statistics
 #'  to describe continuous variables,
-#'  namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR",
+#'  namely 'c("mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max", "SE", "IQR",
 #'  "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal")'
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #' @param verbose A logical, Default TRUE. Show message. 
@@ -154,7 +154,7 @@ compute_continuous_table <- function(
     vars = setdiff(colnames(dataframe), varstrat),
     varstrat = NULL,
     stats_choice = c(
-      "mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR",
+      "mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max", "SE", "IQR",
       "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal"
     ),
     precision = "auto",  # new v0.1.27
@@ -166,7 +166,7 @@ compute_continuous_table <- function(
   ## Validations
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(all(stats_choice %in% c(
-    "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", "SE", "IQR",
+    "mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max", "N", "SE", "IQR",
     "Valeurs_manquantes", "Nb_mesures", "is_Normal"
   )))
   stopifnot(precision == "auto" || is.numeric(precision))
@@ -439,8 +439,8 @@ compute_correlation_table <- function(
         mean = round(x = mean(.SD[[1]], na.rm = TRUE), digits = digits),
         sd = round(stats::sd(.SD[[1]], na.rm = TRUE), digits = digits),
         median = round(stats::median(.SD[[1]], na.rm = TRUE), digits = digits),
-        Q1 = round(stats::quantile(.SD[[1]], na.rm = TRUE)["25%"], digits = digits)[[1]],
-        Q3 = round(stats::quantile(.SD[[1]], na.rm = TRUE)["75%"], digits = digits)[[1]],
+        quantile1st = round(stats::quantile(.SD[[1]], na.rm = TRUE)["25%"], digits = digits)[[1]],
+        quantile3th = round(stats::quantile(.SD[[1]], na.rm = TRUE)["75%"], digits = digits)[[1]],
         min = round(min(.SD[[1]], na.rm = TRUE), digits = digits),
         max = round(max(.SD[[1]], na.rm = TRUE), digits = digits),
         is_Normal = shapiro_conclu, # var i is normal

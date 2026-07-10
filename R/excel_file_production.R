@@ -323,12 +323,12 @@ save_excel_results <- function(
   
   # Separation of variables quali / quanti / dates
   vars_quanti <- get_numerics(dt, vars = vars)
-  if (verbose && any(c("Q1", "Q3", "mean", "sd", "median", "min", "max", "IQR") %in% vars_quanti)) {
+  if (verbose && any(c("mean", "sd", "median", "min", "max", "IQR") %in% vars_quanti)) {
     ## trouble... # reported by Klervi in v0.2.0
     message(
       "[save_excel_results] Warning : ", 
       "your dataset have some columns named like statistics ", 
-      "(mean, sd, median, min, max, Q1, Q3 or IQR), ", 
+      "(mean, sd, median, min, max or IQR), ", 
       "so we suggest to rename them in an other way...", 
       " to avoid troubles !"
     )
@@ -967,7 +967,7 @@ quanti_sheet <- function(
   
   # message("[quanti_sheet]")
   
-  Variable <- Modalites <- Q1 <- Q3 <- NULL
+  Variable <- Modalites <- quantile1st <- quantile3rd <- NULL
   
   if (is.null(varstrat)) varstrat <- ""
   
@@ -1003,7 +1003,7 @@ quanti_sheet <- function(
         vars = vars_quanti,
         varstrat = varstrat_i,
         stats_choice = c(
-          "mean", "sd", "median", "Q1", "Q3", "IQR", "min", "max", "N", 
+          "mean", "sd", "median", "quantile1st", "quantile3rd", "IQR", "min", "max", "N", 
           "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
         ),
         # all stats are excepted in excel workbook function
@@ -1026,7 +1026,7 @@ quanti_sheet <- function(
       
       tab_quanti_sheet <- tab_quanti_sheet[, `:=`(
         `Moy +/- Sd` = paste0(as.character(mean), " +/- ", as.character(sd)),
-        `Med [Q1;Q3]` = paste0(median, " [", Q1, ";", Q3, "]"),
+        `Med [Q1;Q3]` = paste0(median, " [", quantile1st, ";", quantile3rd, "]"),
         `Min - Max` = paste0(min, " - ", max)
       )]
       
@@ -1107,7 +1107,7 @@ quanti_sheet <- function(
           )
           tmp$Med_q1_q3 <- ifelse(
               is.na(tmp$median),
-              "/", paste0(tmp$median, " [", tmp$Q1, ";", tmp$Q3, "]")
+              "/", paste0(tmp$median, " [", tmp$quantile1st, ";", tmp$quantile3rd, "]")
           )
           
           # Metric selection based on test (if do_test)  = v 0.1.27
@@ -1397,7 +1397,7 @@ quali_sheet <- function(
     verbose
 ) {
   # message("[quali_sheet]")
-  Variable <- p <- Modalites <- Q1 <- Q3 <- Nb_mesures <- NULL
+  Variable <- p <- Modalites <- quantile1st <- quantile3rd <- Nb_mesures <- NULL
   
   ##### Classique : No crossed #####
   
@@ -1423,7 +1423,7 @@ quali_sheet <- function(
           vars = varstrat_i,
           varstrat = quali_i_var,
           stats_choice = c(
-            "mean", "sd", "median", "Q1", "Q3", "IQR", "min", "max", "N",
+            "mean", "sd", "median", "quantile1st", "quantile3rd", "IQR", "min", "max", "N",
             "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
           ),
           # all stats are excepted in excel workbook function
@@ -1565,7 +1565,7 @@ quali_sheet <- function(
               
               tmp <- tmp[, `:=`(
                 `Mean_sd` = paste0(mean, " +/- ", sd),
-                `Med_q1_q3` = paste0(median, " [", Q1, ";", Q3, "]"),
+                `Med_q1_q3` = paste0(median, " [", quantile1st, ";", quantile3rd, "]"),
                 `Min - Max` = paste0(min, " - ", max)
               )]
               # Metric selection based on testing (if do_test) = v0.1.27

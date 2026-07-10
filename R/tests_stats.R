@@ -458,7 +458,7 @@ test_means <- function(
     summarizedstats[nlevels(dataframe[, varstrat]) + 1, ] <- summary(dataframe[, vari])[1:6]
 
     rownames(summarizedstats) <- c(varstrat_levels, "Total")
-    colnames(summarizedstats) <- c("Min", "Q1", "Median", "Mean", "Q3", "Max")
+    colnames(summarizedstats) <- c("Min", "quantile1st", "Median", "Mean", "quantile3th", "Max")
     detailtest[[vari]][["statistics"]] <- summarizedstats
 
     # Check normality in each group

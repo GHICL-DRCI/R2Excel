@@ -35,7 +35,7 @@ format_cell_content <- function(
       return("/")
     }
     return(paste0(
-      stats$median," [", stats$Q1, ";", stats$Q3, "]"
+      stats$median," [", stats$quantile1st, ";", stats$quantile3rd, "]"
     ))
   }
 }
@@ -767,7 +767,7 @@ compute_paired_continuous_table_and_test <- function(
 ) {
   
   `.SD` <- `.` <- `.N` <- `:=` <- NULL
-  `Q1` <- `Q3` <- cell_content <- IDENT_PAT <- value <- n_group <- NULL
+  `quantile1st` <- `quantile3rd` <- cell_content <- IDENT_PAT <- value <- n_group <- NULL
   n_missing <- NULL
   
   if (verbose) message("[compute_paired_continuous_table] ", variable_interest)
@@ -821,8 +821,8 @@ compute_paired_continuous_table_and_test <- function(
          mean = round(mean(.SD[[1]], na.rm = TRUE), digits = digits_central),
          sd = round(stats::sd(.SD[[1]], na.rm = TRUE), digits = digits_sd),
          median = round(stats::median(.SD[[1]], na.rm = TRUE), digits = digits_central),
-         Q1 = round(stats::quantile(.SD[[1]], na.rm = TRUE)["25%"], digits = digits_central),
-         Q3 = round(stats::quantile(.SD[[1]], na.rm = TRUE)["75%"], digits = digits_central),
+         quantile1st = round(stats::quantile(.SD[[1]], na.rm = TRUE)["25%"], digits = digits_central),
+         quantile3rd = round(stats::quantile(.SD[[1]], na.rm = TRUE)["75%"], digits = digits_central),
          n_missing = sum(is.na(.SD[[1]])),
          n_group = .N
        ),
