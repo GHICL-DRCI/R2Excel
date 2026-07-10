@@ -52,6 +52,6 @@ Do you want to work in silence? Turn it FALSE.}
 a description for more than 2 levels
 }
 \description{
-Fonction pour le cas : Plus de 2 niveaux
+Function for the case: More than 2 levels
 }
 \keyword{internal}

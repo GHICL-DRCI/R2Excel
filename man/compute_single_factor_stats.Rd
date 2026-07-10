@@ -15,12 +15,13 @@ compute_single_factor_stats(
 )
 }
 \arguments{
-\item{dataframe}{A data.frame. tibble or data.table will be converted into data.frame.}
+\item{dataframe}{A data.frame.
+tibble or data.table will be converted into data.frame.}
 
-\item{varstrat}{A character. Default NULL. Name of the stratification variable,
-making groups to compare.}
+\item{varstrat}{A character. Default NULL.
+Name of the stratification variable, making groups to compare.}
 
-\item{varstrat_levels}{--here}
+\item{varstrat_levels}{A character. groups (label) to compare.}
 
 \item{prop_table_margin}{A vector giving the margins to split by. Default 2. 
 1 indicates rows, 2 indicates columns,
@@ -34,10 +35,11 @@ will test if the unique modality is 0 or "non" and
 add the level 1 or "oui" so it can be display in counts. 
 Can be combined with simplify to only show the modality (1).}
 
-\item{vars}{A vector of characters. Names of dataframe's factorial columns to describe.}
+\item{vars}{A vector of characters. 
+Names of dataframe's factorial columns to describe.}
 
-\item{simplify}{A logical. Default TRUE. Reduce the yes/no  (or 1/0) modalities 
-to display only the yes (1).}
+\item{simplify}{A logical. Default TRUE.
+Reduce the yes/no  (or 1/0) modalities to display only the yes (1).}
 }
 \value{
 a table of n and p for each levels

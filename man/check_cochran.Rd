@@ -16,11 +16,14 @@ check_cochran(
 \item{efftheo}{A table of theoretical counts}
 
 \item{seuil}{A numeric between 0 and 100. Default 80\%.
-Percentage of cell supposed get a count greater than effcochran (Eg. 80\% should have count above 5.)}
+Percentage of cell supposed get a count greater than effcochran 
+(Eg. 80\% should have count above 5.)}
 
-\item{effcritique}{A integer. Default 1. Integer of the minimal count for a given cell}
+\item{effcritique}{A integer. Default 1. Integer of the minimal count for a 
+given cell}
 
-\item{effcochran}{A integer. Default 5. Integer if the minimal count for maximum seuil in \% of cells}
+\item{effcochran}{A integer. Default 5. Integer if the minimal count for 
+maximum seuil in \% of cells}
 
 \item{verbose}{A logical, Default TRUE. Show message. 
 Do you want to work in silence? Turn it FALSE.}
@@ -35,7 +38,9 @@ check Cochran rule : Check theoretical sample size in table
 \dontrun{
 effobs <- table(modified_state[, c("state.region", "election")])
 # tableau des effectifs theoriques
-efftheo <- as.table(round(rowSums(effobs) \%*\% t(colSums(effobs)) / sum(effobs), 2))
+efftheo <- as.table(round(
+  rowSums(effobs) \%*\% t(colSums(effobs)) / sum(effobs), 2
+ ))
 names(dimnames(efftheo)) <- names(dimnames(effobs))
 rownames(efftheo) <- rownames(effobs)
 colnames(efftheo) <- colnames(effobs)

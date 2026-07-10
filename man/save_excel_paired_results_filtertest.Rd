@@ -129,7 +129,8 @@ Tables for paired-tested-data, saved in Excel file
 }
 \details{
 Provide descriptive statistics table with a paired level, 
-**after filtering missing data** for each variables, then re-save the output in Excel
+**after filtering missing data** for each variables, 
+then re-save the output in Excel
 (calling `save_excel_paired_results`)
 }
 \examples{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_characters}
 \alias{get_characters}
-\title{get characters}
+\title{get_characters}
 \usage{
 get_characters(dataframe, vars = colnames(dataframe))
 }
@@ -15,7 +15,7 @@ get_characters(dataframe, vars = colnames(dataframe))
 A vector of characters : the names of character columns
 }
 \description{
-provide the names of character columns
+get characters : provide the names of character columns
 }
 \examples{
 \dontrun{

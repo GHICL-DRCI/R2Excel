@@ -12,7 +12,8 @@ numeric class (important). will be converted as data.table inside functions.}
 
 \item{vars}{A vector of characters. Names of dataframe's columns.}
 
-\item{varstrat}{A character. Default NULL. Name of the stratification variable, making groups to compare.}
+\item{varstrat}{A character. 
+Default NULL. Name of the stratification variable, making groups to compare.}
 
 \item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)
 Integer indicating the number of decimal places (round).}
@@ -40,9 +41,13 @@ Computation follows {stddiff} r pkg implementation
 (https://cran.r-project.org/web/packages/stddiff/index.html)  
 
 Reading of thresholds are based on :  
-  - Cohen, J. (1988).  Cohen J. Statistical Power Analysis for the Behavioral Sciences (2nd ed). Lawrence Erlbaum Associates Publishers: Hillsdale, NJ.   
-  - also quoted in https://www.utstat.toronto.edu/brunner/oldclass/378f16/readings/CohenPower.pdf (page 40 – num 57/579)  
-  - also quoted in SAS documentation : https://support.sas.com/resources/papers/proceedings12/335-2012.pdf  
+  - Cohen, J. (1988). 
+  Cohen J. Statistical Power Analysis for the Behavioral Sciences (2nd ed). 
+  Lawrence Erlbaum Associates Publishers: Hillsdale, NJ.   
+  - also quoted in https://www.utstat.toronto.edu/brunner/oldclass/378f16/readings/CohenPower.pdf 
+  (page 40 – num 57/579)  
+  - also quoted in SAS documentation :
+  https://support.sas.com/resources/papers/proceedings12/335-2012.pdf  
 
 Why SMD ?  
 In the context clinical trials, the use of statistical tests to assess

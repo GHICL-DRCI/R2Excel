@@ -16,9 +16,9 @@ add_global_summary(effectif_tab, dt, variable_interest, digits = 1)
 \item{digits}{An integer}
 }
 \value{
-formated table of frequencies
+formatted table of frequencies
 }
 \description{
-Ajouter la colonne Population_total si demandée
+Add the Population_total column if requested
 }
 \keyword{internal}

@@ -15,13 +15,17 @@ compute_correlation_table(
 )
 }
 \arguments{
-\item{dataframe}{A data.frame, tibble or data.table will be converted into data.table.}
+\item{dataframe}{A data.frame, 
+tibble or data.table will be converted into data.table.}
 
-\item{vars}{A vector of characters. Names of dataframe's continuous columns to describe.}
+\item{vars}{A vector of characters.
+Names of dataframe's continuous columns to describe.}
 
-\item{varstrat}{A character. Always needed. Name of the continuous var to compute the correlation with.}
+\item{varstrat}{A character. Always needed. 
+Name of the continuous var to compute the correlation with.}
 
-\item{method_corr}{A character. Default "detect_auto" meaning the linear link will be detected if the R2 > 0.5.
+\item{method_corr}{A character. 
+Default "detect_auto" meaning the linear link will be detected if the R2 > 0.5.
 Otherwise, method to compute correlation is wanted "pearson", "spearman", "kendall".}
 
 \item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}

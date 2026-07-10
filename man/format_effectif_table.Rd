@@ -24,9 +24,9 @@ format_effectif_table(
 \item{keep_missing_line}{A logical}
 }
 \value{
-formated table of frequencies
+formatted table of frequencies
 }
 \description{
-Créer le tableau d'effectifs formaté
+Create the formatted count list
 }
 \keyword{internal}

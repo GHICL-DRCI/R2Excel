@@ -138,7 +138,7 @@ Tables for paired or longitudinal data, saved in Excel file
 \details{
 Create Excel file of descriptive analysis
 Provide descriptive Excel file for factorial (qualitative) 
-  and continuous (quantitative) data
+and continuous (quantitative) data
 Add statistical paired or longitudinal test according the time variable of stratification
 }
 \examples{

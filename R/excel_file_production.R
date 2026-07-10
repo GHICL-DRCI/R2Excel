@@ -84,11 +84,15 @@
 #' Content : 
 #' 
 #' "Variable"	: a given variable of interest, provided in the dataset, to describe.
-#' "Nb_mesures" : N (sample size) shown is the total number of observations for the given variable, not related to the varstrat (group). 
-#'   The '_N' shown for each levels give the sample size for each levels (with maybe missing data, so N is impacted).
+#' "Nb_mesures" : N (sample size) shown is the total number of observations 
+#' for the given variable, not related to the varstrat (group). 
+#' The '_N' shown for each levels give the sample size for each levels 
+#' (with maybe missing data, so N is impacted).
 #' "Valeurs_manquantes" : Number of missing values for the given variable.
 #' Population_totale	: Statistics for the whole dataset.
 #' varstrat=level_i : Statistics for the level i of the varstrat (group)
+#' IQR : Q3 - Q1
+#' SE : standard error 
 #' P_valeur : P-value.
 #' Test : Test related to the P-value
 #' Message : Message captured for the statistician's attention
@@ -203,7 +207,7 @@ save_excel_results <- function(
     # only select the first 2 columns? should remove others ? 
   }
   
-  #### Detect crossed varstrat ####
+  #### crossed_varstrat: Detect crossed varstrat ####
   if (is.null(varstrat[1]) || varstrat[1] %in% "") {
     # no varstrat
     varstrat <- ""
@@ -217,7 +221,6 @@ save_excel_results <- function(
       crossed_varstrat <- TRUE
       stopifnot(varstrat[2] %in% names(dataframe))
 
-      ## --here to test
       if (drop_levels) dataframe[[varstrat[2]]] <- droplevels(dataframe[[varstrat[2]]]) # v0.1.22
       if (nlevels(dataframe[[varstrat[2]]]) == 1) {
         varstrat <- varstrat[1] # no more 2nd var strat
@@ -254,6 +257,7 @@ save_excel_results <- function(
     dataframe <- droplevels(dataframe)
   }
 
+  ## Update params
   if((force_parametric_test | force_non_parametric_test) & !do_test) {
     if (verbose) message("Warning : you force test so do_test is turned TRUE")
     do_test <- TRUE
@@ -266,7 +270,9 @@ save_excel_results <- function(
     if (verbose) message("Warning : you want exact_p so do_test is turned TRUE")
     do_test <- TRUE
   } 
-  # = MODIFICATION : SMD et OR conditionnés à do_test = v 0.1.27
+  if (crossed_varstrat) show_p_adj <- FALSE # no adj p-values in cross varstrat situation
+  
+  # SMD and OR only if do_test = v0.1.27
   if (!do_test) {
     show_SMD <- FALSE
     show_OR <- FALSE
@@ -276,14 +282,14 @@ save_excel_results <- function(
     if (verbose) message("[save_excel_results] Warning : you want force_non_parametric_test so show_metric is turned median")
     show_metric <- "median"
   } 
-  #  reciproque ? if show_metric == "median", force_non_parametric_test ?? 
+  #  reverse ? if show_metric == "median", force_non_parametric_test ?? --here if wanted
   if (force_parametric_test) {
     if (verbose) message("[save_excel_results] Warning : you want force_parametric_test so show_metric is turned mean")
     show_metric <- "mean"
   }
-  #  reciproque ? if show_metric == "mean", force_parametric_test ?? 
+  #  reverse ? if show_metric == "mean", force_parametric_test ?? --here if wanted
   
-  
+
   vars <- setdiff(vars, varstrat) # do not desc the varstrat...
   dt <- data.table::setDT(data.table::copy(dataframe))
   if (is.null(varstrat[1]) || varstrat[1] %in% "") {
@@ -292,7 +298,7 @@ save_excel_results <- function(
     dt <- dt[, .SD, .SDcols = c(vars, varstrat)]
   }
   
-  #### Clear useless cols ####
+  #### tab_na_sheet_list: Clear useless columns ####
   
   ## remove vars (columns) with all NA # v0.1.22
   dt <- dt[, .SD, .SDcols = colSums(is.na(dt)) < nrow(dt)]
@@ -313,16 +319,16 @@ save_excel_results <- function(
     tab_na_sheet_list <- NULL
   }
 
-  #### Vars class ####
+  #### Check vars' class ####
   
   # Separation of variables quali / quanti / dates
   vars_quanti <- get_numerics(dt, vars = vars)
-  if (verbose && any(c("Q1", "Q3", "mean", "sd", "median", "min", "max") %in% vars_quanti)) {
+  if (verbose && any(c("mean", "sd", "median", "min", "max", "IQR") %in% vars_quanti)) {
     ## trouble... # reported by Klervi in v0.2.0
     message(
       "[save_excel_results] Warning : ", 
       "your dataset have some columns named like statistics ", 
-      "(mean, sd, median, min, max, Q1 or Q3), ", 
+      "(mean, sd, median, min, max or IQR), ", 
       "so we suggest to rename them in an other way...", 
       " to avoid troubles !"
     )
@@ -341,11 +347,11 @@ save_excel_results <- function(
   
   #### Variables quantitatives ####
   
-  
   if (length(vars_quanti) == 0) {
     ##### Skip variables quantitatives #####
     if (verbose) message("[save_excel_results] There is no quantitative variables")
     tab_quanti_sheet_list <- NULL
+    
   } else {
     
     ##### Call quanti_sheet #####
@@ -568,8 +574,7 @@ save_excel_results <- function(
     
 
   #### Show p adjusted ####
-  if (!do_test) show_p_adj <- FALSE # coherence... 
-  if (crossed_varstrat) show_p_adj <- FALSE # no pvalues in cross varstrat situation, so no padj ...
+  
   if (show_p_adj && !is.null(varstrat[[1]]) && !varstrat[[1]] %in% "") {
    
     if (verbose) message("[save_excel_results] show_p_adj")
@@ -585,7 +590,7 @@ save_excel_results <- function(
     ), use.names = TRUE, fill = TRUE)[
       !is.na(P_valeur),
     ][
-      order(P_valeur, decreasing = FALSE), # classés du plus bas au plus haut.
+      order(P_valeur, decreasing = FALSE), # sorted from the lowest to highest.
     ]
     tab_pval$P_adj_holm <- signif(stats::p.adjust(
       p = tab_pval$P_valeur, method = "holm"
@@ -636,6 +641,7 @@ save_excel_results <- function(
   }
 
   #### reFormat tab sheet ####
+  ## add label from dico_labels for instance... 
   
   if (crossed_varstrat) {
     ##### crossed_varstrat #####
@@ -668,10 +674,10 @@ save_excel_results <- function(
       tab_quanti_sheet_list <- list(tab_quanti_sheet_tab)
       names(tab_quanti_sheet_list) <- paste0("quanti-", varstrat[1], "-", varstrat[2])
     } else {
-      tab_quanti_sheet_list <- NULL ## --here v0.1.18
+      tab_quanti_sheet_list <- NULL ## --done v0.1.18
     }
 
-    if (!is.null(tab_quali_sheet_tab)) { ## --here v0.1.18
+    if (!is.null(tab_quali_sheet_tab)) { ## --done v0.1.18
 
       if (!is.null(dico_labels)) {
         
@@ -867,8 +873,8 @@ save_excel_results <- function(
     }
   }
   
-  #### Write Excel ####
-  if (verbose) message("[save_excel_results] Ends : write_xlsx")
+  #### End: Write Excel ####
+  if (verbose) message("[save_excel_results] Ends: write_xlsx")
   writexl::write_xlsx(
     x = c(
       tab_quanti_sheet_list,
@@ -961,7 +967,7 @@ quanti_sheet <- function(
   
   # message("[quanti_sheet]")
   
-  Variable <- Modalites <- Q1 <- Q3 <- NULL
+  Variable <- Modalites <- quantile1st <- quantile3rd <- NULL
   
   if (is.null(varstrat)) varstrat <- ""
   
@@ -971,8 +977,8 @@ quanti_sheet <- function(
     ###### Describe ######
     mm <- ifelse(
       is.null(varstrat_i) || varstrat_i %in% "",
-      paste0("[quanti_sheet] without varstat"),
-      paste0("[quanti_sheet] with varstat : ", varstrat_i)
+      paste0("[quanti_sheet] without varstrat"),
+      paste0("[quanti_sheet] with varstrat : ", varstrat_i)
     )
     if (verbose) message(mm)
     
@@ -997,8 +1003,8 @@ quanti_sheet <- function(
         vars = vars_quanti,
         varstrat = varstrat_i,
         stats_choice = c(
-          "mean", "sd", "median", "Q1", "Q3", "min", "max", "N", 
-          "Valeurs_manquantes", "Nb_mesures", "is_Normal"
+          "mean", "sd", "median", "quantile1st", "quantile3rd", "IQR", "min", "max", "N", 
+          "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
         ),
         # all stats are excepted in excel workbook function
         precision = precision, 
@@ -1020,7 +1026,7 @@ quanti_sheet <- function(
       
       tab_quanti_sheet <- tab_quanti_sheet[, `:=`(
         `Moy +/- Sd` = paste0(as.character(mean), " +/- ", as.character(sd)),
-        `Med [Q1;Q3]` = paste0(median, " [", Q1, ";", Q3, "]"),
+        `Med [Q1;Q3]` = paste0(median, " [", quantile1st, ";", quantile3rd, "]"),
         `Min - Max` = paste0(min, " - ", max)
       )]
       
@@ -1028,11 +1034,11 @@ quanti_sheet <- function(
         ##### no varstrat = no test #####
         tab_quanti_sheet <- tab_quanti_sheet[, .SD, .SDcols = c(
           "Variable", "Nb_mesures", "Valeurs_manquantes",
-          "Moy +/- Sd", "Med [Q1;Q3]", "Min - Max", "is_Normal"
+          "Moy +/- Sd", "Med [Q1;Q3]", "IQR", "Min - Max", "SE", "is_Normal"
         )]
       } else { 
         
-        ## CAS : Varstrat continuous → Tests possibles = 
+        ## case: Varstrat continuous → Tests possibles = 
         
         # is.numeric(dataframe[[varstrat_i]])
         
@@ -1061,7 +1067,8 @@ quanti_sheet <- function(
       
     } else {
       
-      ## CAS : Varstrat factorial → Tests possibles ==
+      ## Case : Varstrat factorial → Tests possibles =
+      
       ##### stat test varstrat factorial #####
       
       # = MODIFICATION : Conditionner les tests à do_test = V0.1.27
@@ -1100,12 +1107,12 @@ quanti_sheet <- function(
           )
           tmp$Med_q1_q3 <- ifelse(
               is.na(tmp$median),
-              "/", paste0(tmp$median, " [", tmp$Q1, ";", tmp$Q3, "]")
+              "/", paste0(tmp$median, " [", tmp$quantile1st, ";", tmp$quantile3rd, "]")
           )
           
-          # = MODIFICATION : Choix métrique basé sur test (si do_test) = v 0.1.27
+          # Metric selection based on test (if do_test)  = v 0.1.27
           if (do_test) {
-            # Logique existante basée sur le test
+            # Existing test-based logic
             cell_auto <- ifelse(
               test = tab_test[Variable %in% var_i, "Test"] %in%
                 c("Wilcoxon rank sum exact test (Mann-Whitney)", 
@@ -1114,8 +1121,8 @@ quanti_sheet <- function(
               no = "Mean_sd" # default show means if no test
             )
           } else {
-            # Sans test : utiliser is_Normal de la description
-            # Récupérer is_Normal depuis tmp
+            # No test : use is_Normal for description
+            # get is_Normal from tmp
             is_normal_var <- tmp$is_Normal[1]
             cell_auto <- ifelse(
               test = is.na(is_normal_var) || !is_normal_var,
@@ -1188,8 +1195,9 @@ quanti_sheet <- function(
           
           tmp2 <- merge(tmp2, tmp2_N, by = "Variable")
           # names(tmp2) <- gsub(varstrat_i, paste0(varstrat_i, "="), names(tmp2))
-          # pb gsub remplace toutes les occurences... 
-          # v0.1.27 = sub va remplacer uniquement la premiere occurence (si SOIN=SOIN 1, par exemple)
+          
+          # problem gsub remplace all occurences... 
+          # v0.1.27 = sub will replace only the first occurence (if SOIN=SOIN 1, for instance)
           names(tmp2) <- sub(paste0("^", varstrat_i), paste0(varstrat_i, "="), names(tmp2))
           # order "Population_totale"
           
@@ -1200,7 +1208,7 @@ quanti_sheet <- function(
           # tmp2 <- tmp2[, .SD, .SDcols = c(alpha_order)]
           # order following levels' order # v1.26 : 13/10/2025
           
-          # Réorganiser les colonnes
+          # Reorder the columns
           cols_order <- unlist(lapply(
             X = paste0(varstrat_i, "=", levels(dataframe[[varstrat_i]])),
             FUN = function(x) paste0(x, c("", "_N")))
@@ -1389,7 +1397,7 @@ quali_sheet <- function(
     verbose
 ) {
   # message("[quali_sheet]")
-  Variable <- p <- Modalites <- Q1 <- Q3 <- Nb_mesures <- NULL
+  Variable <- p <- Modalites <- quantile1st <- quantile3rd <- Nb_mesures <- NULL
   
   ##### Classique : No crossed #####
   
@@ -1415,8 +1423,8 @@ quali_sheet <- function(
           vars = varstrat_i,
           varstrat = quali_i_var,
           stats_choice = c(
-            "mean", "sd", "median", "Q1", "Q3", "min", "max", "N",
-            "Valeurs_manquantes", "Nb_mesures", "is_Normal"
+            "mean", "sd", "median", "quantile1st", "quantile3rd", "IQR", "min", "max", "N",
+            "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
           ),
           # all stats are excepted in excel workbook function
           precision = precision, 
@@ -1444,9 +1452,7 @@ quali_sheet <- function(
     # format outputs tab_quali_sheet
     if (is.null(varstrat_i) || varstrat_i %in% "") {
       
-      ## CAS : Pas de varstrat → Pas de test ==
-      
-      # no varstrat, no test...
+      ## Case : no varstrat, no test...
       pvaleur_quali <- NULL
       tab_quali_sheet <- data.table::rbindlist(
         l = lapply(
@@ -1486,12 +1492,11 @@ quali_sheet <- function(
       
     } else {
       
-      ## CAS : Varstrat présent → Tests possibles ==
-      # == MODIFICATION : Conditionner les tests à do_test =
+      ## Case : Varstrat is there = Tests possible, if do_test =
       
       if (do_test) {
         
-        ##### AVEC TESTS #####
+        ##### With TESTS #####
         
         if (is.numeric(dataframe[[varstrat_i]])) {
           # numeric varstrat..
@@ -1560,10 +1565,10 @@ quali_sheet <- function(
               
               tmp <- tmp[, `:=`(
                 `Mean_sd` = paste0(mean, " +/- ", sd),
-                `Med_q1_q3` = paste0(median, " [", Q1, ";", Q3, "]"),
+                `Med_q1_q3` = paste0(median, " [", quantile1st, ";", quantile3rd, "]"),
                 `Min - Max` = paste0(min, " - ", max)
               )]
-              # = MODIFICATION : Choix métrique basé sur test (si do_test) = v0.1.27
+              # Metric selection based on testing (if do_test) = v0.1.27
               if (do_test) {
                 
                 cell_auto <- ifelse(
@@ -1575,7 +1580,7 @@ quali_sheet <- function(
                 )
                 
               } else {
-                # Sans test : utiliser is_Normal
+                # No test : use is_Normal
                 is_normal_var <- tmp$is_Normal[1]
                 cell_auto <- ifelse(
                   test = is.na(is_normal_var) || !is_normal_var,
@@ -1600,7 +1605,7 @@ quali_sheet <- function(
                 "N", "Nb_mesures", "Valeurs_manquantes", 
                 # "Mean_sd", "Med_q1_q3" # select one of them
                 cell_content
-                # , "Min - Max", "is_Normal" # nor return with varstrat
+                # , "Min - Max", "is_Normal" # not returned with varstrat
               )]
               
               tmp[Nb_mesures %in% "0", cell_content] <- "/" # if n = 0, NaN +/- NA replace by "/"
@@ -1613,7 +1618,7 @@ quali_sheet <- function(
           fill = TRUE
         )
         
-        # ===== MODIFICATION : Merger tab_test UNIQUEMENT si do_test = TRUE =====
+        # Merger tab_test only of do_test = TRUE =
         if (do_test) {
           if (is.null(tab_test)) {
             stop("[quali_sheet] ERREUR INTERNE: tab_test est NULL alors que do_test = TRUE")
@@ -1660,7 +1665,7 @@ quali_sheet <- function(
               
               levels_i_names <- gsub("^n(.*)", "\\1", levels_i_n)
               
-              # --here 0.1.27 keep N as col
+              # --done 0.1.27 keep N as col
               tmp2_N <- tmp[
                 Modalites %in% "Nb_mesures",
                 .SD, .SDcols = c(
@@ -1760,7 +1765,7 @@ quali_sheet <- function(
           fill = TRUE
         )
         
-        ## = MODIFICATION : SMD et OR conditionnés à do_test =
+        ## SMD et OR if do_test
         if (do_test) {
           
           ##### Show SMD #####

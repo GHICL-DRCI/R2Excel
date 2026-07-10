@@ -20,7 +20,8 @@ A table of SMD values for each vars.
 see more details of interpretations and use cases in `compute_SMD_table` documentation.
 }
 \details{
-FYI : Not called in `compute_SMD_table` because `smd_bin` provides same results than `smd_cat` in binary cases.
+FYI : Not called in `compute_SMD_table` because `smd_bin` provides same
+ results than `smd_cat` in binary cases.
 }
 \examples{
 \dontrun{

@@ -17,7 +17,8 @@ smd_num(dataframe, varstrat, vars)
 A table of SMD values for each vars.
 }
 \description{
-see more details of interpretations and use cases in `compute_SMD_table` documentation.
+see more details of interpretations and
+ use cases in `compute_SMD_table` documentation.
 }
 \examples{
 \dontrun{

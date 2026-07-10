@@ -18,9 +18,13 @@
 #' (https://cran.r-project.org/web/packages/stddiff/index.html)  
 #' 
 #' Reading of thresholds are based on :  
-#'   - Cohen, J. (1988).  Cohen J. Statistical Power Analysis for the Behavioral Sciences (2nd ed). Lawrence Erlbaum Associates Publishers: Hillsdale, NJ.   
-#'   - also quoted in https://www.utstat.toronto.edu/brunner/oldclass/378f16/readings/CohenPower.pdf (page 40 – num 57/579)  
-#'   - also quoted in SAS documentation : https://support.sas.com/resources/papers/proceedings12/335-2012.pdf  
+#'   - Cohen, J. (1988). 
+#'   Cohen J. Statistical Power Analysis for the Behavioral Sciences (2nd ed). 
+#'   Lawrence Erlbaum Associates Publishers: Hillsdale, NJ.   
+#'   - also quoted in https://www.utstat.toronto.edu/brunner/oldclass/378f16/readings/CohenPower.pdf 
+#'   (page 40 – num 57/579)  
+#'   - also quoted in SAS documentation :
+#'   https://support.sas.com/resources/papers/proceedings12/335-2012.pdf  
 #' 
 #' Why SMD ?  
 #' In the context clinical trials, the use of statistical tests to assess
@@ -41,7 +45,8 @@
 #'   numeric class (important). will be converted as data.table inside functions.
 #' 
 #' @param vars A vector of characters. Names of dataframe's columns.
-#' @param varstrat A character. Default NULL. Name of the stratification variable, making groups to compare.
+#' @param varstrat A character. 
+#' Default NULL. Name of the stratification variable, making groups to compare.
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #'   Integer indicating the number of decimal places (round).
 #'   
@@ -117,7 +122,8 @@ compute_SMD_table <- function(
 
 #' Standardized mean difference for numeric (continuous) variables
 #' 
-#' see more details of interpretations and use cases in `compute_SMD_table` documentation.
+#' see more details of interpretations and
+#'  use cases in `compute_SMD_table` documentation.
 #' 
 #' @param dataframe A data.frame. tibble or data.table
 #' @param vars A vector of characters. Names of dataframe's columns.
@@ -248,7 +254,8 @@ smd_cat <- function (dataframe, varstrat, vars) {
 #' 
 #' see more details of interpretations and use cases in `compute_SMD_table` documentation.
 #' 
-#' FYI : Not called in `compute_SMD_table` because `smd_bin` provides same results than `smd_cat` in binary cases.
+#' FYI : Not called in `compute_SMD_table` because `smd_bin` provides same
+#'  results than `smd_cat` in binary cases.
 #' 
 #' @param dataframe A data.frame. tibble or data.table
 #' @param vars A vector of characters. Names of dataframe's columns.

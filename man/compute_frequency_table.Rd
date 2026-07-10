@@ -27,6 +27,6 @@ compute_frequency_table(
 table of frequencies
 }
 \description{
-Calculer le tableau de fréquences avec effectifs et pourcentages
+Calculate the frequency table using counts and percentages
 }
 \keyword{internal}

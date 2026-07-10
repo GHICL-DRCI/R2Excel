@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_factors}
 \alias{get_factors}
-\title{get factors}
+\title{get_factors}
 \usage{
 get_factors(dataframe, vars = colnames(dataframe))
 }
@@ -15,7 +15,7 @@ get_factors(dataframe, vars = colnames(dataframe))
 A vector of characters : the names of factorial columns
 }
 \description{
-provide the names of factorial columns
+get factors : provide the names of factorial columns
 }
 \examples{
 \dontrun{

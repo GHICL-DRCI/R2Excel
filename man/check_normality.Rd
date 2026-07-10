@@ -2,18 +2,19 @@
 % Please edit documentation in R/utils.R
 \name{check_normality}
 \alias{check_normality}
-\title{Tester la normalité avec gestion d'erreurs}
+\title{check_normality}
 \usage{
 check_normality(x, return_messages = FALSE)
 }
 \arguments{
-\item{x}{Vecteur numérique à tester}
+\item{x}{Numeric vector to test}
 
-\item{return_messages}{Logical, retourner les messages d'erreur ?}
+\item{return_messages}{Logical, Should error messages be returned?}
 }
 \value{
-Logical (normalité) ou liste avec is_normal et message
+Logical (normality) or
+ list with is_normal the logical and its message
 }
 \description{
-Tester la normalité avec gestion d'erreurs
+Testing for normality with error handling
 }

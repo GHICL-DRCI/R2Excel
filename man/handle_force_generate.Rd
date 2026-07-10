@@ -14,9 +14,9 @@ handle_force_generate(dt, variable_interest, force_generate_1_when_0)
 \item{force_generate_1_when_0}{A logical}
 }
 \value{
-Liste avec var_levels et var_nlevels mis à jour, et dt modifié
+List with updated var_levels and var_nlevels, and modified dt
 }
 \description{
-Gérer force_generate_1_when_0
+handle force_generate_1_when_0
 }
 \keyword{internal}

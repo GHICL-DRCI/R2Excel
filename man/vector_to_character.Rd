@@ -2,22 +2,24 @@
 % Please edit documentation in R/utils.R
 \name{vector_to_character}
 \alias{vector_to_character}
-\title{vector to character}
+\title{vector_to_character}
 \usage{
 vector_to_character(vector, sep = ",", NULL_value = character(0))
 }
 \arguments{
 \item{vector}{A vector wanted to be transformed.}
 
-\item{sep}{A character string to separate the terms. Not NA_character_. Default ",".}
+\item{sep}{A character string to separate the terms. Not NA_character_.
+Default ",".}
 
-\item{NULL_value}{A character null. Default character(0). Return when not applicabe.}
+\item{NULL_value}{A character null. Default character(0).
+Return when not applicable.}
 }
 \value{
 A character
 }
 \description{
-transformation of a vector into a text
+transformation of a vector into a text (character)
 }
 \examples{
 \dontrun{ 

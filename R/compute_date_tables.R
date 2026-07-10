@@ -39,7 +39,7 @@ compute_date_table <- function(
   varstrat = NULL, 
   verbose = TRUE
 ) {
-  # v0.1.24
+
   # message("[compute_date_table]")
   dataframe <- as.data.frame(dataframe)
   ## stops

@@ -29,7 +29,7 @@ test_that("test dim in conti tab", {
   )
   expect_identical(
     colnames(res_conti_tabs[[1]]),
-    c("mean", "sd", "median", "Q1", "Q3", "min", "max",
+    c("mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max",
       "SE", "IQR","N", "Valeurs_manquantes",
       "Nb_mesures", "is_Normal") # default
   )
@@ -52,12 +52,12 @@ test_that("test values in conti tab", {
 
   # Q1 et Q3
   expect_equal(
-    res_conti_tabs[[1]][1, "Q1"],
+    res_conti_tabs[[1]][1, "quantile1st"],
     unname(quantile(modified_state[[vars_wanted[1]]])["25%"]),
     tolerance = 0.1
   )
   expect_equal(
-    res_conti_tabs[[1]][1, "Q3"],
+    res_conti_tabs[[1]][1, "quantile3rd"],
     unname(quantile(modified_state[[vars_wanted[1]]])["75%"]),
     tolerance = 0.1
   )
@@ -207,6 +207,32 @@ test_that("test precision", {
 
 })
 
+#### #### Test var names = Q1/Q3 ####
+
+iris_mod <- iris
+names(iris_mod)[names(iris_mod) == "Sepal.Length"] <- "Q1"
+names(iris_mod)[names(iris_mod) == "Sepal.Width"]  <- "Q3"
+
+res_trap_q1q3 <- compute_continuous_table(
+  dataframe = iris_mod,
+  vars = names(iris_mod)[names(iris_mod) != "Species"], # num only
+  precision = 2
+)
+
+test_that("test trap variable named Q1 or Q3", {
+  
+  #  "Q1" variable should keep stats  
+  expect_equal(
+    res_trap_q1q3["Q1", "quantile1st"][[1]],
+    round(unname(quantile(iris$Sepal.Length, 0.25)), 2)
+  )
+  # "Q3" variable should keep stats  
+
+  expect_equal(
+    res_trap_q1q3["Q3", "quantile3rd"][[1]],
+    round(unname(quantile(iris$Sepal.Width, 0.75)), 2)
+  )
+})
 
 #### shapi ####
 
@@ -516,7 +542,7 @@ test_that("compute_continuous_table returns correct structure", {
   
   expect_true(is.list(result))
   expect_true(all(
-    c("mean", "sd", "median", "Q1", "Q3", 
+    c("mean", "sd", "median", "quantile1st", "quantile3rd", 
       "Valeurs_manquantes", "Nb_mesures") %in% names(result)))
   expect_true(all(sapply(result, is.numeric)))
 })
@@ -530,8 +556,8 @@ test_that("compute_continuous_table calculates correct statistics", {
   
   expect_equal(result$mean, 30)
   expect_equal(result$median, 30)
-  expect_equal(result$Q1[[1]], 20)
-  expect_equal(result$Q3[[1]], 40)
+  expect_equal(result$quantile1st[[1]], 20)
+  expect_equal(result$quantile3rd[[1]], 40)
   expect_equal(result$Valeurs_manquantes, 0)
   expect_equal(result$Nb_mesures, 5)
 })

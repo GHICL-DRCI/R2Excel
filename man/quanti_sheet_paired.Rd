@@ -21,10 +21,12 @@ quanti_sheet_paired(
 )
 }
 \arguments{
-\item{dataframe}{A data.frame. tibble or data.table will be converted into data.table.
+\item{dataframe}{A data.frame.
+tibble or data.table will be converted into data.table.
 Columns must be well formated with factor or numeric class (important).}
 
-\item{vars_quanti}{Vector of characters. Subset of vars : vector of quantitative variable names}
+\item{vars_quanti}{Vector of characters. Subset of vars :
+vector of quantitative variable names}
 
 \item{varstrat}{A characters. Not null. Names of the stratification variable, 
 making groups to compare (*time* or *visits* for instance).
