@@ -8,8 +8,8 @@ compute_continuous_table(
   dataframe,
   vars = setdiff(colnames(dataframe), varstrat),
   varstrat = NULL,
-  stats_choice = c("mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR", "N",
-    "Valeurs_manquantes", "Nb_mesures", "is_Normal"),
+  stats_choice = c("mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max",
+    "SE", "IQR", "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal"),
   precision = "auto",
   verbose = TRUE
 )
@@ -24,7 +24,7 @@ making groups to compare.}
 
 \item{stats_choice}{A vector of characters. Default provide all usual statistics
 to describe continuous variables,
-namely 'c("mean", "sd", "median", "Q1", "Q3", "min", "max", "SE", "IQR",
+namely 'c("mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max", "SE", "IQR",
 "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal")'}
 
 \item{precision}{Precision mode: "auto" (adaptive) or numeric (fixed)}

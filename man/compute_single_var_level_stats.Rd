@@ -25,7 +25,7 @@ compute_single_var_level_stats(
 }
 \value{
 Data.frame with one row containing:
- mean, sd, median, Q1, Q3,
+ mean, sd, median, quantile1st (Q1), quantile3rd(Q3),
  min, max, SE, IQR, N, Valeurs_manquantes, Nb_mesures, is_Normal
 }
 \description{
