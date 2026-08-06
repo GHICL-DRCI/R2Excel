@@ -9,15 +9,16 @@
 #' Internal function that calculates all descriptive statistics for one continuous
 #' variable, with optional filtering by stratification level.
 #'
-#' @param var_name Variable name (character)
 #' @param dataframe Data.frame containing the data
+#' @param var_name Variable name (character)
 #' @param level Stratification level (NULL for global population)
 #' @param varstrat Stratification variable name (NULL if none)
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #'
 #' @return Data.frame with one row containing:
-#'  mean, sd, median, quantile1st (Q1), quantile3rd(Q3),
-#'  min, max, SE, IQR, N, Valeurs_manquantes, Nb_mesures, is_Normal
+#'  mean, sd, median, quantile1st (Q1), quantile3rd (Q3),
+#'  min, max, SE, IQR, N, 
+#'  Valeurs_manquantes, Nb_mesures, is_Normal, has_outliers
 #'
 #' @keywords internal
 #' @examples
@@ -57,24 +58,29 @@ compute_single_var_level_stats <- function(
   stopifnot(precision == "auto" || is.numeric(precision))
   
   # Data extraction by level
-  if (is.null(level)) {
-    x <- dataframe[[var_name]]
-  } else {
-    x <- dataframe[dataframe[[varstrat]] == level, var_name]
+  if (!is.null(level)) {
+    dataframe <- data.table::copy(dataframe)[dataframe[[varstrat]] %in% level, ]
   }
   
   # Determine which digits to use
   if (precision %in% "auto") {
-    base_decimals <- detect_decimal_places(x)
-    digits_central <- compute_precision_digits(x, "central", base_decimals)
-    digits_sd <- compute_precision_digits(x, "sd", base_decimals, max_decimals = 3)
+    base_decimals <- detect_decimal_places(x = dataframe[[var_name]])
+    digits_central <- compute_precision_digits(
+      x = dataframe[[var_name]],
+      stat_type = "central", 
+      base_decimals = base_decimals
+    )
+    digits_sd <- compute_precision_digits(
+      x = dataframe[[var_name]], 
+      stat_type = "sd", base_decimals, max_decimals = 3
+    )
   } else {
     digits_central <- precision
     digits_sd <- precision
   }
   
   # Compute Shapiro test
-  tmp_shapi <- stats::na.omit(x)
+  tmp_shapi <- stats::na.omit(dataframe[[var_name]])
   if (length(unique(tmp_shapi)) == 1 || length(tmp_shapi) < 3) {
     shapiro_conclu <- NA
   } else {
@@ -86,21 +92,37 @@ compute_single_var_level_stats <- function(
     }
   }
   
+  # Detect outliers 
+  outliers_detected_res <- detect_outliers(
+    dt = dataframe, 
+    vars = var_name, 
+    method = "Tukey", 
+    threshold = NULL, 
+    summary = TRUE, 
+    verbose = FALSE
+  )
+  outliers_detected <- ifelse(
+    is.null(outliers_detected_res) || outliers_detected_res$N_outliers == 0,
+    yes = FALSE, 
+    no = TRUE
+  )
+  
   # Calculation of all statistics with appropriate accuracy
   stats_vec <- c(
-    mean = round(mean(x, na.rm = TRUE), digits_central),
-    sd = round(stats::sd(x, na.rm = TRUE), digits_sd),
-    median = round(stats::median(x, na.rm = TRUE), digits_central),
-    quantile1st = round(stats::quantile(x, 0.25, na.rm = TRUE), digits_central)[[1]],
-    quantile3rd = round(stats::quantile(x, 0.75, na.rm = TRUE), digits_central)[[1]],
-    min = round(ifelse(all(is.na(x)), NA, min(x, na.rm = TRUE)), digits_central),
-    max = round(ifelse(all(is.na(x)), NA, max(x, na.rm = TRUE)), digits_central),
-    SE = round(stats::sd(x, na.rm = TRUE), digits_sd) / sqrt(sum(!is.na(x))), 
-    IQR = round(stats::IQR(x, na.rm = TRUE), digits_central), 
-    N = length(x), # n total
-    Valeurs_manquantes = sum(is.na(x)), # missing
-    Nb_mesures = sum(!is.na(x)), # n mesures available =  n total - missing
-    is_Normal = shapiro_conclu
+    mean = round(mean(dataframe[[var_name]], na.rm = TRUE), digits_central),
+    sd = round(stats::sd(dataframe[[var_name]], na.rm = TRUE), digits_sd),
+    median = round(stats::median(dataframe[[var_name]], na.rm = TRUE), digits_central),
+    quantile1st = round(stats::quantile(dataframe[[var_name]], 0.25, na.rm = TRUE), digits_central)[[1]],
+    quantile3rd = round(stats::quantile(dataframe[[var_name]], 0.75, na.rm = TRUE), digits_central)[[1]],
+    min = round(ifelse(all(is.na(dataframe[[var_name]])), NA, min(dataframe[[var_name]], na.rm = TRUE)), digits_central),
+    max = round(ifelse(all(is.na(dataframe[[var_name]])), NA, max(dataframe[[var_name]], na.rm = TRUE)), digits_central),
+    SE = round(stats::sd(dataframe[[var_name]], na.rm = TRUE), digits_sd) / sqrt(sum(!is.na(dataframe[[var_name]]))), 
+    IQR = round(stats::IQR(dataframe[[var_name]], na.rm = TRUE), digits_central), 
+    N = length(dataframe[[var_name]]), # n total
+    Valeurs_manquantes = sum(is.na(dataframe[[var_name]])), # missing
+    Nb_mesures = sum(!is.na(dataframe[[var_name]])), # n mesures available =  n total - missing
+    is_Normal = shapiro_conclu, 
+    has_outliers = outliers_detected 
   )
   
   # line's name
@@ -128,8 +150,9 @@ compute_single_var_level_stats <- function(
 #'  making groups to compare.
 #' @param stats_choice A vector of characters. Default provide all usual statistics
 #'  to describe continuous variables,
-#'  namely 'c("mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max", "SE", "IQR",
-#'  "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal")'
+#'  namely 'c("mean", "sd", "median", "quantile1st", "quantile3rd", 
+#'  "min", "max", "SE", "IQR",
+#'  "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal", "has_outliers")'
 #' @param precision Precision mode: "auto" (adaptive) or numeric (fixed)
 #' @param verbose A logical, Default TRUE. Show message. 
 #'  Do you want to work in silence? Turn it FALSE.
@@ -154,10 +177,11 @@ compute_continuous_table <- function(
     vars = setdiff(colnames(dataframe), varstrat),
     varstrat = NULL,
     stats_choice = c(
-      "mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max", "SE", "IQR",
-      "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal"
+      "mean", "sd", "median", "quantile1st", "quantile3rd",
+      "min", "max", "SE", "IQR",
+      "N", "Valeurs_manquantes", "Nb_mesures", "is_Normal", "has_outliers"
     ),
-    precision = "auto",  # new v0.1.27
+    precision = "auto",
     verbose = TRUE
 ) {
   if (verbose) message("[compute_continuous_table]")
@@ -166,8 +190,9 @@ compute_continuous_table <- function(
   ## Validations
   stopifnot(all(vars %in% names(dataframe)))
   stopifnot(all(stats_choice %in% c(
-    "mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max", "N", "SE", "IQR",
-    "Valeurs_manquantes", "Nb_mesures", "is_Normal"
+    "mean", "sd", "median", "quantile1st", "quantile3rd",
+    "min", "max", "N", "SE", "IQR",
+    "Valeurs_manquantes", "Nb_mesures", "is_Normal", "has_outliers"
   )))
   stopifnot(precision == "auto" || is.numeric(precision))
   
@@ -430,6 +455,35 @@ compute_correlation_table <- function(
       )
     }
     
+    # Detect outliers 
+    outliers_detected_res <- detect_outliers(
+      dt = tmp_dt, 
+      vars = vari, 
+      method = "Tukey", 
+      threshold = NULL, 
+      summary = TRUE, 
+      verbose = verbose
+    )
+    outliers_detected <- ifelse(
+      is.null(outliers_detected_res) || outliers_detected_res$N_outliers == 0,
+      yes = FALSE, 
+      no = TRUE
+    )
+    outliers_detected_res_varstrat <- detect_outliers(
+      dt = tmp_dt, 
+      vars = varstrat, 
+      method = "Tukey", 
+      threshold = NULL, 
+      summary = TRUE, 
+      verbose = verbose
+    )
+    varstrat_outliers_detected <- ifelse(
+      is.null(outliers_detected_res_varstrat) || outliers_detected_res_varstrat$N_outliers == 0,
+      yes = FALSE, 
+      no = TRUE
+    )
+
+    ## Stat desc : 
     sumup <- unique(
       tmp_dt[, `:=`(
         varstrat = varstrat,
@@ -444,7 +498,9 @@ compute_correlation_table <- function(
         min = round(min(.SD[[1]], na.rm = TRUE), digits = digits),
         max = round(max(.SD[[1]], na.rm = TRUE), digits = digits),
         is_Normal = shapiro_conclu, # var i is normal
-        varstrat_is_Normal = varstrat_is_normal, # var strat is normal
+        has_outliers = outliers_detected, # v0.2.2 var i has some outliers
+        varstrat_is_Normal = varstrat_is_normal, # varstrat is normal
+        varstrat_has_outliers = varstrat_outliers_detected, # v0.2.2 varstrat has outliers
         correlation = round(corr_obj$estimate, digits = digits),
         IC95 = IC95,
         P_valeur = signif(corr_obj$p.value, digits = signif_digits),
@@ -630,7 +686,9 @@ simplify_binary_table <- function(
         vari_tab <- vari_tab[c("1", "Valeurs_manquantes", "Nb_mesures"), ]
       } else {
         # ignore.case for "oui"
-        row_select <- grep("OUI", rownames(vari_tab), ignore.case = TRUE, value = TRUE)
+        row_select <- grep(
+          "OUI", rownames(vari_tab), ignore.case = TRUE, value = TRUE
+        )
         vari_tab <- vari_tab[c(row_select, "Valeurs_manquantes", "Nb_mesures"), ]
       }
     }
