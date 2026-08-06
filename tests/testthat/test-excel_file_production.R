@@ -1,4 +1,4 @@
-message("test excel file prod - done v0.2.0")
+message("test excel file prod - done v0.2.2")
 
 dir.create("tmp", showWarnings = FALSE)
 
@@ -57,7 +57,9 @@ analyse_desc_quali_3 <- compute_factorial_table(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
-  varstrat = NULL, precision = 3, simplify = FALSE
+  varstrat = NULL,
+  precision = 3,
+  simplify = FALSE
 )
 analyse_desc_quanti_3 <- compute_continuous_table(
   dataframe = modified_state,
@@ -65,19 +67,24 @@ analyse_desc_quanti_3 <- compute_continuous_table(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ),
-  varstrat = NULL, precision = 3
+  varstrat = NULL,
+  precision = 3
 )
 
 test_that("final_novarstrat_file", {
 
   expect_true(file.exists(file.path("tmp", "03-test_final_novarstrat.xlsx")))
+  
+  ## check quanti
   expect_equal(nrow(tab_quanti_3), length(get_numerics(modified_state, vars = c(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
     "HS Grad", "Frost", "Area", "state.division", "state.region", "binary_test"
   ))))
-  expect_equal(ncol(tab_quanti_3), 9)
+  expect_equal(ncol(tab_quanti_3), 10)
   expect_equal(colnames(tab_quanti_3)[6], "IQR")
   expect_equal(colnames(tab_quanti_3)[8], "SE")
+  expect_equal(colnames(tab_quanti_3)[9], "is_Normal")
+  expect_equal(colnames(tab_quanti_3)[10], "has_outliers")
   expect_equal(
     tab_quanti_3$`Moy +/- Sd`[tab_quanti_3$Variable %in% "Area"],
     paste(round(mean(modified_state$Area, na.rm = TRUE), 3), "+/-",
@@ -85,6 +92,9 @@ test_that("final_novarstrat_file", {
   )
   expect_identical(round(analyse_desc_quanti_3$IQR, 3), round(tab_quanti_3$IQR, 3))
   expect_identical(round(analyse_desc_quanti_3$SE, 3), round(tab_quanti_3$SE, 3))
+  expect_equal(analyse_desc_quanti_3$has_outliers, tab_quanti_3$has_outliers)
+  
+  ## check quali
   expect_equal(length(na.omit(unique(tab_quali_3$Variable))), 
                length(get_factors(modified_state, vars = c(
     "Population", "Income", "Illiteracy", "Life Exp", "Murder",
@@ -343,7 +353,8 @@ path02 <- save_excel_results(
   ),
   varstrat = "election*binary_test",
   precision = 2,
-  detail_NB_measures = TRUE, verbose = FALSE
+  detail_NB_measures = TRUE,
+  verbose = FALSE
 )
 #  add test if no quali vers  :
 path03 <- save_excel_results(
@@ -453,7 +464,8 @@ path04 <- save_excel_results(
   show_p_adj = TRUE
 )
 sheet_padj <- readxl::read_excel(
-  file.path("tmp", "04-test_padj.xlsx"), sheet = "quantitative - election"
+  file.path("tmp", "04-test_padj.xlsx"), 
+  sheet = "quantitative - election"
 )
 
 test_that("test order p adj", {
@@ -540,10 +552,12 @@ sheet_yes_varstrat <- readxl::read_excel(
 
 test_that("test drop_levels", {
   expect_true(nrow(sheet_yes) + 1 == nrow(sheet_no))
-  expect_true(ncol(sheet_yes_varstrat)==9)
+  expect_true(ncol(sheet_yes_varstrat) == 10)
   expect_true(expect_true(nrow(sheet_yes_varstrat)==2))
   expect_equal(colnames(sheet_yes_varstrat)[6], "IQR")
   expect_equal(colnames(sheet_yes_varstrat)[8], "SE")
+  expect_equal(colnames(sheet_yes_varstrat)[9], "is_Normal")
+  expect_equal(colnames(sheet_yes_varstrat)[10], "has_outliers")
 })
 
 #### Variables_all_na ####
@@ -597,9 +611,12 @@ sheet_08quali <- readxl::read_excel(
 
 test_that("test labels", {
   expect_true(names(sheet_08quanti)[1] == "Label")
-  expect_true(sheet_08quanti$Label[1] == "Population size (nb)" & sheet_08quanti$Variable[1] == "Population")
-  expect_true(is.na(sheet_08quanti$Label[2])  & sheet_08quanti$Variable[2] == "Illiteracy")
-  expect_true(sheet_08quali$Label[1] == "State Division ???" & sheet_08quali$Variable[1] == "state.division")
+  expect_true(
+    sheet_08quanti$Label[1] == "Population size (nb)" & sheet_08quanti$Variable[1] == "Population")
+  expect_true(
+    is.na(sheet_08quanti$Label[2])  & sheet_08quanti$Variable[2] == "Illiteracy")
+  expect_true(
+    sheet_08quali$Label[1] == "State Division ???" & sheet_08quali$Variable[1] == "state.division")
   expect_equal(is.na(sheet_08quali$Label), is.na(sheet_08quali$Variable))
 })
 
@@ -943,7 +960,10 @@ test_that("force test", {
   
   # median [Q1 ; Q3] if non param 
   expect_true(all(grepl(";", tab_quanti_iris_forcenonparam$Population_totale)))
-  expect_equal(unique(tab_quanti_iris_forcenonparam$Test), "Wilcoxon rank sum exact test (Mann-Whitney)")
+  expect_equal(
+    unique(tab_quanti_iris_forcenonparam$Test),
+    "Wilcoxon rank sum exact test (Mann-Whitney)"
+  )
   # 3 normal groupe but still Wilcoxon test : 
   expect_true(
     nrow(tab_quanti_iris_forcenonparam[
