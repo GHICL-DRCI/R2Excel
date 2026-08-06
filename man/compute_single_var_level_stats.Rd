@@ -25,8 +25,9 @@ compute_single_var_level_stats(
 }
 \value{
 Data.frame with one row containing:
- mean, sd, median, quantile1st (Q1), quantile3rd(Q3),
- min, max, SE, IQR, N, Valeurs_manquantes, Nb_mesures, is_Normal
+ mean, sd, median, quantile1st (Q1), quantile3rd (Q3),
+ min, max, SE, IQR, N, 
+ Valeurs_manquantes, Nb_mesures, is_Normal, has_outliers
 }
 \description{
 Compute descriptive statistics for a single continuous variable (unit function)
