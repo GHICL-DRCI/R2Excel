@@ -1,3 +1,17 @@
+# Version 0.2.2
+
+05-06/08/2026
+
+## Improvement
+
+- Add a new function `detect_outliers` that can be called on a dataset to 
+  detect the presence of extreme numerical values.
+  
+- Add outliers detection summary in univariate description 
+  (call `detect_outliers` function). #17
+
+- Update in consequence : docs, unit tests, image in readme/inst (function dependency graph)
+
 # Version 0.2.1
 
 30/06/2026 - 10/07/2026

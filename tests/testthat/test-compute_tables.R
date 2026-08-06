@@ -1,4 +1,4 @@
-message("test compute tables - done v0.2.0") # classique
+message("test compute tables - done v0.2.2") # classique
 
 #### continuous tables ####
 
@@ -22,7 +22,7 @@ test_that("test multi conti list", {
 
 test_that("test dim in conti tab", {
   expect_equal(nrow(res_conti_tabs[[1]]), 3)
-  expect_equal(ncol(res_conti_tabs[[1]]), 13)
+  expect_equal(ncol(res_conti_tabs[[1]]), 14)
   expect_identical(
     rownames(res_conti_tabs[[1]]),
     c("Population", paste0(varstrat_wanted, unique(modified_state$election)))
@@ -31,7 +31,7 @@ test_that("test dim in conti tab", {
     colnames(res_conti_tabs[[1]]),
     c("mean", "sd", "median", "quantile1st", "quantile3rd", "min", "max",
       "SE", "IQR","N", "Valeurs_manquantes",
-      "Nb_mesures", "is_Normal") # default
+      "Nb_mesures", "is_Normal", "has_outliers") # default
   )
 })
 
@@ -244,17 +244,29 @@ res_shapi <- compute_continuous_table(
   vars = c("Population", "twovalues"),
   varstrat = "election"
 )
-# mentione as "warning" : # message d'avis
+# mentionne as "warning" : # message d'avis
 modified_state$twovalues <- NULL
 
 test_that("test shapi no error", {
   expect_equal(length(res_shapi), 2)
   expect_equal(nrow(res_shapi[[1]]), 3)
   expect_equal(nrow(res_shapi[[2]]), 3)
-  expect_equal(ncol(res_shapi[[1]]), 13) 
-  expect_equal(ncol(res_shapi[[2]]), 13) 
+  expect_equal(ncol(res_shapi[[1]]), 14) 
+  expect_equal(ncol(res_shapi[[2]]), 14) 
   expect_true(all(res_shapi[[1]]$is_Normal %in% 0))
   expect_true(all(is.na(res_shapi[[2]]$is_Normal)))
+})
+
+#### test has outliers ####
+
+# bx <- boxplot(modified_state$Area, modified_state$election)
+# bx$out
+# bx <- boxplot(modified_state$Murder, modified_state$election)
+# bx$out
+
+test_that("test has outliers", {
+  expect_equal(res_conti_tabs$Area$has_outliers, c(1,1,0))
+  expect_equal(res_conti_tabs$Murder$has_outliers, c(0,0,0))
 })
 
 
@@ -439,11 +451,19 @@ corr_tab <- compute_correlation_table(
 )
 test_that("test correlation tab", {
   expect_equal(nrow(corr_tab), 6)
+  expect_equal(ncol(corr_tab), 20)
   tmp <- corr_tab[
     (!corr_tab$is_Normal | !corr_tab$varstrat_is_Normal),
   ]
   expect_true(all(tmp$correlation_method %in% "spearman"))
-
+  expect_true(
+    all(c("is_Normal", "has_outliers", "varstrat_is_Normal", "varstrat_has_outliers")
+    %in% names(corr_tab))
+  )
+  expect_equal(
+    res_conti_tabs$Frost$has_outliers[1],
+    as.numeric(corr_tab$has_outliers[corr_tab$Variable %in% "Frost"])
+  )
   val1 <- cor(modified_state$Area, modified_state$Population, method = "spearman")
   expect_equal(
     round(val1, 2),

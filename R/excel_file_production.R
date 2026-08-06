@@ -85,17 +85,20 @@
 #' 
 #' "Variable"	: a given variable of interest, provided in the dataset, to describe.
 #' "Nb_mesures" : N (sample size) shown is the total number of observations 
-#' for the given variable, not related to the varstrat (group). 
+#'   for the given variable, not related to the varstrat (group). 
 #' The '_N' shown for each levels give the sample size for each levels 
-#' (with maybe missing data, so N is impacted).
+#'   (with maybe missing data, so N is impacted).
 #' "Valeurs_manquantes" : Number of missing values for the given variable.
-#' Population_totale	: Statistics for the whole dataset.
+#' Population_totale : Statistics for the whole dataset.
 #' varstrat=level_i : Statistics for the level i of the varstrat (group)
-#' IQR : Q3 - Q1
-#' SE : standard error 
 #' P_valeur : P-value.
 #' Test : Test related to the P-value
 #' Message : Message captured for the statistician's attention
+#' 
+#' In univariate description, we will have detail about extra stat
+#' IQR : Q3 - Q1
+#' SE : standard error 
+#' min, max, is_Normal, has_outliers... 
 #' 
 #' @export
 #' @import data.table
@@ -1003,8 +1006,9 @@ quanti_sheet <- function(
         vars = vars_quanti,
         varstrat = varstrat_i,
         stats_choice = c(
-          "mean", "sd", "median", "quantile1st", "quantile3rd", "IQR", "min", "max", "N", 
-          "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
+          "mean", "sd", "median", "quantile1st", "quantile3rd",
+          "IQR", "min", "max", "N", 
+          "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal", "has_outliers"
         ),
         # all stats are excepted in excel workbook function
         precision = precision, 
@@ -1034,7 +1038,8 @@ quanti_sheet <- function(
         ##### no varstrat = no test #####
         tab_quanti_sheet <- tab_quanti_sheet[, .SD, .SDcols = c(
           "Variable", "Nb_mesures", "Valeurs_manquantes",
-          "Moy +/- Sd", "Med [Q1;Q3]", "IQR", "Min - Max", "SE", "is_Normal"
+          "Moy +/- Sd", "Med [Q1;Q3]", "IQR", "Min - Max", "SE",
+          "is_Normal", "has_outliers"
         )]
       } else { 
         
@@ -1423,8 +1428,10 @@ quali_sheet <- function(
           vars = varstrat_i,
           varstrat = quali_i_var,
           stats_choice = c(
-            "mean", "sd", "median", "quantile1st", "quantile3rd", "IQR", "min", "max", "N",
-            "Valeurs_manquantes", "Nb_mesures", "SE", "is_Normal"
+            "mean", "sd", "median", "quantile1st", "quantile3rd", 
+            "SE", "IQR", "min", "max", "N",
+            "Valeurs_manquantes", "Nb_mesures", 
+            "is_Normal", "has_outliers"
           ),
           # all stats are excepted in excel workbook function
           precision = precision, 

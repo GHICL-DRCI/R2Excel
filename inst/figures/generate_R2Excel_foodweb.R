@@ -1,40 +1,50 @@
+# README : 
+
 # Pour faire un schéma fonctionnel des fonctions qui appelle les fonctions... 
 # pour expliquer les dépendances entre les fonctions dans le pkg et
 # aider quand on fait un changement, à aller voir les répercutions
 
+## step 1 : close the current project...
+## step 2 : exec following code
+## step 3 : move the final image R2Excel_foodweb.png into inst/figures/
+
 pkg_path <- "X:/DRCI Methodologie/BIOSTATISTIQUES/R2Excel"
+setwd(pkg_path)
 
-####  foodweb ####
-## du package mvbutils
+#### it works ####
 
+# Option final : foodweb du package mvbutils (le plus visuel)
 # install.packages("mvbutils")
 library(mvbutils)
 
 # Charger ton package
 library(R2Excel)
-packageVersion("R2Excel") # ‘0.2.0’
-# Générer le schéma fonctionnel
-?foodweb()
+packageVersion("R2Excel") # ‘0.2.2’
 
-# Partir d'une fonction spécifique
-foodweb(
-  where = "package:R2Excel",
-  prune = "save_excel_results",  
-  descendents = TRUE
-)
-foodweb(
-  where = "package:R2Excel",
-  prune = "save_excel_paired_results",
-  descendents = TRUE
-)
-foodweb(
-  where = "package:R2Excel",
-  descendents = TRUE, 
-  recursive = TRUE
-)
-foodweb(
-  where = "package:R2Excel"
-)
+if (FALSE) { # just to test foodweb function... 
+  # Générer le schéma fonctionnel
+  ?foodweb()
+  
+  # Partir d'une fonction spécifique
+  foodweb(
+    where = "package:R2Excel",
+    prune = "save_excel_results",  
+    descendents = TRUE
+  )
+  foodweb(
+    where = "package:R2Excel",
+    prune = "save_excel_paired_results",
+    descendents = TRUE
+  )
+  foodweb(
+    where = "package:R2Excel",
+    descendents = TRUE, 
+    recursive = TRUE
+  )
+  foodweb(
+    where = "package:R2Excel"
+  )
+}
 
 ## A) Ajouter dans quel script se trouve quel fonction 
 
@@ -75,21 +85,23 @@ func_file_map[order(file), ]
 
 dput(unique(func_file_map$file))
 # c("compute_date_tables.R", "compute_OR_tables.R", "compute_paired_tables.R", 
-#   "compute_SMD_tables.R", "compute_tables.R", "excel_file_paired_production.R", 
-#   "excel_file_production.R", "tests_stats.R", "utils.R")
+# "compute_SMD_tables.R", "compute_tables.R", "detect_outliers.R", 
+# "excel_file_paired_production.R", "excel_file_production.R", 
+# "tests_stats.R", "utils.R")
 
 file_colors <- c(
-  "excel_file_production.R"        = "#E74C3C",  # Rouge
-  "excel_file_paired_production.R" = "#E67E22",  # Orange
-  "compute_tables.R"               = "#3498DB",  # Bleu
-  "compute_paired_tables.R"        = "#2980B9",  # Bleu foncé
-  "compute_SMD_tables.R"           = "#27AE60",  # Vert
-  "compute_OR_tables.R"            = "#2ECC71",  # Vert clair
+  "excel_file_production.R"        = "#E74C3C",  # Rouge vif
+  "excel_file_paired_production.R" = "#FF69B4",  # Rose fuchsia
+  "compute_tables.R"               = "#3498DB",  # Bleu ciel
+  "compute_paired_tables.R"        = "#1A237A",  # Bleu marine profond
+  "compute_SMD_tables.R"           = "#27AE60",  # Vert émeraude
+  "compute_OR_tables.R"            = "#CDDC39",  # Jaune-vert citron
   "compute_date_tables.R"          = "#9B59B6",  # Violet
-  "tests_stats.R"                  = "#F39C12",  # Jaune
-  "utils.R"                        = "#95A5A6"   # Gris
+  "detect_outliers.R"              = "#FF6F00",  # Orange brûlé
+  "tests_stats.R"                  = "#F1C40F",  # Jaune soleil
+  "utils.R"                        = "#607D8B"   # Gris bleuté
 )
-
+# scales::show_col(file_colors)
 
 # Construire le mapping fonction → fichier + couleur
 r_files <- list.files(
@@ -193,3 +205,7 @@ dev.off()
 
 message("Graph sauvegardé : R2Excel_foodweb.png. ici : ")
 message(getwd())
+
+message("Si ok, à déplacer dans le dossier inst/figures/ ")
+# warning : ne trace pas les deps si fonctions internes
+
