@@ -108,3 +108,5 @@ The following graph shows the dependencies between functions in the package, col
   <em>Function dependencies — colored by source script</em>
 </p>
 
+Rerun the code if you want to update it : `R2Excel/inst/figures/generate_R2Excel_foodweb.R`. 
+
