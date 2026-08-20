@@ -620,7 +620,7 @@ test_that("test labels", {
   expect_equal(is.na(sheet_08quali$Label), is.na(sheet_08quali$Variable))
 })
 
-#### show_SMD ####
+#### show_OR & show_SMD ####
 
 path09 <- save_excel_results(
   dataframe = modified_state,
@@ -662,6 +662,7 @@ sheet09qualicross <- readxl::read_excel(
   path09cross,
   sheet = 2# quanti one
 )
+
 test_that("test smd", {
   expect_true("SMD" %in% names(sheet09quanti))
   expect_true("SMD" %in% names(sheet09quali))
@@ -672,6 +673,14 @@ test_that("test smd", {
   expect_true(any(grepl("SMD", names(sheet09qualicross))))
   expect_true(sheet09quanticross[1, "election==red__SMD"] == -0.43) # test 1 value
 })
+test_that("test OR", {
+  expect_true("OR" %in% names(sheet09quanti))
+  expect_true("OR" %in% names(sheet09quali))
+  expect_equal(nrow(sheet09quali), 17) # v0.2.3
+  expect_equal(sheet09quanti$OR[2], "1.21 (0.48-3.12)") # test 1 value
+  expect_equal(sheet09quali$OR[2], "2.00 (0.12-58.79)") # test 1 value
+})
+
 
 #### quali varstrat ####
 save_excel_results(
