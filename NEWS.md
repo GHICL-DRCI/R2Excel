@@ -1,3 +1,21 @@
+# Version 0.2.3
+
+20/08/2026
+
+## Bug Fixes
+
+- OR tables : The OR and their p-values are clumsily joined to the initial table: 
+correct the join key (on variable and modalites) + all.x = TRUE + sort = FALSE.
+
+- The chi-squared test is performed incorrectly when only one category is present.
+It makes no sense to present this test in a situation where only one modality is present. skip this case. 
+
+## Note
+
+Mathilde's final contribution before leaving the DRCI.
+
+Salut ! 
+
 # Version 0.2.2
 
 05-06/08/2026

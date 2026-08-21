@@ -1762,8 +1762,12 @@ quali_sheet <- function(
                 # --here to valide
                 idx_na <- c(FALSE, rep(TRUE, nrow(tmp2) - 1))
                 tmp2[idx_na, grep(paste0(varstrat_i, ".*_N$"), names(tmp2))] <- NA
-                tmp2$Variable <- tmp2$Variable_light
-                tmp2$Variable_light <- NULL
+                
+                ## --here #20 ici .. ne pas faire car sinon le merge de la table OR fail . 
+                ## apply light après OR computing & merge (ci-dessous)
+                ## concerver les 2 : Variable et Variable_light.. ne retirer qu'après le merge des OR 
+                # tmp2$Variable <- tmp2$Variable_light 
+                # tmp2$Variable_light <- NULL # v0.2.3
               }
               
               return(tmp2)
@@ -1772,7 +1776,7 @@ quali_sheet <- function(
           fill = TRUE
         )
         
-        ## SMD et OR if do_test
+        ## compute SMD et OR if do_test
         if (do_test) {
           
           ##### Show SMD #####
@@ -1823,6 +1827,9 @@ quali_sheet <- function(
           
           # merge computed table and stat test results
           if (light_contents) {
+            
+            # --here ## https://github.com/GHICL-DRCI/R2Excel/issues/20
+
             if ("Variable_light" %in% names(tab_quali_sheet)) {
               # it was needed to keep full Variable for OR
               tab_quali_sheet$Variable <- tab_quali_sheet$Variable_light

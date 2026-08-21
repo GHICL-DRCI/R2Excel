@@ -124,6 +124,28 @@ test_that("test_proportions_fisher", {
   expect_true(is.na(res_prop_fisher_hide$results$P_valeur))
 })
 
+test_that("test_one_modalite", {
+  tmp <- modified_state[, c("yes_no_french_question", "election")]
+  tmp <- tmp[tmp$yes_no_french_question %in% "oui", ]
+  res <- test_proportions(
+    dataframe = tmp,
+    vars = c("yes_no_french_question"),
+    varstrat = "election"
+  )
+  
+  expect_true(res$results$P_valeur == 1)
+  expect_true(grepl("Fisher", res$results$Test))
+  
+  tmp <- droplevels(tmp)
+  res2 <- test_proportions(
+    dataframe = tmp,
+    vars = c("yes_no_french_question"),
+    varstrat = "election"
+  )
+  expect_true(is.na(res2$results$P_valeur))
+  expect_true(is.na(res2$results$Test))
+})
+
 #### test continuous ####
 
 ## test_means

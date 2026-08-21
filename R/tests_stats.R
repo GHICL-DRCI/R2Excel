@@ -228,7 +228,10 @@ test_proportions <- function(
     # table of observed counts
     effobs <- table(dataframe[, c(vari, varstrat)])
     detailtest[[vari]][["observed"]] <- effobs
-    if (sum(effobs) == 0) next
+    
+    ##  bug v0.2.3  #19 ajouter next aussi dans le cas ou on n'a pas une matrice carré !
+    ## exemple présence uniquement de non (et pas de oui, ou inversement...)
+    if (sum(effobs) == 0 || (1 %in% dim(effobs)) ) next
 
     # table of theoretical counts
     efftheo <- as.table(round(rowSums(effobs) %*% t(colSums(effobs)) / sum(effobs), 2))
