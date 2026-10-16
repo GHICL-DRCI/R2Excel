@@ -1099,10 +1099,8 @@ quanti_sheet <- function(
         X = seq_len(length(analyse_desc_quanti)), FUN = function(i) {
           var_i <- names(analyse_desc_quanti)[i]
           if (verbose) message("[quanti_sheet] ", var_i)
-          tmp_raw <- analyse_desc_quanti[i]
+          tmp_raw <- analyse_desc_quanti[[i]]
           tmp <- data.table::as.data.table(tmp_raw, keep.rownames = "Modalites")
-          # names(tmp) <- gsub(paste0(gsub(" ", "\\.", var_i), "\\."), "", names(tmp))
-          names(tmp) <- c("Modalites", names(tmp_raw[[1]]))
           tmp$Variable <- var_i
           tmp$Modalites[1] <- "Population_totale"
           
@@ -1466,13 +1464,10 @@ quali_sheet <- function(
           X = seq_len(length(analyse_desc_quali)),
           FUN = function(i) {
             var_i <- names(analyse_desc_quali)[i]
-            tmp_raw <- analyse_desc_quali[i]
-            tmp <- data.table::as.data.table(
-              analyse_desc_quali[i],
-              keep.rownames = "Modalites"
-            )
-            names(tmp) <- c("Modalites", names(tmp_raw[[1]]))
+            tmp_raw <- analyse_desc_quali[[i]]
+            tmp <- data.table::as.data.table(tmp_raw, keep.rownames = "Modalites")
             tmp$Variable <- var_i
+            
             tmp$Nb_mesures <- tmp$n[tmp$Modalites %in% "Nb_mesures"]
             tmp$Valeurs_manquantes <- tmp$n[tmp$Modalites %in% "Valeurs_manquantes"]
             tmp$`Effectif (%)` <- paste(tmp$n, tmp$p)
@@ -1557,13 +1552,12 @@ quali_sheet <- function(
               var_i <- vars_quali[i]
               if (verbose) message("[quali_sheet] ", var_i)
               tmp_raw <- analyse_desc_quali[[i]]
-              tmp <- data.table::as.data.table(
-                tmp_raw,
-                keep.rownames = "Modalites"
-              )
-              names(tmp) <- c("Modalites", names(tmp_raw[[1]]))
+              if (!is.data.frame(tmp_raw) && !is.matrix(tmp_raw)) {
+                tmp_raw <- tmp_raw[[1]]  # liste d'un seul élément : on prend le tableau
+              }
               
-              tmp$Variable <- varstrat_i
+              tmp <- data.table::as.data.table(tmp_raw, keep.rownames = "Modalites")
+              tmp$Variable <- var_i
               tmp$Modalites <- gsub(var_i, "", tmp$Modalites)
               tmp$Modalites[1] <- "Population_totale"
               tmp$varstrat <- var_i
@@ -1660,10 +1654,9 @@ quali_sheet <- function(
             FUN = function(i) {
               var_i <- names(analyse_desc_quali)[i]
               if (verbose) message("[quali_sheet] ", var_i)
-              tmp_raw <- analyse_desc_quali[i]
+              tmp_raw <- analyse_desc_quali[[i]]
               
               tmp <- data.table::as.data.table(tmp_raw, keep.rownames = "Modalites")
-              names(tmp) <- c("Modalites", names(tmp_raw[[1]]))
               tmp$Variable <- var_i
               
               levels_i_n <- grep("^n(.*)", names(tmp), value = TRUE)[-1]

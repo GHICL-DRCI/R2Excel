@@ -1,7 +1,7 @@
 Package: R2Excel
 Type: Package
 Title: R2Excel : Production Of Statistical Tables in R, Save Into (2) Excel File
-Version: 0.2.3
+Version: 0.2.4
 Author: 
   Mathilde Boissel [aut, cre],
   Cassandra Chaldaureille [aut, cre],
@@ -12,7 +12,7 @@ Author:
   Laurène Norberciak [aut, cre],
   Cristian Preda [aut, cre],
   Stephane Verdun [aut]
-Maintainer: Mathilde Boissel <boissel.mathilde@gmail.com>, Cassandra Chaldaureille <chaldaureille.cassandra@ghicl.net>
+Maintainer: Mathilde Boissel <boissel.mathilde@gmail.com>, Klervi Le Gall <legall.klervi@ghicl.net>
 Description: The goal of R2Excel is to produce Statistical Tables in R, Save Into (2) Excel File. 
   With this package, we don't propose any revolutionary statistical models or tests, 
     but we do recommend that you use this tool for the first stages of analysis in a clinical study. 
@@ -50,6 +50,7 @@ Suggests:
     rmarkdown,
     roxygen2,
     testthat (>= 3.0.0),
-    usethis
+    usethis,
+    tibble
 Config/testthat/edition: 3
 RoxygenNote: 7.3.3

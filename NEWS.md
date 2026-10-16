@@ -1,3 +1,41 @@
+# Version 0.2.4
+15/10/2026
+
+## Bug Fixes
+- #22 assigned to Klervi Le Gall:
+
+  `quali_sheet()` and `quanti_sheet()` (excel_file_production) are now compatible with
+  data.table  1.18.6.1, and still work with older versions (checked with 1.14.8).
+
+ - **Cause**: both functions called
+    `data.table::as.data.table(<list of length 1>, keep.rownames = "Modalites")`
+    and then renamed the columns with `names(tmp) <- c("Modalites", ...)`.
+    Since data.table 1.18.0, `keep.rownames` also extracts the row names of the
+    data.frame / matrix stored in the list. An extra `Modalites` column is created,
+    and the renaming fails with: "Impossible d'assigner 3 noms à une data.table de 4 colonne(s)"
+    (or "15 noms à 16 colonnes" in `quanti_sheet()`).
+  - **Fix**: the data.frame / matrix is now passed directly to `as.data.table()`
+    (`analyse_desc_quali[[i]]` / `analyse_desc_quanti[[i]]` instead of `[i]`)
+    and the renaming step is removed.
+    - `quali_sheet()`: no varstrat, factorial varstrat and continuous varstrat.
+      In the continuous case, the element is a list holding one table,
+      which is unwrapped first (`tmp_raw[[1]]`).
+    - `quanti_sheet()`: factorial varstrat.
+  - `save_excel_paired_results()` calls these two functions and benefits from the fix;
+    no change was needed in excel_file_paired_production.
+  - Output tables are unchanged.
+
+## Note
+
+- Stay aware of this issue for future development: when using
+  `as.data.table(x, keep.rownames = ...)`, pass the data.frame / matrix itself
+  (`x[[i]]`), not a list wrapping it (`x[i]`), and do not rename columns by position
+  afterwards. The result of the list form depends on the data.table version.
+- Other calls with `keep.rownames` (e.g. on `pvaleur_quanti$result`,
+  `pvaleur_quali$result`) are not affected as long as their input is a data.frame
+  or a matrix; if it is a named vector, check it, because data.table 1.18.0 changed
+  the handling of named vectors.
+
 # Version 0.2.3
 
 20/08/2026
@@ -16,6 +54,7 @@ Mathilde's final contribution before leaving the DRCI.
 
 Salut ! 
 
+
 # Version 0.2.2
 
 05-06/08/2026
@@ -29,6 +68,12 @@ Salut !
   (call `detect_outliers` function). #17
 
 - Update in consequence : docs, unit tests, image in readme/inst (function dependency graph)
+
+
+## Note
+
+- Suggestion to do later: update the vignette to explain how to play with the latest developments.
+
 
 # Version 0.2.1
 
@@ -78,8 +123,8 @@ but not returned by default in excel files.
   + A new option was added in v0.2.0, the long format of table when cross varstrat is provided. 
   Test the option "long" in param "crosstableformat", based on Sunstar project.
   Suggests changes (to be made later?)
-
   
+
 # Version 0.2.0
 
 05/05/2026 + 19/06/2026 + 22-23/06/2026

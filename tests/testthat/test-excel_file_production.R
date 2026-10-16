@@ -1103,6 +1103,83 @@ test_that("test trap Q1 Q3 excel modified_state", {
   )
   
 })
+
+#### Test linked to issue 22 quali_sheet function ####
+
+# Jeu de données minimal
+set.seed(1)
+df <- data.frame(
+  sexe  = factor(sample(c("F", "M"), 60, replace = TRUE)),
+  fumeur = factor(sample(c("oui", "non"), 60, replace = TRUE)),
+  grp   = factor(sample(c("A", "B"), 60, replace = TRUE))
+)
+df$fumeur[1:3] <- NA   # quelques valeurs manquantes
+
+appel_quali_sheet <- function(varstrat, ...) {
+  # R2Excel:::quali_sheet si le test est hors du package
+  R2Excel:::quali_sheet(
+    dataframe = df,
+    vars_quali = c("sexe", "fumeur"),
+    varstrat = varstrat,
+    precision = 1,
+    signif_digits = 3,
+    prop_table_margin = 2,
+    force_generate_1_when_0 = FALSE,
+    force_non_parametric_test = FALSE,
+    force_parametric_test = FALSE,
+    show_metric = "auto",
+    global_summary = TRUE,
+    show_OR = FALSE,
+    show_SMD = FALSE,
+    light_contents = FALSE,
+    simplify = FALSE,
+    detail_NB_measures = FALSE,
+    do_test = FALSE,
+    verbose = FALSE,
+    ...
+  )
+}
+
+test_that("sans varstrat : structure et colonne Modalites correctes", {
+  res <- appel_quali_sheet(varstrat = NULL)
+  
+  expect_type(res, "list")
+  expect_named(res, "qualitative - ")
+  tab <- res[[1]]
+  
+  expect_s3_class(tab, "data.table")
+  expect_identical(names(tab)[1], "Variable")
+  expect_true(all(c("Modalites", "Nb_mesures", "Valeurs_manquantes",
+                    "Effectif (%)") %in% names(tab)))
+  
+  # garde-fou de la régression data.table 1.18.x : pas de colonne dupliquée
+  expect_false(anyDuplicated(names(tab)) > 0)
+  expect_false(any(grepl("\\.Modalites$", names(tab))))
+  
+  # les lignes de service sont retirées, les modalités sont là
+  expect_false(any(c("Nb_mesures", "Valeurs_manquantes") %in% tab$Modalites))
+  expect_true(all(c("F", "M") %in% tab$Modalites))
+  expect_setequal(unique(tab$Variable), c("sexe", "fumeur"))
+})
+
+test_that("avec varstrat factoriel (sans tests) : colonnes par groupe", {
+  res <- appel_quali_sheet(varstrat = "grp")
+  
+  expect_named(res, "qualitative - grp")
+  tab <- res[[1]]
+  
+  expect_s3_class(tab, "data.table")
+  expect_identical(names(tab)[1], "Variable")
+  expect_false(anyDuplicated(names(tab)) > 0)
+  
+  attendues <- c("Modalites", "Nb_mesures", "Valeurs_manquantes",
+                 "Population_totale",
+                 "grp=A", "grp=A_N", "grp=B", "grp=B_N")
+  expect_true(all(attendues %in% names(tab)))
+  expect_setequal(unique(tab$Variable), c("sexe", "fumeur"))
+})
+
+
 #### end ####
 # clear tmp test folder
 unlink("tmp", recursive = TRUE)
